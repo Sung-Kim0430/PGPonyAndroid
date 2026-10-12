@@ -700,6 +700,9 @@
     <!-- ── Preview card ─────────────────────────────────────────────── -->
     <string name="import_preview_type_key_pair">Key Pair (Public + Private)</string>
     <string name="import_preview_type_public_only">Public Key Only</string>
+    <string name="import_preview_type_key_pair_offline_primary">Key Pair (offline primary)</string>
+    <string name="import_preview_offline_primary_note">This file has the subkeys\' secrets but not the primary key\'s, as gpg --export-secret-subkeys writes it. The subkeys work as usual; editing the key needs the primary.</string>
+    <string name="import_preview_offline_primary_note_card">The primary key\'s secret is on a hardware key, not in this file. The subkeys work as usual; editing the key needs the hardware key.</string>
     <string name="import_preview_detail_user_label">User</string>
     <string name="import_preview_detail_user_empty">(none)</string>
     <string name="import_preview_detail_fingerprint_label">Fingerprint</string>
@@ -812,6 +815,9 @@
     <!-- 4.7.0 (item 27, #67): a User ID bound only by a SHA-1 self-signature. -->
     <string name="key_detail_userid_weak_hash_badge">Weak hash</string>
     <string name="key_detail_userid_weak_hash_note">Bound with SHA-1, which is no longer considered safe. The name is kept, but it does not make the key verified.</string>
+    <string name="key_detail_offline_primary_title">Offline primary key</string>
+    <string name="key_detail_offline_primary_body">The primary key\'s secret is not on this device. The subkeys stored here work as usual. Changing User IDs, subkeys or expiry, and revoking the key, need the primary: make those changes where it is kept, then import the key here again.</string>
+    <string name="key_detail_offline_primary_body_card">The primary key\'s secret is on a hardware key, not on this device. The subkeys stored here work as usual. Changing User IDs, subkeys or expiry, and revoking the key, need the hardware key: make those changes in GnuPG, then import the key here again.</string>
 
     <!-- ── 4.2.0 RC3 workstream I (#29): add/revoke/promote User IDs ── -->
     <string name="key_detail_userids_make_primary">Make Primary</string>
@@ -2552,6 +2558,8 @@
     <!-- 4.7.0 (item 23): a composite signed message that streamed in the wrong shape. -->
     <string name="err_malformed_signed_message">The signed message is malformed and was not opened.</string>
     <string name="err_nfc_openpgp_unavailable">This key did not open its OpenPGP application over NFC. Some keys, the Nitrokey 3 among them, turn OpenPGP off over NFC. If your key has USB, plug it in and try again.</string>
+    <string name="err_offline_primary_sign">The primary key\'s secret is not on this device (offline primary). Sign with a signing subkey.</string>
+    <string name="err_offline_primary_edit">The primary key\'s secret is not on this device (offline primary). Make this change where the primary key is kept, then import the key here again.</string>
     <string name="err_session_key_block_too_short">session key block too short</string>
     <string name="err_session_key_checksum_mismatch">session key checksum mismatch</string>
     <string name="err_short_form_apdu_data_limited_255">Short-form APDU data limited to 255 bytes (was %1$s). Use command chaining or set extended = true for larger payloads.</string>

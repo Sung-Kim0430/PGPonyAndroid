@@ -539,6 +539,9 @@ pgpony.app</string>
     <!-- ── Preview card ─────────────────────────────────────────────── -->
     <string name="import_preview_type_key_pair">Schlüsselpaar (öffentlich + privat)</string>
     <string name="import_preview_type_public_only">Nur öffentlicher Schlüssel</string>
+    <string name="import_preview_type_key_pair_offline_primary">Schlüsselpaar (Hauptschlüssel offline)</string>
+    <string name="import_preview_offline_primary_note">Diese Datei enthält die geheimen Teile der Unterschlüssel, aber nicht den des Hauptschlüssels, wie von gpg --export-secret-subkeys erzeugt. Die Unterschlüssel funktionieren wie gewohnt; zum Bearbeiten des Schlüssels wird der Hauptschlüssel benötigt.</string>
+    <string name="import_preview_offline_primary_note_card">Der geheime Teil des Hauptschlüssels liegt auf einem Hardware-Schlüssel, nicht in dieser Datei. Die Unterschlüssel funktionieren wie gewohnt; zum Bearbeiten des Schlüssels wird der Hardware-Schlüssel benötigt.</string>
     <string name="import_preview_detail_user_label">Nutzerin / Nutzer</string>
     <string name="import_preview_detail_user_empty">(keine)</string>
     <string name="import_preview_detail_fingerprint_label">Fingerabdruck</string>
@@ -1484,6 +1487,9 @@ Optional kannst du die App hinter deinem Fingerabdruck oder Gesicht sperren, um 
     <string name="key_detail_userids_primary">Primär</string>
     <string name="key_detail_userid_weak_hash_badge">Schwacher Hash</string>
     <string name="key_detail_userid_weak_hash_note">Mit SHA-1 gebunden, das nicht mehr als sicher gilt. Der Name bleibt erhalten, aber der Schlüssel gilt dadurch nicht als verifiziert.</string>
+    <string name="key_detail_offline_primary_title">Hauptschlüssel offline</string>
+    <string name="key_detail_offline_primary_body">Der geheime Teil des Hauptschlüssels ist nicht auf diesem Gerät. Die hier gespeicherten Unterschlüssel funktionieren wie gewohnt. Zum Ändern von Benutzer-IDs, Unterschlüsseln oder Ablaufdatum sowie zum Widerrufen des Schlüssels wird der Hauptschlüssel benötigt: Nimm diese Änderungen dort vor, wo er aufbewahrt wird, und importiere den Schlüssel dann erneut hier.</string>
+    <string name="key_detail_offline_primary_body_card">Der geheime Teil des Hauptschlüssels liegt auf einem Hardware-Schlüssel, nicht auf diesem Gerät. Die hier gespeicherten Unterschlüssel funktionieren wie gewohnt. Zum Ändern von Benutzer-IDs, Unterschlüsseln oder Ablaufdatum sowie zum Widerrufen des Schlüssels wird der Hardware-Schlüssel benötigt: Nimm diese Änderungen in GnuPG vor und importiere den Schlüssel dann erneut hier.</string>
     <string name="key_detail_userids_title">Benutzer-IDs</string>
     <string name="key_refresh_notif_expired_body">Der Schlüssel von %1$s ist laut einem Schlüsselserver abgelaufen.</string>
     <string name="key_refresh_notif_expired_title">Ein Schlüssel ist abgelaufen</string>
@@ -2464,6 +2470,8 @@ Optional kannst du die App hinter deinem Fingerabdruck oder Gesicht sperren, um 
     <string name="err_select_openpgp_application_failed">SELECT der OpenPGP-Anwendung fehlgeschlagen (%1$s)</string>
     <string name="err_malformed_signed_message">Die signierte Nachricht ist fehlerhaft und wurde nicht geöffnet.</string>
     <string name="err_nfc_openpgp_unavailable">Dieser Schlüssel hat seine OpenPGP-Anwendung über NFC nicht geöffnet. Manche Schlüssel, darunter der Nitrokey 3, schalten OpenPGP über NFC ab. Wenn dein Schlüssel USB hat, steck ihn ein und versuche es erneut.</string>
+    <string name="err_offline_primary_sign">Der geheime Teil des Hauptschlüssels ist nicht auf diesem Gerät (Hauptschlüssel offline). Signiere mit einem Signatur-Unterschlüssel.</string>
+    <string name="err_offline_primary_edit">Der geheime Teil des Hauptschlüssels ist nicht auf diesem Gerät (Hauptschlüssel offline). Nimm diese Änderung dort vor, wo der Hauptschlüssel aufbewahrt wird, und importiere den Schlüssel dann erneut hier.</string>
     <string name="err_session_key_block_too_short">Sitzungsschlüssel-Block zu kurz</string>
     <string name="err_session_key_checksum_mismatch">Prüfsumme des Sitzungsschlüssels stimmt nicht</string>
     <string name="err_short_form_apdu_data_limited_255">APDU-Daten in Kurzform sind auf 255 Bytes begrenzt (waren %1$s). Verwende Command Chaining oder setze extended = true für größere Nutzdaten.</string>

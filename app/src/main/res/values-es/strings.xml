@@ -539,6 +539,9 @@ pgpony.app</string>
     <!-- ── Preview card ─────────────────────────────────────────────── -->
     <string name="import_preview_type_key_pair">Par de claves (pública + privada)</string>
     <string name="import_preview_type_public_only">Solo clave pública</string>
+    <string name="import_preview_type_key_pair_offline_primary">Par de claves (clave principal sin conexión)</string>
+    <string name="import_preview_offline_primary_note">Este archivo tiene los secretos de las subclaves pero no el de la clave principal, tal como lo genera gpg --export-secret-subkeys. Las subclaves funcionan con normalidad; para editar la clave se necesita la clave principal.</string>
+    <string name="import_preview_offline_primary_note_card">El secreto de la clave principal está en una llave de hardware, no en este archivo. Las subclaves funcionan con normalidad; para editar la clave se necesita la llave de hardware.</string>
     <string name="import_preview_detail_user_label">Usuario</string>
     <string name="import_preview_detail_user_empty">(ninguno)</string>
     <string name="import_preview_detail_fingerprint_label">Huella digital</string>
@@ -1484,6 +1487,9 @@ Opcionalmente, bloquea la app con tu huella digital o cara para mayor tranquilid
     <string name="key_detail_userids_primary">Principal</string>
     <string name="key_detail_userid_weak_hash_badge">Hash débil</string>
     <string name="key_detail_userid_weak_hash_note">Vinculado con SHA-1, que ya no se considera seguro. El nombre se conserva, pero no hace que la clave quede verificada.</string>
+    <string name="key_detail_offline_primary_title">Clave principal sin conexión</string>
+    <string name="key_detail_offline_primary_body">El secreto de la clave principal no está en este dispositivo. Las subclaves almacenadas aquí funcionan con normalidad. Para cambiar los ID de usuario, las subclaves o la caducidad, y para revocar la clave, se necesita la clave principal: haz esos cambios donde se guarda y luego vuelve a importar la clave aquí.</string>
+    <string name="key_detail_offline_primary_body_card">El secreto de la clave principal está en una llave de hardware, no en este dispositivo. Las subclaves almacenadas aquí funcionan con normalidad. Para cambiar los ID de usuario, las subclaves o la caducidad, y para revocar la clave, se necesita la llave de hardware: haz esos cambios en GnuPG y luego vuelve a importar la clave aquí.</string>
     <string name="key_detail_userids_title">ID de usuario</string>
     <string name="key_refresh_notif_expired_body">La clave de %1$s ha caducado según un servidor de claves.</string>
     <string name="key_refresh_notif_expired_title">Una clave ha caducado</string>
@@ -2464,6 +2470,8 @@ Opcionalmente, bloquea la app con tu huella digital o cara para mayor tranquilid
     <string name="err_select_openpgp_application_failed">Falló SELECT de la aplicación OpenPGP (%1$s)</string>
     <string name="err_malformed_signed_message">El mensaje firmado está mal formado y no se abrió.</string>
     <string name="err_nfc_openpgp_unavailable">Esta llave no abrió su aplicación OpenPGP por NFC. Algunas llaves, como la Nitrokey 3, desactivan OpenPGP por NFC. Si tu llave tiene USB, conéctala e inténtalo de nuevo.</string>
+    <string name="err_offline_primary_sign">El secreto de la clave principal no está en este dispositivo (clave principal sin conexión). Firma con una subclave de firma.</string>
+    <string name="err_offline_primary_edit">El secreto de la clave principal no está en este dispositivo (clave principal sin conexión). Haz este cambio donde se guarda la clave principal y luego vuelve a importar la clave aquí.</string>
     <string name="err_session_key_block_too_short">bloque de clave de sesión demasiado corto</string>
     <string name="err_session_key_checksum_mismatch">la suma de comprobación de la clave de sesión no coincide</string>
     <string name="err_short_form_apdu_data_limited_255">Los datos de una APDU de formato corto están limitados a 255 bytes (había %1$s). Usa el encadenamiento de comandos o establece extended = true para cargas más grandes.</string>

@@ -158,6 +158,9 @@ data class KeyDetailUiState(
     /** RC4 O5 (#16): the stored ring already carries its own passphrase,
      *  so the export-passphrase fields are pointless and hidden. */
     val privateKeyIsProtected: Boolean = false,
+    /** 4.7.0 (item 22): the stored primary is a stub (offline primary or
+     *  divert-to-card), so the edits that need the primary are hidden. */
+    val primaryStub: com.pgpony.android.crypto.OfflineStub.Kind? = null,
     val signingDefaults: com.pgpony.android.data.SigningDefaultsEntity? = null,
     val signerChoices: List<PGPKeyEntity> = emptyList(),
     /** True while the initial load() coroutine is in flight. */
@@ -411,6 +414,9 @@ class KeyDetailViewModel(
                 privateKeyIsProtected = loaded?.takeIf { it.isKeyPair }?.let {
                     withContext(Dispatchers.IO) { repo.isPrivateKeyPassphraseProtected(it.fingerprint) }
                 } ?: false,
+                primaryStub = loaded?.takeIf { it.isKeyPair && !it.isCardBacked }?.let {
+                    withContext(Dispatchers.IO) { runCatching { repo.primaryStubKind(it.fingerprint) }.getOrNull() }
+                },
                 signingDefaults = loaded?.takeIf { it.isKeyPair }
                     ?.let { repo.signingDefaultsFor(it.fingerprint) },
                 signerChoices = loaded?.takeIf { it.isKeyPair }

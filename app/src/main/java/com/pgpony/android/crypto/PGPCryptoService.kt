@@ -279,7 +279,10 @@ data class ImportResult(
     val hasPrivateKey: Boolean,
     val creationDate: Date,
     val publicKeyRing: PGPPublicKeyRing?,
-    val secretKeyRing: PGPSecretKeyRing?
+    val secretKeyRing: PGPSecretKeyRing?,
+    /** 4.7.0 (item 22): set when the primary's secret is not in the data
+     *  (GnuPG offline primary, or divert-to-card); null otherwise. */
+    val primaryStub: OfflineStub.Kind? = null
 )
 
 // ── Crypto Service ─────────────────────────────────────────────────────
@@ -788,6 +791,25 @@ class PGPCryptoService private constructor() {
             )
             val algorithm = detectAlgorithm(masterKey, publicRing)
 
+            // 4.7.0 (item 22): a block in which every secret key is a stub (a
+            // gpg export of a card key, say) holds no secret at all, so it
+            // imports as the public key it is.
+            if (OfflineStub.allStubs(secretRing)) {
+                val sanitized = PGPPublicKeyRing(
+                    ByteArrayInputStream(CertificateBindings.sanitized(publicRing.encoded)),
+                    JcaKeyFingerprintCalculator()
+                )
+                return ImportResult(
+                    fingerprint = fingerprint,
+                    userID = userID,
+                    algorithm = detectAlgorithm(sanitized.publicKey, sanitized),
+                    hasPrivateKey = false,
+                    creationDate = masterKey.creationTime,
+                    publicKeyRing = sanitized,
+                    secretKeyRing = null
+                )
+            }
+
             return ImportResult(
                 fingerprint = fingerprint,
                 userID = userID,
@@ -795,7 +817,8 @@ class PGPCryptoService private constructor() {
                 hasPrivateKey = true,
                 creationDate = masterKey.creationTime,
                 publicKeyRing = publicRing,
-                secretKeyRing = secretRing
+                secretKeyRing = secretRing,
+                primaryStub = OfflineStub.primaryKind(secretRing)
             )
         } catch (e: KeyPolicy.RefusedProtection) {
             throw PGPCryptoError.ImportFailed(e.message ?: "refused key protection")
@@ -856,7 +879,8 @@ class PGPCryptoService private constructor() {
                 hasPrivateKey = true,
                 creationDate = masterKey.creationTime,
                 publicKeyRing = publicRing,
-                secretKeyRing = secretRing
+                secretKeyRing = secretRing,
+                primaryStub = OfflineStub.primaryKind(secretRing)
             )
         } catch (e: KeyPolicy.RefusedProtection) {
             throw PGPCryptoError.ImportFailed(e.message ?: "refused key protection")
@@ -908,7 +932,10 @@ class PGPCryptoService private constructor() {
      * not re-encrypt it without knowing that passphrase anyway.
      */
     fun isPassphraseProtected(secretKeyRing: PGPSecretKeyRing): Boolean =
-        secretKeyRing.secretKey.s2KUsage != 0
+        // 4.7.0 (item 22): read the first key that has material. A stub
+        // primary carries S2K usage 255 whatever its subkeys use.
+        secretKeyRing.secretKeys.asSequence().firstOrNull { !OfflineStub.isStub(it) }
+            ?.let { it.s2KUsage != 0 } ?: false
 
     /**
      * RC4 O5 (#16, CertainBot): export an UNPROTECTED secret ring
@@ -926,7 +953,18 @@ class PGPCryptoService private constructor() {
             .get(org.bouncycastle.bcpg.HashAlgorithmTags.SHA1)
         // 4.6.0 (item 17.6): calibrated SHA-256 S2K, not SHA-1 at 65,536 octets.
         val encryptor = S2kPolicy.v4EncryptorBuilder().build(exportPassphrase.toCharArray())
-        val protectedRing = PGPSecretKeyRing.copyWithNewPassword(secretKeyRing, null, encryptor)
+        // 4.7.0 (item 22): per key. A stub (offline primary, card) is kept
+        // byte for byte: the ring-level copy would re-encrypt a divert-to-card
+        // stub's serial as if it were key material. A key already under a
+        // passphrase keeps its own (it cannot be unlocked here). The SHA-1
+        // checksum gives S2K usage 254, as documented above.
+        var protectedRing = secretKeyRing
+        for (key in secretKeyRing.secretKeys.asSequence().toList()) {
+            if (OfflineStub.isStub(key) || key.s2KUsage != 0) continue
+            protectedRing = PGPSecretKeyRing.insertSecretKey(
+                protectedRing, org.bouncycastle.openpgp.PGPSecretKey.copyWithNewPassword(key, null, encryptor, digest)
+            )
+        }
         return exportArmoredPrivateKey(protectedRing)
     }
 
@@ -984,6 +1022,9 @@ class PGPCryptoService private constructor() {
         val keys = secretKeyRing.secretKeys.asSequence().toList()
         var ring = secretKeyRing
         for (key in keys) {
+            // 4.7.0 (item 22): a stub has no secret to re-protect; it stays
+            // byte for byte, so the key still goes back into gpg as sec#.
+            if (OfflineStub.isStub(key)) continue
             enforceArgon2Policy(key.s2K)
             val reprotected = when {
                 // Strip: null encryptor removes protection (BC handles v4, v6,
@@ -1345,7 +1386,7 @@ class PGPCryptoService private constructor() {
                 sigGen.generateOnePassVersion(false).encode(compOut)
             } else if (signingSecretKey != null) {
                 val signingKey = pickSigningSecretKey(signingSecretKey, signingKeyId)
-                    ?: throw SigningError.NoSigningKey()
+                    ?: throw noSigningKeyError(signingSecretKey)
                 enforceArgon2Policy(signingKey.s2K)
                 val privateKey = try {
                     signingKey.extractPrivateKey(
@@ -1518,7 +1559,7 @@ class PGPCryptoService private constructor() {
             sigGen.setHashedSubpackets(cardSubpackets.generate())
         } else if (signingSecretKey != null) {
             val signingKey = pickSigningSecretKey(signingSecretKey, signingKeyId)
-                ?: throw SigningError.NoSigningKey()
+                ?: throw noSigningKeyError(signingSecretKey)
             enforceArgon2Policy(signingKey.s2K)
             val privateKey = try {
                 signingKey.extractPrivateKey(
@@ -2869,7 +2910,7 @@ class PGPCryptoService private constructor() {
     ): ByteArray {
         try {
             val signingKey = pickSigningSecretKey(secretKeyRing)
-                ?: throw SigningError.NoSigningKey()
+                ?: throw noSigningKeyError(secretKeyRing)
             enforceArgon2Policy(signingKey.s2K)
             val privateKey = signingKey.extractPrivateKey(
                 org.bouncycastle.openpgp.operator.bc.BcPBESecretKeyDecryptorBuilder(
@@ -3231,6 +3272,7 @@ class PGPCryptoService private constructor() {
         val iterator = ring.secretKeys
         while (iterator.hasNext()) {
             val secretKey = iterator.next()
+            if (OfflineStub.isStub(secretKey)) continue // 4.7.0 (item 22): no secret here
             val pub = secretKey.publicKey
             if (KeyPolicy.isWeak(pub, ring.publicKey)) continue // 3.0.0 (5d-3): weak keys are read-only
             val caps = SubkeyCapability.fromPgpPublicKey(pub, detectAlgorithm(pub), pub.isMasterKey)
@@ -3251,6 +3293,7 @@ class PGPCryptoService private constructor() {
         val it = ring.secretKeys
         while (it.hasNext()) {
             val sk = it.next()
+            if (OfflineStub.isStub(sk)) continue // 4.7.0 (item 22): no secret here
             val pub = sk.publicKey
             if (KeyPolicy.isWeak(pub, ring.publicKey)) continue // 3.0.0 (5d-3): weak keys are read-only
             val caps = SubkeyCapability.fromPgpPublicKey(pub, detectAlgorithm(pub), pub.isMasterKey)
@@ -3259,6 +3302,19 @@ class PGPCryptoService private constructor() {
             }
         }
         return if (primary != null) subs + primary else subs
+    }
+
+    /** 4.7.0 (item 22): the error when [ring] has no usable signing key. A
+     *  ring whose only Sign-capable key is a stub (an offline primary) says
+     *  so, rather than claiming the key cannot sign at all. */
+    internal fun noSigningKeyError(ring: PGPSecretKeyRing): SigningError {
+        val stubSigner = ring.secretKeys.asSequence().any { sk ->
+            OfflineStub.isStub(sk) && SubkeyCapability.hasCapability(
+                SubkeyCapability.fromPgpPublicKey(sk.publicKey, detectAlgorithm(sk.publicKey), sk.publicKey.isMasterKey),
+                SubkeyCapability.Sign
+            )
+        }
+        return if (stubSigner) SigningError.OfflinePrimary() else SigningError.NoSigningKey()
     }
 
     /** §4.5 (#22): display-ready signing-key choices for [ring]; first entry
@@ -3348,6 +3404,9 @@ class PGPCryptoService private constructor() {
         var sawUnlockFailure = false
 
         fun attempt(obj: PGPPublicKeyEncryptedData, secretKey: PGPSecretKey): PkeskMatch? {
+            // 4.7.0 (item 22): a stub (offline primary, card) has nothing to
+            // unlock here, so it is neither a candidate nor a locked key.
+            if (OfflineStub.isStub(secretKey)) return null
             // 4.0.4's guard, moved in here and made non-fatal: a locked key
             // must not abort the scan, because a later candidate may open
             // the packet without any passphrase at all. If none does, the

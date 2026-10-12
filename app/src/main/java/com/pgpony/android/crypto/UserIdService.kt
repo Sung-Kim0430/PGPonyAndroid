@@ -442,6 +442,8 @@ class UserIdService private constructor() {
         primarySecret: org.bouncycastle.openpgp.PGPSecretKey,
         passphrase: String?
     ): PGPPrivateKey {
+        // 4.7.0 (item 22): an offline primary has no secret to sign with.
+        OfflineStub.requireSecret(primarySecret)
         // An Argon2 S2K outside the policy is refused before any KDF runs.
         enforceArgon2Policy(primarySecret.s2K)
         return try {

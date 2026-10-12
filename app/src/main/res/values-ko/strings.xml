@@ -653,6 +653,9 @@
     <!-- ── Preview card ─────────────────────────────────────────────── -->
     <string name="import_preview_type_key_pair">키쌍 (공개 + 개인)</string>
     <string name="import_preview_type_public_only">공개 키만</string>
+    <string name="import_preview_type_key_pair_offline_primary">키쌍 (오프라인 기본 키)</string>
+    <string name="import_preview_offline_primary_note">gpg --export-secret-subkeys로 내보낸 파일처럼, 이 파일에는 보조 키의 개인 키는 있지만 기본 키의 개인 키는 없습니다. 보조 키는 평소처럼 사용할 수 있지만 키를 편집하려면 기본 키가 필요합니다.</string>
+    <string name="import_preview_offline_primary_note_card">기본 키의 개인 키는 이 파일이 아니라 하드웨어 키에 있습니다. 보조 키는 평소처럼 사용할 수 있지만 키를 편집하려면 하드웨어 키가 필요합니다.</string>
     <string name="import_preview_detail_user_label">사용자</string>
     <string name="import_preview_detail_user_empty">(없음)</string>
     <string name="import_preview_detail_fingerprint_label">지문</string>
@@ -754,6 +757,9 @@
     <string name="key_detail_userids_primary">기본</string>
     <string name="key_detail_userid_weak_hash_badge">약한 해시</string>
     <string name="key_detail_userid_weak_hash_note">더 이상 안전하지 않은 SHA-1로 바인딩되어 있습니다. 이름은 유지되지만 이것으로 키가 검증됨 상태가 되지는 않습니다.</string>
+    <string name="key_detail_offline_primary_title">오프라인 기본 키</string>
+    <string name="key_detail_offline_primary_body">기본 키의 개인 키가 이 기기에 없습니다. 여기 있는 보조 키는 평소처럼 사용할 수 있습니다. 사용자 ID, 보조 키, 만료일 변경과 키 철회에는 기본 키가 필요합니다. 기본 키가 보관된 곳에서 변경한 후 이 키를 여기로 다시 가져오세요.</string>
+    <string name="key_detail_offline_primary_body_card">기본 키의 개인 키는 이 기기가 아니라 하드웨어 키에 있습니다. 여기 있는 보조 키는 평소처럼 사용할 수 있습니다. 사용자 ID, 보조 키, 만료일 변경과 키 철회에는 하드웨어 키가 필요합니다. GnuPG에서 변경한 후 이 키를 여기로 다시 가져오세요.</string>
 
     <!-- ── 4.2.0 RC3 workstream I (#29): add/revoke/promote User IDs ── -->
     <string name="key_detail_userids_make_primary">기본으로 만들기</string>

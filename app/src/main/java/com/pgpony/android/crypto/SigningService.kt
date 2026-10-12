@@ -51,6 +51,8 @@ sealed class SigningError(message: String) : Exception(message) {
     class InvalidPassphrase : SigningError("Incorrect passphrase for signing key")
     /** Key ring has no signing-capable secret key. Shouldn't happen for PGPony-generated keys. */
     class NoSigningKey : SigningError("No signing-capable key found in key ring")
+    /** 4.7.0 (item 22): the only Sign-capable key is a stub (offline primary). */
+    class OfflinePrimary : SigningError(OfflineStub.SIGN_MESSAGE)
     /** Underlying BC failure, wrapped so the UI layer doesn't import BC types. */
     class SigningFailed(msg: String) : SigningError("Signing failed: $msg")
 }
@@ -257,6 +259,8 @@ class SigningService private constructor() {
         hashAlgorithm: Int,
         signatureType: Int
     ): PGPSignatureGenerator {
+        // 4.7.0 (item 22): a stub has no secret to unlock.
+        if (OfflineStub.isStub(signingKey)) throw SigningError.OfflinePrimary()
         // An Argon2 S2K outside the policy is refused before any KDF runs.
         enforceArgon2Policy(signingKey.s2K)
         val privateKey = try {
@@ -300,7 +304,7 @@ class SigningService private constructor() {
      */
     private fun pickSigningKey(ring: PGPSecretKeyRing, signingKeyId: Long? = null): PGPSecretKey {
         return PGPCryptoService.shared.pickSigningSecretKey(ring, signingKeyId)
-            ?: throw SigningError.NoSigningKey()
+            ?: throw PGPCryptoService.shared.noSigningKeyError(ring)
     }
 
     /**

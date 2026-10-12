@@ -539,6 +539,9 @@ pgpony.app</string>
     <!-- ── Preview card ─────────────────────────────────────────────── -->
     <string name="import_preview_type_key_pair">鍵ペア（公開鍵 + 秘密鍵）</string>
     <string name="import_preview_type_public_only">公開鍵のみ</string>
+    <string name="import_preview_type_key_pair_offline_primary">鍵ペア（主鍵はオフライン）</string>
+    <string name="import_preview_offline_primary_note">gpg --export-secret-subkeys で書き出したファイルと同じく、このファイルにはサブキーの秘密鍵が含まれていますが、主鍵の秘密鍵は含まれていません。サブキーは通常どおり使えますが、鍵の編集には主鍵が必要です。</string>
+    <string name="import_preview_offline_primary_note_card">主鍵の秘密鍵はこのファイルではなく、ハードウェアキーにあります。サブキーは通常どおり使えますが、鍵の編集にはハードウェアキーが必要です。</string>
     <string name="import_preview_detail_user_label">ユーザー</string>
     <string name="import_preview_detail_user_empty">(なし)</string>
     <string name="import_preview_detail_fingerprint_label">フィンガープリント</string>
@@ -1484,6 +1487,9 @@ PGPony は、古い OpenPGP 実装との相互運用性のために従来の RSA
     <string name="key_detail_userids_primary">プライマリ</string>
     <string name="key_detail_userid_weak_hash_badge">弱いハッシュ</string>
     <string name="key_detail_userid_weak_hash_note">SHA-1 で紐付けられていますが、SHA-1 はもう安全とは見なされていません。名前は保持されますが、これで鍵が確認済みになるわけではありません。</string>
+    <string name="key_detail_offline_primary_title">オフラインの主鍵</string>
+    <string name="key_detail_offline_primary_body">主鍵の秘密鍵はこのデバイスにありません。ここにあるサブキーは通常どおり使えます。ユーザー ID、サブキー、有効期限の変更と鍵の失効には主鍵が必要です。主鍵を保管している場所で変更してから、この鍵をもう一度ここにインポートしてください。</string>
+    <string name="key_detail_offline_primary_body_card">主鍵の秘密鍵はこのデバイスではなく、ハードウェアキーにあります。ここにあるサブキーは通常どおり使えます。ユーザー ID、サブキー、有効期限の変更と鍵の失効にはハードウェアキーが必要です。GnuPG で変更してから、この鍵をもう一度ここにインポートしてください。</string>
     <string name="key_detail_userids_title">ユーザー ID</string>
     <string name="key_refresh_notif_expired_body">鍵サーバーによると %1$s の鍵は期限切れです。</string>
     <string name="key_refresh_notif_expired_title">鍵が期限切れになりました</string>
@@ -2450,6 +2456,8 @@ PGPony は、古い OpenPGP 実装との相互運用性のために従来の RSA
     <string name="err_select_openpgp_application_failed">OpenPGP アプリケーションの SELECT に失敗しました (%1$s)</string>
     <string name="err_malformed_signed_message">署名済みメッセージの形式が正しくないため、開きませんでした。</string>
     <string name="err_nfc_openpgp_unavailable">この鍵は NFC 経由で OpenPGP アプリケーションを開きませんでした。Nitrokey 3 など一部の鍵は、NFC 経由では OpenPGP を無効にしています。鍵に USB がある場合は、接続してもう一度お試しください。</string>
+    <string name="err_offline_primary_sign">主鍵の秘密鍵がこのデバイスにありません（オフラインの主鍵）。署名用サブキーで署名してください。</string>
+    <string name="err_offline_primary_edit">主鍵の秘密鍵がこのデバイスにありません（オフラインの主鍵）。主鍵を保管している場所でこの変更を行ってから、この鍵をもう一度ここにインポートしてください。</string>
     <string name="err_session_key_block_too_short">セッション鍵ブロックが短すぎます</string>
     <string name="err_session_key_checksum_mismatch">セッション鍵のチェックサムが一致しません</string>
     <string name="err_short_form_apdu_data_limited_255">短形式 APDU のデータは 255 バイトまでです (%1$s バイトでした)。より大きなペイロードにはコマンドチェーンを使うか、extended = true を設定してください。</string>

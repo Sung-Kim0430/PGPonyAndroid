@@ -539,6 +539,9 @@ pgpony.app</string>
     <!-- ── Preview card ─────────────────────────────────────────────── -->
     <string name="import_preview_type_key_pair">Par de chaves (pública + privada)</string>
     <string name="import_preview_type_public_only">Apenas chave pública</string>
+    <string name="import_preview_type_key_pair_offline_primary">Par de chaves (chave principal offline)</string>
+    <string name="import_preview_offline_primary_note">Este arquivo tem os segredos das subchaves, mas não o da chave principal, do jeito que o gpg --export-secret-subkeys o gera. As subchaves funcionam normalmente; editar a chave exige a chave principal.</string>
+    <string name="import_preview_offline_primary_note_card">O segredo da chave principal está em uma chave de hardware, não neste arquivo. As subchaves funcionam normalmente; editar a chave exige a chave de hardware.</string>
     <string name="import_preview_detail_user_label">Usuário</string>
     <string name="import_preview_detail_user_empty">(nenhum)</string>
     <string name="import_preview_detail_fingerprint_label">Impressão digital</string>
@@ -1484,6 +1487,9 @@ Opcionalmente, bloqueie o app com sua impressão digital ou rosto para mais tran
     <string name="key_detail_userids_primary">Principal</string>
     <string name="key_detail_userid_weak_hash_badge">Hash fraco</string>
     <string name="key_detail_userid_weak_hash_note">Vinculado com SHA-1, que não é mais considerado seguro. O nome é mantido, mas não torna a chave verificada.</string>
+    <string name="key_detail_offline_primary_title">Chave principal offline</string>
+    <string name="key_detail_offline_primary_body">O segredo da chave principal não está neste dispositivo. As subchaves armazenadas aqui funcionam normalmente. Alterar IDs de usuário, subchaves ou expiração, e revogar a chave, exige a chave principal: faça essas alterações onde ela é guardada e depois importe a chave aqui novamente.</string>
+    <string name="key_detail_offline_primary_body_card">O segredo da chave principal está em uma chave de hardware, não neste dispositivo. As subchaves armazenadas aqui funcionam normalmente. Alterar IDs de usuário, subchaves ou expiração, e revogar a chave, exige a chave de hardware: faça essas alterações no GnuPG e depois importe a chave aqui novamente.</string>
     <string name="key_detail_userids_title">IDs de usuário</string>
     <string name="key_refresh_notif_expired_body">A chave de %1$s expirou segundo um servidor de chaves.</string>
     <string name="key_refresh_notif_expired_title">Uma chave expirou</string>
@@ -2464,6 +2470,8 @@ Opcionalmente, bloqueie o app com sua impressão digital ou rosto para mais tran
     <string name="err_select_openpgp_application_failed">Falha no SELECT do aplicativo OpenPGP (%1$s)</string>
     <string name="err_malformed_signed_message">A mensagem assinada está malformada e não foi aberta.</string>
     <string name="err_nfc_openpgp_unavailable">Esta chave não abriu seu aplicativo OpenPGP via NFC. Algumas chaves, como a Nitrokey 3, desativam o OpenPGP via NFC. Se sua chave tiver USB, conecte-a e tente novamente.</string>
+    <string name="err_offline_primary_sign">O segredo da chave principal não está neste dispositivo (chave principal offline). Assine com uma subchave de assinatura.</string>
+    <string name="err_offline_primary_edit">O segredo da chave principal não está neste dispositivo (chave principal offline). Faça esta alteração onde a chave principal é guardada e depois importe a chave aqui novamente.</string>
     <string name="err_session_key_block_too_short">bloco da chave de sessão curto demais</string>
     <string name="err_session_key_checksum_mismatch">checksum da chave de sessão não confere</string>
     <string name="err_short_form_apdu_data_limited_255">Os dados de APDU em formato curto são limitados a 255 bytes (eram %1$s). Use encadeamento de comandos ou defina extended = true para cargas maiores.</string>

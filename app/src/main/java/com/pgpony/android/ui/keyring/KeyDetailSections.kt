@@ -1258,6 +1258,52 @@ fun DangerZoneSection(
 // ── Phase A6: Revoked banner ──────────────────────────────────────────
 
 /**
+ * 4.7.0 (item 22): shown on a key pair whose primary is a stub. The subkeys
+ * stored here keep working; the edits that need the
+ * primary (User IDs, subkeys, expiry, revoking the key) are hidden, and this
+ * says where to make them instead.
+ */
+@Composable
+fun OfflinePrimaryBanner(onCard: Boolean) {
+    Surface(
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.secondaryContainer,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Key,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.key_detail_offline_primary_title),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+                Text(
+                    text = stringResource(
+                        if (onCard) R.string.key_detail_offline_primary_body_card
+                        else R.string.key_detail_offline_primary_body
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+            }
+        }
+    }
+}
+
+/**
  * Red banner shown directly below the header on a revoked key. Rendered
  * by LoadedBody (or whichever screen-level Composable owns section
  * order) when [key].isRevoked is true. Three pieces of info:

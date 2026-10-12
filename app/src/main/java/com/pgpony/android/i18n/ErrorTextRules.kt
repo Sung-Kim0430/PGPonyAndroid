@@ -181,6 +181,9 @@ internal object ErrorTextRules {
             ErrorText.Rule("""\QCard returned a \E(.*?)\Q-octet Ed25519 signature\E""", R.string.err_card_returned_octet_ed25519_signature),
             ErrorText.Rule("""\QCould not read the authentication subkey\E""", R.string.err_could_not_read_authentication_subkey),
             ErrorText.Rule("""\QNo signing-capable key found in key ring\E""", R.string.err_no_signing_capable_key_found_key),
+            // 4.7.0 (item 22): offline primary (OfflineStub).
+            ErrorText.Rule("""\QThe primary key's secret is not on this device (offline primary). Sign with a signing subkey.\E""", R.string.err_offline_primary_sign),
+            ErrorText.Rule("""\QThe primary key's secret is not on this device (offline primary). Make this change where the primary key is kept, then import the key here again.\E""", R.string.err_offline_primary_edit),
             ErrorText.Rule("""\Qv4 algo-35 subkey secret is unavailable\E""", R.string.err_v4_algo_35_subkey_secret_unavailable),
             ErrorText.Rule("""\Qwrapped session key length out of range\E""", R.string.err_wrapped_session_key_length_out_range),
             ErrorText.Rule("""\Qprotect requires a non-empty passphrase\E""", R.string.err_protect_requires_non_empty_passphrase),

@@ -695,6 +695,9 @@
     <!-- ── Preview card ─────────────────────────────────────────────── -->
     <string name="import_preview_type_key_pair">Пара ключів (відкритий + закритий)</string>
     <string name="import_preview_type_public_only">Лише відкритий ключ</string>
+    <string name="import_preview_type_key_pair_offline_primary">Пара ключів (основний ключ офлайн)</string>
+    <string name="import_preview_offline_primary_note">У цьому файлі є закриті ключі підключів, але немає закритого основного ключа: так його записує gpg --export-secret-subkeys. Підключі працюють як зазвичай; для редагування ключа потрібен основний ключ.</string>
+    <string name="import_preview_offline_primary_note_card">Закритий основний ключ зберігається на апаратному ключі, а не в цьому файлі. Підключі працюють як зазвичай; для редагування ключа потрібен апаратний ключ.</string>
     <string name="import_preview_detail_user_label">Користувач</string>
     <string name="import_preview_detail_user_empty">(немає)</string>
     <string name="import_preview_detail_fingerprint_label">Відбиток</string>
@@ -807,6 +810,9 @@
     <string name="key_detail_userids_primary">Основний</string>
     <string name="key_detail_userid_weak_hash_badge">СЛАБКИЙ ХЕШ</string>
     <string name="key_detail_userid_weak_hash_note">Прив’язано за допомогою SHA-1, який більше не вважається безпечним. Ім’я збережено, але ключ від цього не стає перевіреним.</string>
+    <string name="key_detail_offline_primary_title">Основний ключ офлайн</string>
+    <string name="key_detail_offline_primary_body">Закритого основного ключа немає на цьому пристрої. Підключі, що зберігаються тут, працюють як зазвичай. Для зміни ідентифікаторів користувача, підключів або терміну дії, а також для відкликання ключа потрібен основний ключ: внесіть ці зміни там, де він зберігається, а потім знову імпортуйте ключ сюди.</string>
+    <string name="key_detail_offline_primary_body_card">Закритий основний ключ зберігається на апаратному ключі, а не на цьому пристрої. Підключі, що зберігаються тут, працюють як зазвичай. Для зміни ідентифікаторів користувача, підключів або терміну дії, а також для відкликання ключа потрібен апаратний ключ: внесіть ці зміни в GnuPG, а потім знову імпортуйте ключ сюди.</string>
 
     <!-- ── 4.2.0 RC3 workstream I (#29): add/revoke/promote User IDs ── -->
     <string name="key_detail_userids_make_primary">Зробити основним</string>
@@ -2568,6 +2574,8 @@
     <string name="err_select_openpgp_application_failed">Не вдалося виконати SELECT для застосунку OpenPGP (%1$s)</string>
     <string name="err_malformed_signed_message">Підписане повідомлення має неправильний формат, тому його не відкрито.</string>
     <string name="err_nfc_openpgp_unavailable">Цей ключ не відкрив застосунок OpenPGP через NFC. Деякі ключі, зокрема Nitrokey 3, вимикають OpenPGP через NFC. Якщо ваш ключ має USB, під’єднайте його і спробуйте ще раз.</string>
+    <string name="err_offline_primary_sign">Закритого основного ключа немає на цьому пристрої (основний ключ офлайн). Для підписування скористайтеся підключем підписування.</string>
+    <string name="err_offline_primary_edit">Закритого основного ключа немає на цьому пристрої (основний ключ офлайн). Внесіть цю зміну там, де зберігається основний ключ, а потім знову імпортуйте ключ сюди.</string>
     <string name="err_session_key_block_too_short">блок сеансового ключа закороткий</string>
     <string name="err_session_key_checksum_mismatch">контрольна сума сеансового ключа не збігається</string>
     <string name="err_short_form_apdu_data_limited_255">Дані APDU короткої форми обмежені 255 байтами (було: %1$s). Для більших обсягів використовуйте ланцюжок команд або задайте extended = true.</string>

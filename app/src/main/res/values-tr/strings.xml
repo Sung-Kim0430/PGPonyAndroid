@@ -693,6 +693,9 @@
     <!-- ── Preview card ─────────────────────────────────────────────── -->
     <string name="import_preview_type_key_pair">Anahtar Çifti (Açık + Gizli)</string>
     <string name="import_preview_type_public_only">Yalnızca Açık Anahtar</string>
+    <string name="import_preview_type_key_pair_offline_primary">Anahtar Çifti (Çevrimdışı Birincil)</string>
+    <string name="import_preview_offline_primary_note">Bu dosya alt anahtarların gizli kısımlarını içeriyor, birincil anahtarınkini içermiyor; gpg --export-secret-subkeys dosyayı bu şekilde yazar. Alt anahtarlar her zamanki gibi çalışır; anahtarı düzenlemek için birincil anahtar gerekir.</string>
+    <string name="import_preview_offline_primary_note_card">Birincil anahtarın gizli kısmı bu dosyada değil, bir donanım anahtarında. Alt anahtarlar her zamanki gibi çalışır; anahtarı düzenlemek için donanım anahtarı gerekir.</string>
     <string name="import_preview_detail_user_label">Kullanıcı</string>
     <string name="import_preview_detail_user_empty">(yok)</string>
     <string name="import_preview_detail_fingerprint_label">Parmak İzi</string>
@@ -803,6 +806,9 @@
     <string name="key_detail_userids_primary">BİRİNCİL</string>
     <string name="key_detail_userid_weak_hash_badge">Zayıf hash</string>
     <string name="key_detail_userid_weak_hash_note">Artık güvenli kabul edilmeyen SHA-1 ile bağlanmış. Ad korunur, ancak bu anahtarı doğrulanmış yapmaz.</string>
+    <string name="key_detail_offline_primary_title">Çevrimdışı birincil anahtar</string>
+    <string name="key_detail_offline_primary_body">Birincil anahtarın gizli kısmı bu cihazda değil. Burada saklanan alt anahtarlar her zamanki gibi çalışır. Kullanıcı Kimliklerini, alt anahtarları veya son kullanma tarihini değiştirmek ve anahtarı geçersiz kılmak için birincil anahtar gerekir: bu değişiklikleri birincil anahtarın saklandığı yerde yapın, ardından anahtarı buraya yeniden içe aktarın.</string>
+    <string name="key_detail_offline_primary_body_card">Birincil anahtarın gizli kısmı bu cihazda değil, bir donanım anahtarında. Burada saklanan alt anahtarlar her zamanki gibi çalışır. Kullanıcı Kimliklerini, alt anahtarları veya son kullanma tarihini değiştirmek ve anahtarı geçersiz kılmak için donanım anahtarı gerekir: bu değişiklikleri GnuPG\'de yapın, ardından anahtarı buraya yeniden içe aktarın.</string>
 
     <!-- ── 4.2.0 RC3 workstream I (#29): add/revoke/promote User IDs ── -->
     <string name="key_detail_userids_make_primary">Birincil Yap</string>
@@ -2540,6 +2546,8 @@
     <string name="err_select_openpgp_application_failed">SELECT OpenPGP uygulaması başarısız oldu (%1$s)</string>
     <string name="err_malformed_signed_message">İmzalı mesaj bozuk biçimli ve açılmadı.</string>
     <string name="err_nfc_openpgp_unavailable">Bu anahtar OpenPGP uygulamasını NFC üzerinden açmadı. Nitrokey 3 dahil bazı anahtarlar NFC üzerinden OpenPGP\'yi kapatır. Anahtarınızda USB varsa takın ve tekrar deneyin.</string>
+    <string name="err_offline_primary_sign">Birincil anahtarın gizli kısmı bu cihazda değil (çevrimdışı birincil). İmzalamak için bir imzalama alt anahtarı kullanın.</string>
+    <string name="err_offline_primary_edit">Birincil anahtarın gizli kısmı bu cihazda değil (çevrimdışı birincil). Bu değişikliği birincil anahtarın saklandığı yerde yapın, ardından anahtarı buraya yeniden içe aktarın.</string>
     <string name="err_session_key_block_too_short">oturum anahtarı bloğu çok kısa</string>
     <string name="err_session_key_checksum_mismatch">oturum anahtarı sağlama toplamı eşleşmiyor</string>
     <string name="err_short_form_apdu_data_limited_255">Kısa biçimli APDU verisi 255 baytla sınırlıdır (gelen: %1$s). Daha büyük yükler için komut zincirleme kullanın veya extended = true ayarlayın.</string>

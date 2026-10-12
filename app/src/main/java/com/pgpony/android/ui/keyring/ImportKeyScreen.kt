@@ -619,12 +619,27 @@ private fun ImportPreviewCard(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = if (preview.hasPrivateKey) stringResource(R.string.import_preview_type_key_pair)
+                    text = if (preview.hasPrivateKey && preview.primaryStub != null)
+                               stringResource(R.string.import_preview_type_key_pair_offline_primary)
+                           else if (preview.hasPrivateKey) stringResource(R.string.import_preview_type_key_pair)
                            else stringResource(R.string.import_preview_type_public_only),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = if (preview.hasPrivateKey) Color(0xFF8B5CF6)
                             else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            // 4.7.0 (item 22): the primary's secret is not in this data.
+            preview.primaryStub?.let { kind ->
+                Text(
+                    text = stringResource(
+                        if (kind == com.pgpony.android.crypto.OfflineStub.Kind.CARD)
+                            R.string.import_preview_offline_primary_note_card
+                        else R.string.import_preview_offline_primary_note
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 

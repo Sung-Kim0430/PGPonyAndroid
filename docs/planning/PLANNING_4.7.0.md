@@ -495,7 +495,16 @@ hides those edits and the Revoke item behind one banner (offline or on a hardwar
 "Key Pair (offline primary)" with a note. Export, the export passphrase and passphrase change keep the stub byte
 for byte, and protection is read from the first key with material. A block in which every secret key is a stub
 imports as a public key; pairing a 1002 primary with a linked card waits for RC4. One banner explains the hidden
-edits instead of a line per action. Fixtures (GnuPG 2.4) and OfflinePrimaryTest in app/src/test.
+edits instead of a line per action. Re-importing your own key pair now also brings in a secret subkey the stored
+ring lacks (one added in gpg where the primary is kept), taking only subkeys the merged certificate binds and never
+replacing a held secret; otherwise the newest encryption subkey would have no secret here. Export with a passphrase
+leaves already-protected keys as they are and writes S2K usage 254. Fixtures (GnuPG 2.4) and OfflinePrimaryTest
+in app/src/test.
+
+On device: import rsa-c and ed-c stub exports, sign, encrypt and sign to self and to others, decrypt, sign
+through the provider from a mail app, check the banner and that the hidden edits are gone, export and
+`gpg --import` (shows `sec#`), `gpg --verify` the signatures; add a subkey in gpg, re-export the subkeys and
+re-import: the new subkey decrypts in PGPony.
 
 Priority: medium (feature, interop). Origin: an email report against iOS 8.3.0 build 7; Android checked by
 reading the code only. Written on 4.6.x and carried to main with the 4.6.3 merge.

@@ -442,7 +442,8 @@ fun KeyDetailScreen(
                                     leadingIcon = { Icon(Icons.Filled.IosShare, null) },
                                     onClick = { menuOpen = false; dispatchAction(KeyDetailActionIds.EXPORT_REVOCATION_CERT) }
                                 )
-                            } else if (menuKey.isKeyPair) {
+                            } else if (menuKey.isKeyPair && state.primaryStub == null) {
+                                // 4.7.0 (item 22): revoking needs the primary's secret.
                                 DropdownMenuItem(
                                     text = { Text(stringResource(R.string.key_detail_action_revoke_key), color = MaterialTheme.colorScheme.error) },
                                     leadingIcon = { Icon(Icons.Filled.Report, null, tint = MaterialTheme.colorScheme.error) },
@@ -1534,6 +1535,11 @@ private fun LoadedBody(
         // to scroll to Danger Zone. RevokedBanner internally no-ops when
         // !key.isRevoked, so unconditional inclusion is safe.
         item { RevokedBanner(key = key) }
+        // 4.7.0 (item 22): the primary's secret is not on this device, so the
+        // edits that need it are hidden below; this says why.
+        state.primaryStub?.let { kind ->
+            item { OfflinePrimaryBanner(onCard = kind == com.pgpony.android.crypto.OfflineStub.Kind.CARD) }
+        }
         // 4.6.0 (item 11): a published key edited since its last upload.
         if (key.isKeyPair && key.hasUnpublishedChanges && !com.pgpony.android.network.OfflineMode.enabled) {
             item {
@@ -1552,7 +1558,7 @@ private fun LoadedBody(
         // Rendered when there's more than one, or when the key can add
         // one (RC3 §17.2 I / #29) — software key pairs only, same
         // gating as the Subkeys section's Add button.
-        val canEditUserIds = key.isKeyPair && !key.isCardBacked
+        val canEditUserIds = key.isKeyPair && !key.isCardBacked && state.primaryStub == null
         // 4.7.0 (item 27): also shown for a single User ID carrying the
         // weak-hash mark, so the mark is never hidden.
         if (state.userIds.size > 1 || canEditUserIds || state.userIds.any { it.weakHash }) {
@@ -1584,7 +1590,7 @@ private fun LoadedBody(
             DetailsSection(
                 key = key,
                 onTrustTap = { onComingSoon(KeyDetailActionIds.CHANGE_TRUST) },
-                onEditExpiry = if (key.isKeyPair || key.isCardBacked) onEditExpiry else null
+                onEditExpiry = if ((key.isKeyPair && state.primaryStub == null) || key.isCardBacked) onEditExpiry else null
             )
         }
         // 4.2.0 RC3 workstream G (§11.2) — read-only subkey list.
@@ -1593,7 +1599,7 @@ private fun LoadedBody(
         // Edit Expiry row's own gating (card-backed keys use the NFC
         // flow, public-only keys have no private material to sign
         // the binding with).
-        val canAddSubkey = key.isKeyPair && !key.isCardBacked
+        val canAddSubkey = key.isKeyPair && !key.isCardBacked && state.primaryStub == null
         if (state.subkeys.isNotEmpty() || canAddSubkey) {
             item {
                 SubkeysSection(

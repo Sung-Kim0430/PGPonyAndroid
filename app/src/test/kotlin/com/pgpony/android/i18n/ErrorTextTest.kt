@@ -182,6 +182,8 @@ class ErrorTextTest {
         "Card returned a 7-octet Ed25519 signature" to R.string.err_card_returned_octet_ed25519_signature,
         "Could not read the authentication subkey" to R.string.err_could_not_read_authentication_subkey,
         "No signing-capable key found in key ring" to R.string.err_no_signing_capable_key_found_key,
+        "The primary key's secret is not on this device (offline primary). Sign with a signing subkey." to R.string.err_offline_primary_sign,
+        "The primary key's secret is not on this device (offline primary). Make this change where the primary key is kept, then import the key here again." to R.string.err_offline_primary_edit,
         "v4 algo-35 subkey secret is unavailable" to R.string.err_v4_algo_35_subkey_secret_unavailable,
         "wrapped session key length out of range" to R.string.err_wrapped_session_key_length_out_range,
         "protect requires a non-empty passphrase" to R.string.err_protect_requires_non_empty_passphrase,

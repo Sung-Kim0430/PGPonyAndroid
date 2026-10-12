@@ -122,6 +122,9 @@ data class ImportPreview(
      *  keep the Import button enabled for the pairing case. */
     val willPairWithCard: Boolean = false,
     val armoredText: String,
+    /** 4.7.0 (item 22): the primary's secret is not in the data (an offline
+     *  primary, or a divert-to-card stub); null when it is. */
+    val primaryStub: com.pgpony.android.crypto.OfflineStub.Kind? = null,
     /** 4.6.0 (item 17.9): every OTHER key the same text holds. The commit
      *  imports all of them, so the preview must show all of them; a noisy
      *  paste can no longer slip a second key in behind the one reviewed. */
@@ -777,7 +780,8 @@ class KeyRepository(
                 isDuplicate = existing != null,
                 willUpgradeToKeyPair = willUpgrade,
                 willPairWithCard = willPairWithCard,
-                armoredText = armoredText
+                armoredText = armoredText,
+                primaryStub = importResult.primaryStub
             )
         } catch (e: Exception) {
             null
@@ -929,13 +933,19 @@ class KeyRepository(
             )
             val resolved = detailed.entity
             val resolution = detailed.resolution
+            // 4.7.0 (item 22): your own key pair re-imported with a subkey
+            // whose secret the stored ring lacks (one added in gpg where the
+            // offline primary is kept) brings that secret in too.
+            val grafted = if (existing.isKeyPair && !existing.isCardBacked) {
+                importResult.secretKeyRing?.let { graftNewSecretSubkeys(existing.fingerprint, it) } ?: 0
+            } else 0
             return ImportOutcome(
                 resolved,
-                when (resolution) {
-                    KeyDeduplicationService.DuplicateResolution.ALREADY_IN_KEYRING ->
+                when {
+                    grafted > 0 -> ImportResolution.MERGED_NEW_MATERIAL
+                    resolution == KeyDeduplicationService.DuplicateResolution.ALREADY_IN_KEYRING ->
                         ImportResolution.ALREADY_IN_KEYRING
-                    KeyDeduplicationService.DuplicateResolution.MERGED_NEW_MATERIAL ->
-                        ImportResolution.MERGED_NEW_MATERIAL
+                    else -> ImportResolution.MERGED_NEW_MATERIAL
                 },
                 selfSignaturesApplied = detailed.selfSignaturesApplied
             )
@@ -1576,6 +1586,48 @@ class KeyRepository(
         } catch (e: Exception) {
             null
         }
+    }
+
+    /**
+     * 4.7.0 (item 22): graft the secret subkeys of [incoming] that the stored
+     * secret ring of [fingerprint] lacks, or holds only as a stub. Only a
+     * subkey the stored certificate (already merged and sanitized by the
+     * duplicate path) binds is taken, with that bound public part, and a
+     * secret already held is never replaced. Returns how many were added.
+     */
+    private fun graftNewSecretSubkeys(fingerprint: String, incoming: org.bouncycastle.openpgp.PGPSecretKeyRing): Int =
+        runCatching {
+            val storedBytes = store.loadPrivateKey(fingerprint) ?: return@runCatching 0
+            if (CompositeKeyFacade.isCompositePrimary(storedBytes) || CompositeKeyFacade.hasV4Algo35Subkey(storedBytes)) {
+                return@runCatching 0
+            }
+            val calc = org.bouncycastle.openpgp.operator.jcajce.JcaKeyFingerprintCalculator()
+            val stored = org.bouncycastle.openpgp.PGPSecretKeyRing(storedBytes, calc)
+            val certificate = org.bouncycastle.openpgp.PGPPublicKeyRing(
+                store.loadPublicKey(fingerprint) ?: return@runCatching 0, calc
+            )
+            var ring = stored
+            var added = 0
+            for (sk in incoming.secretKeys.asSequence().toList()) {
+                if (sk.publicKey.isMasterKey || com.pgpony.android.crypto.OfflineStub.isStub(sk)) continue
+                val held = ring.getSecretKey(sk.keyID)
+                if (held != null && !com.pgpony.android.crypto.OfflineStub.isStub(held)) continue
+                val bound = certificate.getPublicKey(sk.keyID) ?: continue
+                if (!bound.fingerprint.contentEquals(sk.publicKey.fingerprint)) continue
+                ring = org.bouncycastle.openpgp.PGPSecretKeyRing.insertSecretKey(
+                    ring, org.bouncycastle.openpgp.PGPSecretKey.replacePublicKey(sk, bound)
+                )
+                added++
+            }
+            if (added > 0) store.storePrivateKey(fingerprint, ring.encoded)
+            added
+        }.getOrDefault(0)
+
+    /** 4.7.0 (item 22): the kind of stub [fingerprint]'s stored primary is
+     *  (offline, or divert-to-card), or null when its secret is stored here. */
+    fun primaryStubKind(fingerprint: String): com.pgpony.android.crypto.OfflineStub.Kind? {
+        val ring = loadSecretKeyRing(fingerprint) ?: return null
+        return com.pgpony.android.crypto.OfflineStub.primaryKind(ring)
     }
 
     /** RC4 O5: whether the stored secret ring carries its own passphrase. */
@@ -2274,6 +2326,7 @@ class KeyRepository(
         passphrase: String?,
         onFailure: (Boolean) -> Exception
     ): org.bouncycastle.openpgp.PGPPrivateKey = try {
+        com.pgpony.android.crypto.OfflineStub.requireSecret(secRing.secretKey) // 4.7.0 (item 22)
         SecretKeyUnlock.extract(secRing.secretKey, (passphrase ?: "").toCharArray())
             ?: throw onFailure(passphrase.isNullOrEmpty())
     } catch (e: org.bouncycastle.openpgp.PGPException) {

@@ -124,6 +124,7 @@ object ClassicalSubkeyGen {
         creationTime: Date = Date()
     ): PGPSecretKeyRing {
         val primarySec = secretRing.secretKey
+        OfflineStub.requireSecret(primarySec) // 4.7.0 (item 22): the binding needs the primary
 
         val decryptor = com.pgpony.android.crypto.SecretKeyUnlock.decryptor(passphrase)
         val checksumCalc = BcPGPDigestCalculatorProvider().get(HashAlgorithmTags.SHA1)
