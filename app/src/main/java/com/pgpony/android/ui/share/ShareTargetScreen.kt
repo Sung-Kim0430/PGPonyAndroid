@@ -85,6 +85,15 @@ fun ShareTargetScreen(
     onDismiss: () -> Unit,
 ) {
     val state by vm.state.collectAsState()
+    // 4.7.0 (item 10): recipients marked Don't use, waiting on confirmation.
+    var dontUsePrompt by remember { mutableStateOf<List<com.pgpony.android.data.PGPKeyEntity>?>(null) }
+    dontUsePrompt?.let { keys ->
+        com.pgpony.android.ui.components.DontUseConfirmDialog(
+            keys = keys,
+            onConfirm = { dontUsePrompt = null; vm.performEncrypt() },
+            onDismiss = { dontUsePrompt = null }
+        )
+    }
     val context = LocalContext.current
 
     // 4.1.0 Phase 7b — Save outcome, hoisted here because this is where the
@@ -153,7 +162,13 @@ fun ShareTargetScreen(
                 ShareTargetPhase.PickRecipients -> ShareEncryptPicker(
                     state = state,
                     onToggleRecipient = vm::toggleRecipient,
-                    onConfirm = { vm.performEncrypt() },
+                    onConfirm = {
+                        // 4.7.0 (item 10): encrypting to a key marked Don't use asks first.
+                        val flagged = com.pgpony.android.ui.components.dontUseKeys(
+                            state.availableRecipients.filter { it.fingerprint in state.selectedRecipients }
+                        )
+                        if (flagged.isEmpty()) { vm.performEncrypt() } else { dontUsePrompt = flagged }
+                    },
                     onBack = { vm.goBackToActionPicker() },
                 )
 

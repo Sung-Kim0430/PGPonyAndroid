@@ -399,7 +399,8 @@ class PGPonyOpenPgpService : Service() {
      * every key that happens to carry the address.
      */
     private suspend fun recipientCandidates(email: String): List<com.pgpony.android.data.PGPKeyEntity> {
-        val all = repo.getByAnyUserEmail(email).filter { !it.isRevoked }
+        // 4.7.0 (item 10): a key marked Don't use is never picked for an address.
+        val all = repo.getByAnyUserEmail(email).filter { !it.isRevoked && it.trustLevel != com.pgpony.android.data.TrustLevel.DONT_USE }
         val userManaged = all.filter { it.autocryptImportedAt == null }
         if (userManaged.isNotEmpty()) return userManaged
         if (all.isEmpty()) return all
@@ -573,9 +574,16 @@ class PGPonyOpenPgpService : Service() {
 
         val rings = LinkedHashMap<String, org.bouncycastle.openpgp.PGPPublicKeyRing>()
         val missing = mutableListOf<String>()
+        // 4.7.0 (item 10): recipients the user marked Don't use. The mail app
+        // cannot ask for the in-app confirmation, so the send is refused.
+        val dontUse = mutableListOf<String>()
         runBlocking {
             requestedKeyIds?.forEach { id ->
                 val entity = findEntityByKeyId(id)?.takeIf { !it.isRevoked }
+                if (entity?.trustLevel == com.pgpony.android.data.TrustLevel.DONT_USE) {
+                    dontUse += entity.userName.ifBlank { entity.userEmail.ifBlank { entity.shortFingerprint } }
+                    return@forEach
+                }
                 val ring = entity?.let { repo.loadEncryptionRecipientRing(it.fingerprint) }
                 if (ring != null) rings[entity.fingerprint] = ring
                 else missing += String.format("0x%016X", id)
@@ -604,9 +612,23 @@ class PGPonyOpenPgpService : Service() {
                         added = true
                     }
                 }
-                if (!added) missing += raw
+                if (!added) {
+                    val marked = matches.isEmpty() &&
+                        repo.getByAnyUserEmail(email).any { !it.isRevoked && it.trustLevel == com.pgpony.android.data.TrustLevel.DONT_USE }
+                    if (marked) dontUse += email else missing += raw
+                }
             }
         }
+        if (dontUse.isNotEmpty() &&
+            !data.getBooleanExtra(OpenPgpApi.EXTRA_OPPORTUNISTIC_ENCRYPTION, false)
+        ) {
+            return errorResult(
+                OpenPgpError.GENERIC_ERROR,
+                "Recipient key is marked Don't use in PGPony: ${dontUse.joinToString(", ")}. " +
+                    "Change its trust level in PGPony to encrypt to it."
+            )
+        }
+        missing += dontUse
         if (missing.isNotEmpty()) {
             // Opportunistic mode (Autocrypt-style "encrypt if possible")
             // gets its dedicated error id so clients silently fall back
@@ -1092,7 +1114,7 @@ class PGPonyOpenPgpService : Service() {
                     .ifEmpty { raw.trim() }
                 // 4.2.1 (#27): secondary identities count for the
                 // Autocrypt recommendation too.
-                val matches = repo.getByAnyUserEmail(email).filter { !it.isRevoked }
+                val matches = repo.getByAnyUserEmail(email).filter { !it.isRevoked && it.trustLevel != com.pgpony.android.data.TrustLevel.DONT_USE }
                 if (matches.isEmpty()) {
                     anyMissing = true
                     allConfirmed = false
@@ -1966,6 +1988,17 @@ class PGPonyOpenPgpService : Service() {
             )
         // RC4 O4 (#34): apply the per-key signing defaults.
         val entity = resolveProviderSigner(clientEntity, recipientRings)
+        // 4.7.0 (item 10): a signing key marked Don't use is refused here; the
+        // in-app confirmation cannot be shown to a mail app.
+        if (entity.trustLevel == com.pgpony.android.data.TrustLevel.DONT_USE) {
+            return SignResolve.Fail(
+                errorResult(
+                    OpenPgpError.GENERIC_ERROR,
+                    "Signing key is marked Don't use in PGPony. Pick another signing key in your mail app, " +
+                        "or change its trust level in PGPony."
+                )
+            )
+        }
         val effectiveKeyId = if (entity === clientEntity) keyId else {
             try {
                 java.lang.Long.parseUnsignedLong(entity.longKeyId, 16)
@@ -2027,7 +2060,9 @@ class PGPonyOpenPgpService : Service() {
         } ?: return base
         if (pickedFp == base.fingerprint) return base
         val picked = runBlocking { repo.getByFingerprint(pickedFp) }
-        return if (picked != null && picked.isKeyPair && !picked.isCardBacked && !picked.isRevoked) {
+        return if (picked != null && picked.isKeyPair && !picked.isCardBacked && !picked.isRevoked &&
+            picked.trustLevel != com.pgpony.android.data.TrustLevel.DONT_USE
+        ) {
             picked
         } else {
             base

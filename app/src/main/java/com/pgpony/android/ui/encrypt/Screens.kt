@@ -113,6 +113,15 @@ fun EncryptScreen(viewModel: EncryptDecryptViewModel) {
         onDispose { cardActivity?.stopCardScan() }
     }
     var showCardSignPin by remember { mutableStateOf(false) }
+    // 4.7.0 (item 10): keys marked Don't use, and the action waiting on the answer.
+    var dontUsePrompt by remember { mutableStateOf<Pair<List<PGPKeyEntity>, () -> Unit>?>(null) }
+    dontUsePrompt?.let { (keys, action) ->
+        com.pgpony.android.ui.components.DontUseConfirmDialog(
+            keys = keys,
+            onConfirm = { dontUsePrompt = null; action() },
+            onDismiss = { dontUsePrompt = null }
+        )
+    }
     // 3.1.0 Phase 7 (B1): prefill from the PIN cache when enabled and
     // unexpired; the dialog still shows (the NFC tap is needed anyway)
     // but the PIN isn't re-typed.
@@ -310,6 +319,9 @@ fun EncryptScreen(viewModel: EncryptDecryptViewModel) {
             // gated on having both recipients and a picked file.
             Button(
                 onClick = {
+                    // 4.7.0 (item 10): everything this button does, run only
+                    // after the Don't use check below.
+                    val proceedPrimary: () -> Unit = {
                     val runPrimaryAction: () -> Unit = {
                       when (state.mode) {
                         EncryptMode.SIGN -> {
@@ -486,6 +498,20 @@ fun EncryptScreen(viewModel: EncryptDecryptViewModel) {
                     } else {
                         runPrimaryAction()
                     }
+                    }
+                    // 4.7.0 (item 10, #75): encrypting to a key marked Don't
+                    // use, or signing with one, asks first.
+                    val signer = state.signingKey?.takeIf { state.signMessage }
+                    val flagged = when (state.mode) {
+                        EncryptMode.SIGN -> com.pgpony.android.ui.components.dontUseKeys(listOf(state.signingKey))
+                        EncryptMode.TEXT, EncryptMode.FILE ->
+                            if (state.fileEncryptMethod == FileEncryptMethod.RECIPIENTS)
+                                com.pgpony.android.ui.components.dontUseKeys(state.selectedRecipients + signer)
+                            else emptyList()
+                        EncryptMode.BUNDLE -> com.pgpony.android.ui.components.dontUseKeys(state.selectedRecipients + signer)
+                        else -> emptyList()
+                    }
+                    if (flagged.isEmpty()) { proceedPrimary() } else { dontUsePrompt = flagged to proceedPrimary }
                 },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !state.isProcessing && when (state.mode) {
@@ -3067,6 +3093,15 @@ private fun LegacyDecryptPassphraseDialog(
 private fun SignFileModeBody(state: EncryptUiState, viewModel: EncryptDecryptViewModel) {
     val context = LocalContext.current
     val activity = context.findEncryptMainActivity()
+    // 4.7.0 (item 10): a signing key marked Don't use waiting on confirmation.
+    var signFileDontUse by remember { mutableStateOf<List<PGPKeyEntity>?>(null) }
+    signFileDontUse?.let { keys ->
+        com.pgpony.android.ui.components.DontUseConfirmDialog(
+            keys = keys,
+            onConfirm = { signFileDontUse = null; viewModel.runSignFile() },
+            onDismiss = { signFileDontUse = null }
+        )
+    }
 
     val pickFile: () -> Unit = {
         activity?.startDocumentPicker(arrayOf("*/*")) { uri ->
@@ -3266,7 +3301,11 @@ private fun SignFileModeBody(state: EncryptUiState, viewModel: EncryptDecryptVie
                 }
             } else {
                 Button(
-                    onClick = { viewModel.runSignFile() },
+                    onClick = {
+                        // 4.7.0 (item 10): signing with a key marked Don't use asks first.
+                        val flagged = com.pgpony.android.ui.components.dontUseKeys(listOf(state.signFileSelectedKey))
+                        if (flagged.isEmpty()) { viewModel.runSignFile() } else { signFileDontUse = flagged }
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !state.signFileProcessing &&
                         state.signFileUri != null &&

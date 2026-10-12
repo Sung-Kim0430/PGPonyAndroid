@@ -184,6 +184,9 @@ internal object ErrorTextRules {
             // 4.7.0 (item 22): offline primary (OfflineStub).
             ErrorText.Rule("""\QThe primary key's secret is not on this device (offline primary). Sign with a signing subkey.\E""", R.string.err_offline_primary_sign),
             ErrorText.Rule("""\QThe primary key's secret is not on this device (offline primary). Make this change where the primary key is kept, then import the key here again.\E""", R.string.err_offline_primary_edit),
+            // 4.7.0 (item 10): keys marked Don't use, refused through the provider.
+            ErrorText.Rule("""\QRecipient key is marked Don't use in PGPony: \E(.*?)\Q. Change its trust level in PGPony to encrypt to it.\E""", R.string.err_provider_recipient_dont_use),
+            ErrorText.Rule("""\QSigning key is marked Don't use in PGPony. Pick another signing key in your mail app, or change its trust level in PGPony.\E""", R.string.err_provider_signer_dont_use),
             ErrorText.Rule("""\Qv4 algo-35 subkey secret is unavailable\E""", R.string.err_v4_algo_35_subkey_secret_unavailable),
             ErrorText.Rule("""\Qwrapped session key length out of range\E""", R.string.err_wrapped_session_key_length_out_range),
             ErrorText.Rule("""\Qprotect requires a non-empty passphrase\E""", R.string.err_protect_requires_non_empty_passphrase),

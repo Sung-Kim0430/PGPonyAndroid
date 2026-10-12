@@ -84,14 +84,20 @@ fun VerificationBanner(
             // or a null trust (caller did not resolve it), keeps the green state.
             val unconfirmed = result.signerTrust == TrustLevel.UNKNOWN ||
                 result.signerTrust == TrustLevel.UNVERIFIED
+            // 4.7.0 (item 10, #75): the signature checks out, but the signer's
+            // key is marked Don't use, so the banner is red and says so.
+            val dontUse = result.signerTrust == TrustLevel.DONT_USE
             BannerRow(
                 modifier = modifier,
                 icon = Icons.Filled.VerifiedUser,
-                iconTint = if (unconfirmed) YellowTint else GreenTint,
-                bg = if (unconfirmed) YellowBg else GreenBg,
+                iconTint = when { dontUse -> RedTint; unconfirmed -> YellowTint; else -> GreenTint },
+                bg = when { dontUse -> RedBg; unconfirmed -> YellowBg; else -> GreenBg },
                 title = stringResource(
-                    if (unconfirmed) R.string.verify_banner_verified_unconfirmed_title
-                    else R.string.verify_banner_verified_title
+                    when {
+                        dontUse -> R.string.verify_banner_verified_dont_use_title
+                        unconfirmed -> R.string.verify_banner_verified_unconfirmed_title
+                        else -> R.string.verify_banner_verified_title
+                    }
                 ),
                 subtitle = subtitle
             )

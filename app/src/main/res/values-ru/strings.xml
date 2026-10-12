@@ -956,6 +956,11 @@
     <string name="trust_level_unverified_description">Добавлен, но не проверен — действуйте с осторожностью</string>
     <string name="trust_level_verified_description">Отпечаток сверен через доверенный канал</string>
     <string name="trust_level_ultimate_description">Ваш собственный ключ или тот, что вы полностью контролируете</string>
+    <string name="trust_level_dont_use_name">Не использовать</string>
+    <string name="trust_level_dont_use_description">Скомпрометирован или выведен из использования; PGPony запросит подтверждение перед шифрованием для него или подписью им</string>
+    <string name="dont_use_confirm_title">Использовать ключ с пометкой «Не использовать»?</string>
+    <string name="dont_use_confirm_body">Помечен как «Не использовать»: %1$s. Всё равно продолжить?</string>
+    <string name="dont_use_confirm_continue">Всё равно использовать</string>
 
     <!-- ── TrustLevelSheet ──────────────────────────────────────────── -->
     <string name="trust_sheet_title">Уровень доверия</string>
@@ -1172,6 +1177,7 @@
     <string name="contacts_trust_unverified_cd">Не проверено</string>
     <string name="contacts_trust_verified_cd">Проверено</string>
     <string name="contacts_trust_ultimate_cd">Абсолютное доверие</string>
+    <string name="contacts_trust_dont_use_cd">Не использовать</string>
 
     <!-- ── Row icons ────────────────────────────────────────────────── -->
     <string name="contacts_linked_cd">Связано</string>
@@ -2196,6 +2202,7 @@
         <item quantity="other">Здесь также содержится ещё %1$d ключа, которые тоже будут импортированы:</item>
     </plurals>
     <string name="verify_banner_verified_unconfirmed_title">Подписано, ключ не проверен</string>
+    <string name="verify_banner_verified_dont_use_title">Подписано, ключ помечен как «Не использовать»</string>
     <string name="restore_settings_ask">Эта резервная копия также содержит настройки прокси и серверов ключей. Применить их? Восстановление никогда не отключает существующий прокси, а уровни доверия не восстанавливаются.</string>
     <string name="restore_settings_apply">Применить настройки</string>
     <string name="restore_settings_skip">Оставить мои</string>
@@ -2561,6 +2568,8 @@
     <string name="err_nfc_openpgp_unavailable">Этот ключ не открыл приложение OpenPGP через NFC. Некоторые ключи, в том числе Nitrokey 3, отключают OpenPGP через NFC. Если у вашего ключа есть USB, подключите его и повторите попытку.</string>
     <string name="err_offline_primary_sign">Закрытого основного ключа нет на этом устройстве (основной ключ офлайн). Для подписи воспользуйтесь подключом подписи.</string>
     <string name="err_offline_primary_edit">Закрытого основного ключа нет на этом устройстве (основной ключ офлайн). Внесите это изменение там, где хранится основной ключ, а затем снова импортируйте ключ сюда.</string>
+    <string name="err_provider_recipient_dont_use">Ключ получателя помечен в PGPony как «Не использовать»: %1$s. Чтобы шифровать для него, измените его уровень доверия в PGPony.</string>
+    <string name="err_provider_signer_dont_use">Ключ подписи помечен в PGPony как «Не использовать». Выберите другой ключ подписи в почтовом приложении или измените его уровень доверия в PGPony.</string>
     <string name="err_session_key_block_too_short">блок сеансового ключа слишком короткий</string>
     <string name="err_session_key_checksum_mismatch">несовпадение контрольной суммы сеансового ключа</string>
     <string name="err_short_form_apdu_data_limited_255">Данные APDU в короткой форме ограничены 255 байтами (было %1$s). Для больших объёмов используйте цепочку команд (command chaining) или задайте extended = true.</string>

@@ -165,6 +165,7 @@ internal fun TrustLevel.descriptionText(): String = when (this) {
     TrustLevel.UNVERIFIED  -> stringResource(R.string.trust_level_unverified_description)
     TrustLevel.VERIFIED    -> stringResource(R.string.trust_level_verified_description)
     TrustLevel.ULTIMATE    -> stringResource(R.string.trust_level_ultimate_description)
+    TrustLevel.DONT_USE    -> stringResource(R.string.trust_level_dont_use_description)
 }
 
 /** Phase A13 — localized name lookup for TrustLevel enum.
@@ -176,4 +177,5 @@ internal fun TrustLevel.localizedName(): String = when (this) {
     TrustLevel.UNVERIFIED -> stringResource(R.string.trust_level_unverified_name)
     TrustLevel.VERIFIED   -> stringResource(R.string.trust_level_verified_name)
     TrustLevel.ULTIMATE   -> stringResource(R.string.trust_level_ultimate_name)
+    TrustLevel.DONT_USE   -> stringResource(R.string.trust_level_dont_use_name)
 }

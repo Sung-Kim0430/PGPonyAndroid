@@ -184,6 +184,8 @@ class ErrorTextTest {
         "No signing-capable key found in key ring" to R.string.err_no_signing_capable_key_found_key,
         "The primary key's secret is not on this device (offline primary). Sign with a signing subkey." to R.string.err_offline_primary_sign,
         "The primary key's secret is not on this device (offline primary). Make this change where the primary key is kept, then import the key here again." to R.string.err_offline_primary_edit,
+        "Recipient key is marked Don't use in PGPony: bob@example.org. Change its trust level in PGPony to encrypt to it." to R.string.err_provider_recipient_dont_use,
+        "Signing key is marked Don't use in PGPony. Pick another signing key in your mail app, or change its trust level in PGPony." to R.string.err_provider_signer_dont_use,
         "v4 algo-35 subkey secret is unavailable" to R.string.err_v4_algo_35_subkey_secret_unavailable,
         "wrapped session key length out of range" to R.string.err_wrapped_session_key_length_out_range,
         "protect requires a non-empty passphrase" to R.string.err_protect_requires_non_empty_passphrase,

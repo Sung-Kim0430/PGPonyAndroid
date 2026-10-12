@@ -1047,6 +1047,11 @@
     <string name="trust_level_unverified_description">Додано, але не перевірено, будьте обережні</string>
     <string name="trust_level_verified_description">Відбиток звірено через довірений канал</string>
     <string name="trust_level_ultimate_description">Ваш власний ключ або ключ, який ви повністю контролюєте</string>
+    <string name="trust_level_dont_use_name">Не використовувати</string>
+    <string name="trust_level_dont_use_description">Скомпрометований або виведений з ужитку; PGPony запитає підтвердження перед шифруванням для нього чи підписуванням ним</string>
+    <string name="dont_use_confirm_title">Використати ключ із позначкою «Не використовувати»?</string>
+    <string name="dont_use_confirm_body">Позначено як «Не використовувати»: %1$s. Усе одно продовжити?</string>
+    <string name="dont_use_confirm_continue">Усе одно використати</string>
 
     <!-- ── TrustLevelSheet ──────────────────────────────────────────── -->
     <string name="trust_sheet_title">Рівень довіри</string>
@@ -1263,6 +1268,7 @@
     <string name="contacts_trust_unverified_cd">Не перевірено</string>
     <string name="contacts_trust_verified_cd">Перевірено</string>
     <string name="contacts_trust_ultimate_cd">Абсолютна довіра</string>
+    <string name="contacts_trust_dont_use_cd">Не використовувати</string>
 
     <!-- ── Row icons ────────────────────────────────────────────────── -->
     <string name="contacts_linked_cd">Пов’язано</string>
@@ -1353,6 +1359,7 @@
          ════════════════════════════════════════════════════════════════ -->
     <string name="verify_banner_verified_title">Перевірено</string>
     <string name="verify_banner_verified_unconfirmed_title">Підписано, ключ не перевірено</string>
+    <string name="verify_banner_verified_dont_use_title">Підписано, ключ позначено як «Не використовувати»</string>
     <string name="verify_banner_invalid_title">Недійсний підпис</string>
     <string name="verify_banner_unknown_signer_title">Невідомий підписувач</string>
     <string name="verify_banner_unknown_signer_lookup_cd">Знайти підписувача</string>
@@ -2576,6 +2583,8 @@
     <string name="err_nfc_openpgp_unavailable">Цей ключ не відкрив застосунок OpenPGP через NFC. Деякі ключі, зокрема Nitrokey 3, вимикають OpenPGP через NFC. Якщо ваш ключ має USB, під’єднайте його і спробуйте ще раз.</string>
     <string name="err_offline_primary_sign">Закритого основного ключа немає на цьому пристрої (основний ключ офлайн). Для підписування скористайтеся підключем підписування.</string>
     <string name="err_offline_primary_edit">Закритого основного ключа немає на цьому пристрої (основний ключ офлайн). Внесіть цю зміну там, де зберігається основний ключ, а потім знову імпортуйте ключ сюди.</string>
+    <string name="err_provider_recipient_dont_use">Ключ отримувача позначено в PGPony як «Не використовувати»: %1$s. Щоб шифрувати для нього, змініть його рівень довіри в PGPony.</string>
+    <string name="err_provider_signer_dont_use">Ключ підпису позначено в PGPony як «Не використовувати». Виберіть інший ключ підпису в поштовому застосунку або змініть його рівень довіри в PGPony.</string>
     <string name="err_session_key_block_too_short">блок сеансового ключа закороткий</string>
     <string name="err_session_key_checksum_mismatch">контрольна сума сеансового ключа не збігається</string>
     <string name="err_short_form_apdu_data_limited_255">Дані APDU короткої форми обмежені 255 байтами (було: %1$s). Для більших обсягів використовуйте ланцюжок команд або задайте extended = true.</string>

@@ -699,6 +699,11 @@ pgpony.app</string>
     <string name="trust_level_unverified_description">Adicionada mas não verificada — proceda com cautela</string>
     <string name="trust_level_verified_description">Impressão digital comparada por um canal confiável</string>
     <string name="trust_level_ultimate_description">Sua própria chave, ou uma que você controla totalmente</string>
+    <string name="trust_level_dont_use_name">Não usar</string>
+    <string name="trust_level_dont_use_description">Comprometida ou fora de uso; o PGPony pergunta antes de criptografar para ela ou assinar com ela</string>
+    <string name="dont_use_confirm_title">Usar uma chave marcada como \"Não usar\"?</string>
+    <string name="dont_use_confirm_body">Marcada como \"Não usar\": %1$s. Continuar mesmo assim?</string>
+    <string name="dont_use_confirm_continue">Usar mesmo assim</string>
 
     <!-- ── TrustLevelSheet ──────────────────────────────────────────── -->
     <string name="trust_sheet_title">Nível de confiança</string>
@@ -953,6 +958,7 @@ Opcionalmente, bloqueie o app com sua impressão digital ou rosto para mais tran
     <string name="contacts_trust_unverified_cd">Não verificada</string>
     <string name="contacts_trust_verified_cd">Verificada</string>
     <string name="contacts_trust_ultimate_cd">Confiança máxima</string>
+    <string name="contacts_trust_dont_use_cd">Não usar</string>
 
     <!-- ── Row icons ────────────────────────────────────────────────── -->
     <string name="contacts_linked_cd">Vinculado</string>
@@ -2117,6 +2123,7 @@ Opcionalmente, bloqueie o app com sua impressão digital ou rosto para mais tran
         <item quantity="other">Isto também contém mais %1$d chaves. Elas também serão importadas:</item>
     </plurals>
     <string name="verify_banner_verified_unconfirmed_title">Assinada, chave não verificada</string>
+    <string name="verify_banner_verified_dont_use_title">Assinada, chave marcada como \"Não usar\"</string>
     <string name="restore_settings_ask">Este backup também contém configurações de proxy e de servidor de chaves. Aplicá-las? Uma restauração nunca desativa um proxy existente, e os níveis de confiança não são restaurados.</string>
     <string name="restore_settings_apply">Aplicar configurações</string>
     <string name="restore_settings_skip">Manter as minhas</string>
@@ -2472,6 +2479,8 @@ Opcionalmente, bloqueie o app com sua impressão digital ou rosto para mais tran
     <string name="err_nfc_openpgp_unavailable">Esta chave não abriu seu aplicativo OpenPGP via NFC. Algumas chaves, como a Nitrokey 3, desativam o OpenPGP via NFC. Se sua chave tiver USB, conecte-a e tente novamente.</string>
     <string name="err_offline_primary_sign">O segredo da chave principal não está neste dispositivo (chave principal offline). Assine com uma subchave de assinatura.</string>
     <string name="err_offline_primary_edit">O segredo da chave principal não está neste dispositivo (chave principal offline). Faça esta alteração onde a chave principal é guardada e depois importe a chave aqui novamente.</string>
+    <string name="err_provider_recipient_dont_use">A chave do destinatário está marcada como \"Não usar\" no PGPony: %1$s. Altere o nível de confiança dela no PGPony para criptografar para ela.</string>
+    <string name="err_provider_signer_dont_use">A chave de assinatura está marcada como \"Não usar\" no PGPony. Escolha outra chave de assinatura no seu app de e-mail ou altere o nível de confiança dela no PGPony.</string>
     <string name="err_session_key_block_too_short">bloco da chave de sessão curto demais</string>
     <string name="err_session_key_checksum_mismatch">checksum da chave de sessão não confere</string>
     <string name="err_short_form_apdu_data_limited_255">Os dados de APDU em formato curto são limitados a 255 bytes (eram %1$s). Use encadeamento de comandos ou defina extended = true para cargas maiores.</string>

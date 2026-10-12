@@ -160,6 +160,17 @@ delete sheet. Check both dialogs side by side and align them the same way.
 
 ## 10. Trust levels: new shields and a "Don't use" level (#75, reopens 4.6.0 item 7)
 
+**Status:** RC2. TrustLevel gains DONT_USE (stored by name, so no migration; kept last so a duplicate merge keeps
+it). TrustMark: Unknown grey GppBad (X), Unverified amber GppMaybe (!), Verified green GppGood, Ultimate
+blue-violet star on a shield, Don't use red DoNotDisturbOn; check on device that GppBad and GppMaybe draw X and
+"!" (the old comments described them the other way round). The Encrypt screen's primary button, Sign File and the
+Quick Action encrypt ask before using a Don't use recipient or signer (DontUseConfirmDialog), card paths
+included. The provider never picks a Don't use key for an address, refuses one asked for by key ID or as signer
+(opportunistic mode reports it as missing), and the Autocrypt status treats it as missing. The verify banner
+turns red for a valid signature from a Don't use key; decrypt and verify otherwise unchanged. Backups write the
+level's name ("Don't use") in metadata as before; restore never applies trust. 9 strings, all 10 locales (ko
+without the 2 provider errors). Test: TrustLevelDontUseTest.
+
 Priority: medium (feature). Origin: #75. Status: reopened and accepted for 4.7.0 as proposed.
 
 Ladder:

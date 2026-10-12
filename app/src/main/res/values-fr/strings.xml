@@ -699,6 +699,11 @@ pgpony.app</string>
     <string name="trust_level_unverified_description">Ajoutée mais non vérifiée — à utiliser avec prudence</string>
     <string name="trust_level_verified_description">Empreinte comparée via un canal de confiance</string>
     <string name="trust_level_ultimate_description">Votre propre clé, ou une que vous contrôlez entièrement</string>
+    <string name="trust_level_dont_use_name">Ne pas utiliser</string>
+    <string name="trust_level_dont_use_description">Compromise ou retirée ; PGPony demande confirmation avant de chiffrer pour elle ou de signer avec elle</string>
+    <string name="dont_use_confirm_title">Utiliser une clé marquée « Ne pas utiliser » ?</string>
+    <string name="dont_use_confirm_body">Marquée « Ne pas utiliser » : %1$s. Continuer quand même ?</string>
+    <string name="dont_use_confirm_continue">Utiliser quand même</string>
 
     <!-- ── TrustLevelSheet ──────────────────────────────────────────── -->
     <string name="trust_sheet_title">Niveau de confiance</string>
@@ -953,6 +958,7 @@ Vous pouvez aussi verrouiller l\'application derrière votre empreinte digitale 
     <string name="contacts_trust_unverified_cd">Non vérifiée</string>
     <string name="contacts_trust_verified_cd">Vérifiée</string>
     <string name="contacts_trust_ultimate_cd">Confiance ultime</string>
+    <string name="contacts_trust_dont_use_cd">Ne pas utiliser</string>
 
     <!-- ── Row icons ────────────────────────────────────────────────── -->
     <string name="contacts_linked_cd">Lié</string>
@@ -2117,6 +2123,7 @@ Vous pouvez aussi verrouiller l\'application derrière votre empreinte digitale 
         <item quantity="other">Il contient aussi %1$d autres clés. Elles seront importées également :</item>
     </plurals>
     <string name="verify_banner_verified_unconfirmed_title">Signé, clé non vérifiée</string>
+    <string name="verify_banner_verified_dont_use_title">Signé, clé marquée « Ne pas utiliser »</string>
     <string name="restore_settings_ask">Cette sauvegarde contient aussi des réglages de proxy et de serveur de clés. Les appliquer ? Une restauration ne désactive jamais un proxy existant, et les niveaux de confiance ne sont pas restaurés.</string>
     <string name="restore_settings_apply">Appliquer les réglages</string>
     <string name="restore_settings_skip">Garder les miens</string>
@@ -2472,6 +2479,8 @@ Vous pouvez aussi verrouiller l\'application derrière votre empreinte digitale 
     <string name="err_nfc_openpgp_unavailable">Cette clé n\'a pas ouvert son application OpenPGP via NFC. Certaines clés, dont la Nitrokey 3, désactivent OpenPGP via NFC. Si votre clé dispose d\'un port USB, branchez-la et réessayez.</string>
     <string name="err_offline_primary_sign">Le secret de la clé principale n\'est pas sur cet appareil (clé principale hors ligne). Signez avec une sous-clé de signature.</string>
     <string name="err_offline_primary_edit">Le secret de la clé principale n\'est pas sur cet appareil (clé principale hors ligne). Effectuez cette modification là où la clé principale est conservée, puis importez à nouveau la clé ici.</string>
+    <string name="err_provider_recipient_dont_use">La clé du destinataire est marquée « Ne pas utiliser » dans PGPony : %1$s. Modifiez son niveau de confiance dans PGPony pour chiffrer pour cette clé.</string>
+    <string name="err_provider_signer_dont_use">La clé de signature est marquée « Ne pas utiliser » dans PGPony. Choisissez une autre clé de signature dans votre application de messagerie, ou modifiez son niveau de confiance dans PGPony.</string>
     <string name="err_session_key_block_too_short">bloc de clé de session trop court</string>
     <string name="err_session_key_checksum_mismatch">somme de contrôle de la clé de session incorrecte</string>
     <string name="err_short_form_apdu_data_limited_255">Les données d\'une APDU courte sont limitées à 255 octets (reçu : %1$s). Utilisez le chaînage de commandes ou définissez extended = true pour des charges plus grandes.</string>

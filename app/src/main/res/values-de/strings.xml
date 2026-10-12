@@ -699,6 +699,11 @@ pgpony.app</string>
     <string name="trust_level_unverified_description">Hinzugefügt, aber nicht überprüft — mit Vorsicht verwenden</string>
     <string name="trust_level_verified_description">Fingerabdruck über einen vertrauenswürdigen Kanal verglichen</string>
     <string name="trust_level_ultimate_description">Dein eigener Schlüssel oder einer, den du vollständig kontrollierst</string>
+    <string name="trust_level_dont_use_name">Nicht verwenden</string>
+    <string name="trust_level_dont_use_description">Kompromittiert oder ausgemustert; PGPony fragt nach, bevor du an ihn verschlüsselst oder mit ihm signierst</string>
+    <string name="dont_use_confirm_title">Als „Nicht verwenden“ markierten Schlüssel verwenden?</string>
+    <string name="dont_use_confirm_body">Als „Nicht verwenden“ markiert: %1$s. Trotzdem fortfahren?</string>
+    <string name="dont_use_confirm_continue">Trotzdem verwenden</string>
 
     <!-- ── TrustLevelSheet ──────────────────────────────────────────── -->
     <string name="trust_sheet_title">Vertrauensstufe</string>
@@ -953,6 +958,7 @@ Optional kannst du die App hinter deinem Fingerabdruck oder Gesicht sperren, um 
     <string name="contacts_trust_unverified_cd">Nicht verifiziert</string>
     <string name="contacts_trust_verified_cd">Verifiziert</string>
     <string name="contacts_trust_ultimate_cd">Höchstes Vertrauen</string>
+    <string name="contacts_trust_dont_use_cd">Nicht verwenden</string>
 
     <!-- ── Row icons ────────────────────────────────────────────────── -->
     <string name="contacts_linked_cd">Verknüpft</string>
@@ -2117,6 +2123,7 @@ Optional kannst du die App hinter deinem Fingerabdruck oder Gesicht sperren, um 
         <item quantity="other">Hier sind außerdem %1$d weitere Schlüssel enthalten. Sie werden ebenfalls importiert:</item>
     </plurals>
     <string name="verify_banner_verified_unconfirmed_title">Signiert, Schlüssel nicht verifiziert</string>
+    <string name="verify_banner_verified_dont_use_title">Signiert, Schlüssel als „Nicht verwenden“ markiert</string>
     <string name="restore_settings_ask">Dieses Backup enthält auch Proxy- und Schlüsselserver-Einstellungen. Übernehmen? Eine Wiederherstellung schaltet einen vorhandenen Proxy nie aus, und Vertrauensstufen werden nicht wiederhergestellt.</string>
     <string name="restore_settings_apply">Einstellungen übernehmen</string>
     <string name="restore_settings_skip">Meine behalten</string>
@@ -2472,6 +2479,8 @@ Optional kannst du die App hinter deinem Fingerabdruck oder Gesicht sperren, um 
     <string name="err_nfc_openpgp_unavailable">Dieser Schlüssel hat seine OpenPGP-Anwendung über NFC nicht geöffnet. Manche Schlüssel, darunter der Nitrokey 3, schalten OpenPGP über NFC ab. Wenn dein Schlüssel USB hat, steck ihn ein und versuche es erneut.</string>
     <string name="err_offline_primary_sign">Der geheime Teil des Hauptschlüssels ist nicht auf diesem Gerät (Hauptschlüssel offline). Signiere mit einem Signatur-Unterschlüssel.</string>
     <string name="err_offline_primary_edit">Der geheime Teil des Hauptschlüssels ist nicht auf diesem Gerät (Hauptschlüssel offline). Nimm diese Änderung dort vor, wo der Hauptschlüssel aufbewahrt wird, und importiere den Schlüssel dann erneut hier.</string>
+    <string name="err_provider_recipient_dont_use">Empfängerschlüssel ist in PGPony als „Nicht verwenden“ markiert: %1$s. Ändere seine Vertrauensstufe in PGPony, um an ihn zu verschlüsseln.</string>
+    <string name="err_provider_signer_dont_use">Signaturschlüssel ist in PGPony als „Nicht verwenden“ markiert. Wähle in deiner Mail-App einen anderen Signaturschlüssel oder ändere seine Vertrauensstufe in PGPony.</string>
     <string name="err_session_key_block_too_short">Sitzungsschlüssel-Block zu kurz</string>
     <string name="err_session_key_checksum_mismatch">Prüfsumme des Sitzungsschlüssels stimmt nicht</string>
     <string name="err_short_form_apdu_data_limited_255">APDU-Daten in Kurzform sind auf 255 Bytes begrenzt (waren %1$s). Verwende Command Chaining oder setze extended = true für größere Nutzdaten.</string>

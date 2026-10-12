@@ -699,6 +699,11 @@ pgpony.app</string>
     <string name="trust_level_unverified_description">追加されましたが未検証 — 慎重に進めてください</string>
     <string name="trust_level_verified_description">フィンガープリントを信頼できる経路で照合済み</string>
     <string name="trust_level_ultimate_description">自身の鍵、または完全に管理している鍵</string>
+    <string name="trust_level_dont_use_name">使用しない</string>
+    <string name="trust_level_dont_use_description">漏洩または廃止された鍵。この鍵宛ての暗号化やこの鍵での署名の前に PGPony が確認します</string>
+    <string name="dont_use_confirm_title">「使用しない」に設定された鍵を使用しますか？</string>
+    <string name="dont_use_confirm_body">「使用しない」に設定されています: %1$s。続行しますか？</string>
+    <string name="dont_use_confirm_continue">このまま使用</string>
 
     <!-- ── TrustLevelSheet ──────────────────────────────────────────── -->
     <string name="trust_sheet_title">信頼レベル</string>
@@ -953,6 +958,7 @@ PGPony は、古い OpenPGP 実装との相互運用性のために従来の RSA
     <string name="contacts_trust_unverified_cd">未確認</string>
     <string name="contacts_trust_verified_cd">確認済み</string>
     <string name="contacts_trust_ultimate_cd">最高の信頼レベル</string>
+    <string name="contacts_trust_dont_use_cd">使用しない</string>
 
     <!-- ── Row icons ────────────────────────────────────────────────── -->
     <string name="contacts_linked_cd">リンク済み</string>
@@ -2108,6 +2114,7 @@ PGPony は、古い OpenPGP 実装との相互運用性のために従来の RSA
         <item quantity="other">ほかに %1$d 個の鍵が含まれています。これらもインポートされます:</item>
     </plurals>
     <string name="verify_banner_verified_unconfirmed_title">署名済み、鍵は未検証</string>
+    <string name="verify_banner_verified_dont_use_title">署名済み、鍵は「使用しない」に設定</string>
     <string name="restore_settings_ask">このバックアップにはプロキシと鍵サーバーの設定も含まれています。適用しますか？ 復元によって既存のプロキシがオフになることはなく、信頼レベルは復元されません。</string>
     <string name="restore_settings_apply">設定を適用</string>
     <string name="restore_settings_skip">現在の設定を維持</string>
@@ -2458,6 +2465,8 @@ PGPony は、古い OpenPGP 実装との相互運用性のために従来の RSA
     <string name="err_nfc_openpgp_unavailable">この鍵は NFC 経由で OpenPGP アプリケーションを開きませんでした。Nitrokey 3 など一部の鍵は、NFC 経由では OpenPGP を無効にしています。鍵に USB がある場合は、接続してもう一度お試しください。</string>
     <string name="err_offline_primary_sign">主鍵の秘密鍵がこのデバイスにありません（オフラインの主鍵）。署名用サブキーで署名してください。</string>
     <string name="err_offline_primary_edit">主鍵の秘密鍵がこのデバイスにありません（オフラインの主鍵）。主鍵を保管している場所でこの変更を行ってから、この鍵をもう一度ここにインポートしてください。</string>
+    <string name="err_provider_recipient_dont_use">受信者の鍵は PGPony で「使用しない」に設定されています: %1$s。この鍵宛てに暗号化するには、PGPony で信頼レベルを変更してください。</string>
+    <string name="err_provider_signer_dont_use">署名鍵は PGPony で「使用しない」に設定されています。メールアプリで別の署名鍵を選択するか、PGPony で信頼レベルを変更してください。</string>
     <string name="err_session_key_block_too_short">セッション鍵ブロックが短すぎます</string>
     <string name="err_session_key_checksum_mismatch">セッション鍵のチェックサムが一致しません</string>
     <string name="err_short_form_apdu_data_limited_255">短形式 APDU のデータは 255 バイトまでです (%1$s バイトでした)。より大きなペイロードにはコマンドチェーンを使うか、extended = true を設定してください。</string>

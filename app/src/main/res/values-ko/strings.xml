@@ -960,6 +960,11 @@
     <string name="trust_level_unverified_description">추가되었지만 검토되지 않음. 주의해서 진행하세요</string>
     <string name="trust_level_verified_description">신뢰할 수 있는 경로로 지문을 비교함</string>
     <string name="trust_level_ultimate_description">당신 자신의 키, 또는 완전히 통제하는 키</string>
+    <string name="trust_level_dont_use_name">사용 안 함</string>
+    <string name="trust_level_dont_use_description">유출되었거나 폐기된 키. 이 키로 암호화하거나 서명하기 전에 PGPony가 확인을 요청합니다</string>
+    <string name="dont_use_confirm_title">‘사용 안 함’으로 표시된 키를 사용하시겠습니까?</string>
+    <string name="dont_use_confirm_body">‘사용 안 함’으로 표시됨: %1$s. 계속하시겠습니까?</string>
+    <string name="dont_use_confirm_continue">그래도 사용</string>
 
     <!-- ── TrustLevelSheet ──────────────────────────────────────────── -->
     <string name="trust_sheet_title">신뢰 수준</string>
@@ -1176,6 +1181,7 @@
     <string name="contacts_trust_unverified_cd">인증되지 않음</string>
     <string name="contacts_trust_verified_cd">인증됨</string>
     <string name="contacts_trust_ultimate_cd">최상 신뢰</string>
+    <string name="contacts_trust_dont_use_cd">사용 안 함</string>
 
     <!-- ── Row icons ────────────────────────────────────────────────── -->
     <string name="contacts_linked_cd">연결됨</string>
@@ -2154,4 +2160,5 @@
     <string name="provider_clients_scope_ssh">%1$s로 SSH 로그인</string>
     <string name="provider_clients_scope_ssh_nokey">SSH 로그인 (아직 키를 선택하지 않음)</string>
     <string name="provider_clients_scope_remove">제거</string>
+    <string name="verify_banner_verified_dont_use_title">서명됨, 키가 ‘사용 안 함’으로 표시됨</string>
 </resources>

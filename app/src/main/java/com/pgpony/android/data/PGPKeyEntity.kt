@@ -21,7 +21,12 @@ enum class TrustLevel(val displayName: String, val colorName: String) {
     UNKNOWN("Unknown", "gray"),
     UNVERIFIED("Unverified", "yellow"),
     VERIFIED("Verified", "green"),
-    ULTIMATE("Ultimate", "blue");
+    ULTIMATE("Ultimate", "violet"),
+    // 4.7.0 (item 10, #75): compromised or retired. Encrypting to it or
+    // signing with it asks first; decrypt and verify still work. Stored by
+    // name like the others, so existing rows need no migration. Kept last:
+    // KeyDeduplicationService ranks by ordinal, so a merge keeps Don't use.
+    DONT_USE("Don't use", "red");
 
     // ── A15 preflight fix ──────────────────────────────────────────────
     //
@@ -42,6 +47,7 @@ enum class TrustLevel(val displayName: String, val colorName: String) {
             UNVERIFIED -> app.getString(com.pgpony.android.R.string.trust_level_unverified_name)
             VERIFIED -> app.getString(com.pgpony.android.R.string.trust_level_verified_name)
             ULTIMATE -> app.getString(com.pgpony.android.R.string.trust_level_ultimate_name)
+            DONT_USE -> app.getString(com.pgpony.android.R.string.trust_level_dont_use_name)
         }
     }
 
@@ -52,6 +58,7 @@ enum class TrustLevel(val displayName: String, val colorName: String) {
             UNVERIFIED -> app.getString(com.pgpony.android.R.string.trust_level_unverified_description)
             VERIFIED -> app.getString(com.pgpony.android.R.string.trust_level_verified_description)
             ULTIMATE -> app.getString(com.pgpony.android.R.string.trust_level_ultimate_description)
+            DONT_USE -> app.getString(com.pgpony.android.R.string.trust_level_dont_use_description)
         }
     }
 }

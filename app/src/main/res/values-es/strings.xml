@@ -699,6 +699,11 @@ pgpony.app</string>
     <string name="trust_level_unverified_description">Añadida pero no verificada — proceda con precaución</string>
     <string name="trust_level_verified_description">Huella digital comparada por un canal de confianza</string>
     <string name="trust_level_ultimate_description">Tu propia clave, o una que controlas por completo</string>
+    <string name="trust_level_dont_use_name">No usar</string>
+    <string name="trust_level_dont_use_description">Comprometida o retirada; PGPony pregunta antes de cifrar para ella o firmar con ella</string>
+    <string name="dont_use_confirm_title">¿Usar una clave marcada como \"No usar\"?</string>
+    <string name="dont_use_confirm_body">Marcada como \"No usar\": %1$s. ¿Continuar de todos modos?</string>
+    <string name="dont_use_confirm_continue">Usar de todos modos</string>
 
     <!-- ── TrustLevelSheet ──────────────────────────────────────────── -->
     <string name="trust_sheet_title">Nivel de confianza</string>
@@ -953,6 +958,7 @@ Opcionalmente, bloquea la app con tu huella digital o cara para mayor tranquilid
     <string name="contacts_trust_unverified_cd">No verificada</string>
     <string name="contacts_trust_verified_cd">Verificada</string>
     <string name="contacts_trust_ultimate_cd">Confianza máxima</string>
+    <string name="contacts_trust_dont_use_cd">No usar</string>
 
     <!-- ── Row icons ────────────────────────────────────────────────── -->
     <string name="contacts_linked_cd">Vinculado</string>
@@ -2117,6 +2123,7 @@ Opcionalmente, bloquea la app con tu huella digital o cara para mayor tranquilid
         <item quantity="other">Esto también contiene %1$d claves más. También se importarán:</item>
     </plurals>
     <string name="verify_banner_verified_unconfirmed_title">Firmado, clave no verificada</string>
+    <string name="verify_banner_verified_dont_use_title">Firmado, clave marcada como \"No usar\"</string>
     <string name="restore_settings_ask">Esta copia también contiene ajustes de proxy y de servidores de claves. ¿Aplicarlos? Una restauración nunca desactiva un proxy existente, y los niveles de confianza no se restauran.</string>
     <string name="restore_settings_apply">Aplicar ajustes</string>
     <string name="restore_settings_skip">Conservar los míos</string>
@@ -2472,6 +2479,8 @@ Opcionalmente, bloquea la app con tu huella digital o cara para mayor tranquilid
     <string name="err_nfc_openpgp_unavailable">Esta llave no abrió su aplicación OpenPGP por NFC. Algunas llaves, como la Nitrokey 3, desactivan OpenPGP por NFC. Si tu llave tiene USB, conéctala e inténtalo de nuevo.</string>
     <string name="err_offline_primary_sign">El secreto de la clave principal no está en este dispositivo (clave principal sin conexión). Firma con una subclave de firma.</string>
     <string name="err_offline_primary_edit">El secreto de la clave principal no está en este dispositivo (clave principal sin conexión). Haz este cambio donde se guarda la clave principal y luego vuelve a importar la clave aquí.</string>
+    <string name="err_provider_recipient_dont_use">La clave del destinatario está marcada como \"No usar\" en PGPony: %1$s. Cambia su nivel de confianza en PGPony para cifrar para ella.</string>
+    <string name="err_provider_signer_dont_use">La clave de firma está marcada como \"No usar\" en PGPony. Elige otra clave de firma en tu app de correo o cambia su nivel de confianza en PGPony.</string>
     <string name="err_session_key_block_too_short">bloque de clave de sesión demasiado corto</string>
     <string name="err_session_key_checksum_mismatch">la suma de comprobación de la clave de sesión no coincide</string>
     <string name="err_short_form_apdu_data_limited_255">Los datos de una APDU de formato corto están limitados a 255 bytes (había %1$s). Usa el encadenamiento de comandos o establece extended = true para cargas más grandes.</string>

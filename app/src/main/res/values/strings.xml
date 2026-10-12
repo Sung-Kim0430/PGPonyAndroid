@@ -1050,6 +1050,11 @@
     <string name="trust_level_unverified_description">Added but not vetted, proceed with caution</string>
     <string name="trust_level_verified_description">Fingerprint compared via a trusted channel</string>
     <string name="trust_level_ultimate_description">Your own key, or one you fully control</string>
+    <string name="trust_level_dont_use_name">Don\'t use</string>
+    <string name="trust_level_dont_use_description">Compromised or retired; PGPony asks before encrypting to it or signing with it</string>
+    <string name="dont_use_confirm_title">Use a key marked Don\'t use?</string>
+    <string name="dont_use_confirm_body">Marked Don\'t use: %1$s. Continue anyway?</string>
+    <string name="dont_use_confirm_continue">Use anyway</string>
 
     <!-- ── TrustLevelSheet ──────────────────────────────────────────── -->
     <string name="trust_sheet_title">Trust Level</string>
@@ -1266,6 +1271,7 @@
     <string name="contacts_trust_unverified_cd">Unverified</string>
     <string name="contacts_trust_verified_cd">Verified</string>
     <string name="contacts_trust_ultimate_cd">Ultimate trust</string>
+    <string name="contacts_trust_dont_use_cd">Don\'t use</string>
 
     <!-- ── Row icons ────────────────────────────────────────────────── -->
     <string name="contacts_linked_cd">Linked</string>
@@ -1356,6 +1362,7 @@
          ════════════════════════════════════════════════════════════════ -->
     <string name="verify_banner_verified_title">Verified</string>
     <string name="verify_banner_verified_unconfirmed_title">Signed, key not verified</string>
+    <string name="verify_banner_verified_dont_use_title">Signed, key marked Don\'t use</string>
     <string name="verify_banner_invalid_title">Signature invalid</string>
     <string name="verify_banner_unknown_signer_title">Unknown signer</string>
     <string name="verify_banner_unknown_signer_lookup_cd">Look up signer</string>
@@ -2560,6 +2567,8 @@
     <string name="err_nfc_openpgp_unavailable">This key did not open its OpenPGP application over NFC. Some keys, the Nitrokey 3 among them, turn OpenPGP off over NFC. If your key has USB, plug it in and try again.</string>
     <string name="err_offline_primary_sign">The primary key\'s secret is not on this device (offline primary). Sign with a signing subkey.</string>
     <string name="err_offline_primary_edit">The primary key\'s secret is not on this device (offline primary). Make this change where the primary key is kept, then import the key here again.</string>
+    <string name="err_provider_recipient_dont_use">Recipient key is marked Don\'t use in PGPony: %1$s. Change its trust level in PGPony to encrypt to it.</string>
+    <string name="err_provider_signer_dont_use">Signing key is marked Don\'t use in PGPony. Pick another signing key in your mail app, or change its trust level in PGPony.</string>
     <string name="err_session_key_block_too_short">session key block too short</string>
     <string name="err_session_key_checksum_mismatch">session key checksum mismatch</string>
     <string name="err_short_form_apdu_data_limited_255">Short-form APDU data limited to 255 bytes (was %1$s). Use command chaining or set extended = true for larger payloads.</string>

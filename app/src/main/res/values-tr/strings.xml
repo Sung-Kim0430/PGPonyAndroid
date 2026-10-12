@@ -1041,6 +1041,11 @@
     <string name="trust_level_unverified_description">Eklendi ancak incelenmedi, dikkatli olun</string>
     <string name="trust_level_verified_description">Parmak izi güvenilir bir kanal üzerinden karşılaştırıldı</string>
     <string name="trust_level_ultimate_description">Kendi anahtarınız veya tamamen sizin kontrolünüzdeki bir anahtar</string>
+    <string name="trust_level_dont_use_name">Kullanım dışı</string>
+    <string name="trust_level_dont_use_description">Ele geçirilmiş veya kullanımdan kaldırılmış; PGPony bu anahtara şifrelemeden veya bu anahtarla imzalamadan önce onay ister</string>
+    <string name="dont_use_confirm_title">\"Kullanım dışı\" olarak işaretli bir anahtar kullanılsın mı?</string>
+    <string name="dont_use_confirm_body">\"Kullanım dışı\" olarak işaretli: %1$s. Yine de devam edilsin mi?</string>
+    <string name="dont_use_confirm_continue">Yine de kullan</string>
 
     <!-- ── TrustLevelSheet ──────────────────────────────────────────── -->
     <string name="trust_sheet_title">Güven Düzeyi</string>
@@ -1257,6 +1262,7 @@
     <string name="contacts_trust_unverified_cd">Doğrulanmamış</string>
     <string name="contacts_trust_verified_cd">Doğrulanmış</string>
     <string name="contacts_trust_ultimate_cd">Mutlak güven</string>
+    <string name="contacts_trust_dont_use_cd">Kullanım dışı</string>
 
     <!-- ── Row icons ────────────────────────────────────────────────── -->
     <string name="contacts_linked_cd">Bağlı</string>
@@ -1347,6 +1353,7 @@
          ════════════════════════════════════════════════════════════════ -->
     <string name="verify_banner_verified_title">Doğrulandı</string>
     <string name="verify_banner_verified_unconfirmed_title">İmzalı, anahtar doğrulanmadı</string>
+    <string name="verify_banner_verified_dont_use_title">İmzalı, anahtar \"Kullanım dışı\" olarak işaretli</string>
     <string name="verify_banner_invalid_title">İmza geçersiz</string>
     <string name="verify_banner_unknown_signer_title">Bilinmeyen imzalayan</string>
     <string name="verify_banner_unknown_signer_lookup_cd">İmzalayanı ara</string>
@@ -2548,6 +2555,8 @@
     <string name="err_nfc_openpgp_unavailable">Bu anahtar OpenPGP uygulamasını NFC üzerinden açmadı. Nitrokey 3 dahil bazı anahtarlar NFC üzerinden OpenPGP\'yi kapatır. Anahtarınızda USB varsa takın ve tekrar deneyin.</string>
     <string name="err_offline_primary_sign">Birincil anahtarın gizli kısmı bu cihazda değil (çevrimdışı birincil). İmzalamak için bir imzalama alt anahtarı kullanın.</string>
     <string name="err_offline_primary_edit">Birincil anahtarın gizli kısmı bu cihazda değil (çevrimdışı birincil). Bu değişikliği birincil anahtarın saklandığı yerde yapın, ardından anahtarı buraya yeniden içe aktarın.</string>
+    <string name="err_provider_recipient_dont_use">Alıcı anahtarı PGPony\'de \"Kullanım dışı\" olarak işaretli: %1$s. Bu anahtara şifrelemek için PGPony\'de güven düzeyini değiştirin.</string>
+    <string name="err_provider_signer_dont_use">İmzalama anahtarı PGPony\'de \"Kullanım dışı\" olarak işaretli. E-posta uygulamanızda başka bir imzalama anahtarı seçin veya PGPony\'de bu anahtarın güven düzeyini değiştirin.</string>
     <string name="err_session_key_block_too_short">oturum anahtarı bloğu çok kısa</string>
     <string name="err_session_key_checksum_mismatch">oturum anahtarı sağlama toplamı eşleşmiyor</string>
     <string name="err_short_form_apdu_data_limited_255">Kısa biçimli APDU verisi 255 baytla sınırlıdır (gelen: %1$s). Daha büyük yükler için komut zincirleme kullanın veya extended = true ayarlayın.</string>

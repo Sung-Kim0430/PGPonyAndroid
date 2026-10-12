@@ -561,6 +561,7 @@ private fun TrustBadge(trust: TrustLevel) {
         TrustLevel.UNVERIFIED -> stringResource(R.string.contacts_trust_unverified_cd)
         TrustLevel.VERIFIED   -> stringResource(R.string.contacts_trust_verified_cd)
         TrustLevel.ULTIMATE   -> stringResource(R.string.contacts_trust_ultimate_cd)
+        TrustLevel.DONT_USE   -> stringResource(R.string.contacts_trust_dont_use_cd)
     }
     TrustMark(trust = trust, size = 14.dp, contentDescription = label)
 }
