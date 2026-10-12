@@ -158,7 +158,7 @@ signing tier (87 gets ML-KEM-1024 + X448, algo 36; 65 keeps ML-KEM-768 + X25519)
 GitHub #65 (elnardosa). Implemented in the 4.5.3 tree, no longer 4.6.0 work. In-app file detached sign and file
 encrypt-and-sign now route a composite ML-DSA signer through CompositeDocumentSigner / crypto.encrypt (buffered,
 since a composite signature covers the whole document and cannot stream), instead of the classical BouncyCastle
-signer that could not see an algo-30/31 key. See RELEASE_NOTES_4.5.3.md.
+signer that could not see an algo-30/31 key. See docs/releases/RELEASE_NOTES_4.5.3.md.
 
 ## 5. Key Detail avatar shortcut fix, additive encrypt recipients, and Default Key polish
 

@@ -548,7 +548,7 @@ disabled Key Detail action explains itself.
 
 ## 23. Encrypt and sign a large file with an ML-DSA key runs out of memory (#73 follow-up)
 
-**Status:** Built for RC1. encryptStream takes a composite signer (CompositeDocumentSigner.InlineStream), used by single files above the inline limit and by package mode; detached file signing and verifying stream (signDetachedStream, CompositeSignerGate.verifyDetachedStream). The streaming decrypt no longer buffers a composite inline message: CompositeInlineStreamReader hashes the literal as it is written and CompositeSignerGate.verifyStreamed grades the signatures from their digests. The large-file encrypt path also passes the chosen recipient subkeys now. Unit tests: CompositeStreamingTest. On device: the 500 MB case, and the GpgFrontend check.
+**Status:** Built for RC1. encryptStream takes a composite signer (CompositeDocumentSigner.InlineStream), used by single files above the inline limit and by package mode; detached file signing and verifying stream (signDetachedStream, CompositeSignerGate.verifyDetachedStream). The streaming decrypt no longer buffers a composite inline message: CompositeInlineStreamReader hashes the literal as it is written and CompositeSignerGate.verifyStreamed grades the signatures from their digests. The large-file encrypt path also passes the chosen recipient subkeys now. Unit tests: CompositeStreamingTest. On device: the 500 MB case, and the GpgFrontend check. RC1 (#73): a 2 GB file encrypted and signed, then decrypted and verified, both ways with GpgFrontend on an ML-DSA-65 key; ML-DSA-87 still open.
 
 Priority: high (bug). Origin: #73, after 4.6.3 RC1: a 500 MB file encrypts fine but encrypt and sign with an
 ML-DSA key fails with an out-of-memory error.
@@ -566,7 +566,7 @@ streamed output verifies in PGPony and in GpgFrontend.
 
 ## 24. Re-importing your own key edited in gpg changes nothing (#78)
 
-**Status:** Built for RC1: CertificateMerge.mergeDetailed takes newer owner self-signatures (0x1F, 0x10 to 0x13, 0x18) on components already present; the secret ring gets the same public parts (PGPSecretKeyRing.replacePublicKeys, BC rings only, so a composite key pair updates its public copy only); the import says what was applied, or why nothing was. Unit tests in CertificateMergeTest. On device: the gpg setpref and SHA-512 case, then export and `gpg --import`.
+**Status:** Built for RC1: CertificateMerge.mergeDetailed takes newer owner self-signatures (0x1F, 0x10 to 0x13, 0x18) on components already present; the secret ring gets the same public parts (PGPSecretKeyRing.replacePublicKeys, BC rings only, so a composite key pair updates its public copy only); the import says what was applied, or why nothing was. Unit tests in CertificateMergeTest. On device: the gpg setpref and SHA-512 case, then export and `gpg --import`. RC1 (#78): the reporter confirmed the gpg-edited key imports with its changes and the export reads back in gpg.
 
 Priority: medium-high (bug, interop). Origin: #78: preferences changed and binding signatures remade with
 SHA-512 in gpg, exported and imported back; PGPony keeps the old key and says it is already in the keyring.
@@ -849,6 +849,52 @@ Status: proposed. Asked the reporter whether a persistent notification while a p
 acceptable; waiting on the reply.
 
 
+## 37. Saving a large decrypted file shows nothing and can be cut short (#73)
+
+Priority: medium (bug, large files). Origin: #73, after RC1 confirmed a 2 GB encrypt-and-sign round trip with
+GpgFrontend.
+
+Reported: after decrypting a large file, PGPony takes a while to write it to device storage, with no progress
+shown. If the app is closed during that write, the file can be left incomplete.
+
+Work:
+
+- Show a "Saving" state with bytes written (or indeterminate when the size is unknown) for the copy to the
+  chosen location, in the app and in the Quick Action.
+- Keep the write alive if the screen is left: run it outside the screen's scope (a short-lived worker or the
+  process-level scope used for streaming decrypts) and write to a temporary name in the target folder, renaming
+  only after the last byte and flush, so an interrupted save never leaves a file that looks complete.
+- Same treatment for large encrypt outputs (item 23 streaming) and package mode.
+
+Test: a 2 GB decrypt with the progress visible; leave the app mid-save and come back; force-stop mid-save and
+confirm no partial file is left under the final name.
+
+
+## 38. Quick Actions with several encrypted files encrypts them as one bundle (#72)
+
+Priority: medium-high (bug). Origin: #72 (RC1): selecting several .asc files in a file manager and sharing them
+to PGPony gives one consolidated file, with no signature results; the in-app Decrypt File picker decrypts the
+same files one by one and verifies them.
+
+Cause (from the code): a share of two or more files arrives as SEND_MULTIPLE, which only MainActivity
+registers, and IntentHandler.handleSendMultiple routes every multi-file share to ComposeBundle (encrypt
+together) without looking at the files. So the "consolidated file" is the encrypted files wrapped into one new
+encrypted bundle, not a decrypt at all.
+
+Work:
+
+- handleSendMultiple classifies each shared file the way handleFileUri does (sniff, not just the extension).
+  When every file is an encrypted PGP message, route to the existing multi-file decrypt (the in-app picker's
+  path) with those URIs; each file decrypts, verifies and saves on its own.
+- All detached signatures with their data, or a mix of encrypted and plain files: offer a choice (decrypt the
+  encrypted ones, or encrypt everything as a bundle) instead of guessing.
+- Plain files keep the bundle route, and item 15 adds "encrypt each separately" next to it.
+- Check .zip and .eml once the reporter reports on them.
+
+Test: share 2, 5 and 20 .asc files (armored and binary, signed and unsigned) from a file manager; each
+decrypts and verifies separately; a mixed selection offers the choice; plain files still bundle.
+
+
 ## RC breakdown (set Oct 9 2026)
 
 One RC at a time: the next RC's work starts only after the current one is built and tested. versionCode 470 /
@@ -860,8 +906,8 @@ uk, b+zh+Hans).
 - RC2, key management on soft keys: 22, then 10, then 31 (31 needs 22's stub check and 10's Verified level).
   Certifying on a card waits for RC4. Also 35 (label change, no new strings; RC1 was built before it was
   added) and 36 (provider foreground service).
-- RC3: 15 (each file separately), 32 (duress PIN, builds on 33), 6, 21 remainder (protocol change shared with
-  desktop and iOS PGPonyPair), 8.
+- RC3: 15 (each file separately), 38 and 37 (multi-file Quick Actions and large-file saves, same area as 15),
+  32 (duress PIN, builds on 33), 6, 21 remainder (protocol change shared with desktop and iOS PGPonyPair), 8.
 - RC4, card work: 13 (keytocard), card certification for 31, and 34 (card-generated key display), once a working card is on hand for testing.
 - Last RC: the 12a on-device checks (Tor with Orbot, custom proxy, OpenKeychain restore, protected key over a
   contact, the provider with Thunderbird including a card).
