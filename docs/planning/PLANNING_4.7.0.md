@@ -488,6 +488,15 @@ one item of each kind both ways.
 
 ## 22. Offline primary key: secret subkeys only, GnuPG stub primary (iOS 8.4.0 item 1.3)
 
+**Status:** RC2. OfflineStub.isStub (GNU 1001 and 1002 by S2K, else isPrivateKeyEmpty) is checked wherever a
+secret key is picked or unlocked: signing skips stubs and says "offline primary" when the only signer is one; the
+PKESK scan skips them; User ID, expiry, subkey and revocation edits refuse with the offline message; Key Detail
+hides those edits and the Revoke item behind one banner (offline or on a hardware key); the import preview reads
+"Key Pair (offline primary)" with a note. Export, the export passphrase and passphrase change keep the stub byte
+for byte, and protection is read from the first key with material. A block in which every secret key is a stub
+imports as a public key; pairing a 1002 primary with a linked card waits for RC4. One banner explains the hidden
+edits instead of a line per action. Fixtures (GnuPG 2.4) and OfflinePrimaryTest in app/src/test.
+
 Priority: medium (feature, interop). Origin: an email report against iOS 8.3.0 build 7; Android checked by
 reading the code only. Written on 4.6.x and carried to main with the 4.6.3 merge.
 
@@ -758,16 +767,90 @@ Reported: after on-card key generation the key is listed under Key Pairs but sty
 Work: style card-backed key pairs as key pairs on the Keyring and its row action; list every card slot's subkey in Key Details with ON CARD; add the card label to the Keyring row. Test with a card-generated key on a YubiKey and a Nitrokey 3.
 
 
+## 35. Exchange key selector: show the email with the name (iOS 8.4.0 item 1.5)
+
+Priority: medium (usability, cheap). Origin: user email (Oct 10, reported on iOS 8.3.0): four key pairs, one per
+mail account, all with the same name. The iOS Exchange picker lists that name four times and nothing else, so
+there is no way to pick the key for a given account. Asked: identify the name and the email together.
+
+Where Android stands: ExchangeScreen's radio rows read "userName (shortFingerprint)", and the block under the QR
+shows userName and the full fingerprint. Four same-name keys are distinguishable by fingerprint, but a user who
+thinks in mail accounts still has to match fingerprints by hand. SettingsScreen's Default Signing Key and
+Default Recipient dropdowns show `userName.ifBlank { userEmail }.ifBlank { userID }` and nothing else, so there
+the four keys are indistinguishable, the same as the iOS report. SignAsSheet already shows the email on a second
+line when both are set; ApiClientsScreen appends the short fingerprint.
+
+Work:
+
+- One label for the user's own keys on PGPKeyEntity (say `pickerLabel`): name and email when both are set
+  ("Name <email>"), email alone when the name is blank, name alone when there is no email, then the short
+  fingerprint always (two keys on one address are otherwise identical). Falls back to userID when both are
+  blank.
+- Exchange selector rows and the identity under the QR use it (the QR block keeps the full fingerprint and
+  adds the email line).
+- Settings Default Signing Key and Default Recipient dropdowns, and the button text that shows the current
+  choice, switch to the same label. SignAsSheet keeps its two-line layout; check it also shows the short
+  fingerprint when name and email both match another key.
+- No new strings: the label is built from the key's own fields. If "<" ">" reads badly in a dropdown, use a
+  middle dot separator; decide on device.
+
+Test: four key pairs with one name and four emails (two on one address); every row in the Exchange selector and
+both Settings dropdowns reads distinctly, and the QR block shows the picked key's email; a key with no name; a
+key with no email.
+
+
+## 36. "Until I clear it" passphrase is lost after a few minutes on Xiaomi (user email, Oct 11)
+
+Priority: medium (bug, mail-app users on aggressive OEM builds). Origin: user email on 4.6.4, Xiaomi phone on
+HyperOS, Android 16.
+
+Reported: the duration is set to "Until I clear it", yet Thunderbird asks for the passphrase again after about
+10 minutes. Battery for PGPony is set to unrestricted; no change.
+
+Cause: ProviderPassphraseCache is memory only and lives in the :remote_api process. Under the until-cleared
+sentinel an entry drops only on Clear, a wrong passphrase, invalidation or process death. Nothing keeps
+:remote_api alive once the mail app unbinds, so HyperOS kills the idle process and the passphrase goes with it.
+Stock Android does the same, only later. The duration file (4.6.3) is not involved.
+
+Work:
+
+- A foreground service in :remote_api that runs while ProviderPassphraseCache holds an entry, with an ongoing
+  notification: "PGPony is holding a passphrase for mail apps", plus a Clear action that clears the provider
+  cache (and the card PIN cache, if it lives there) and stops the service. OpenKeychain does the same.
+- Start it from ProviderPassphraseActivity right after put(), while that activity is in the foreground, so the
+  Android 12+ background-start limits do not apply. Stop it when the cache empties: timer expiry, Clear from
+  Settings (ProviderCacheClearReceiver), wrong passphrase, invalidation. A timed entry needs one alarm or
+  handler tick at its expiry so the service does not outlive it.
+- Manifest: FOREGROUND_SERVICE and FOREGROUND_SERVICE_SPECIAL_USE, foregroundServiceType="specialUse" with the
+  PROPERTY_SPECIAL_USE_FGS_SUBTYPE explaining the use. Play needs the special-use declaration in the Console
+  before the build that adds it goes to Play.
+- Own low-importance notification channel, no sound. Without POST_NOTIFICATIONS the service still runs; the
+  notification just does not show.
+- Decide on device whether timed durations of 5 minutes or less skip the service (process death within 5
+  minutes is rare and the notification would be noise).
+- Check CardPinCache and the "until the phone locks" hold for the same process-death gap.
+- New strings (channel name, notification text, Clear action) in all 10 locales.
+
+Test: on the reporter's class of device if one turns up, otherwise stock Android with `adb shell am kill` on
+:remote_api in the background: with the service running the process survives and Thunderbird does not ask
+again; Clear from the notification and from Settings both stop it and the next decrypt asks; a 15 minute
+duration stops the service at expiry.
+
+Status: proposed. Asked the reporter whether a persistent notification while a passphrase is held is
+acceptable; waiting on the reply.
+
+
 ## RC breakdown (set Oct 9 2026)
 
 One RC at a time: the next RC's work starts only after the current one is built and tested. versionCode 470 /
 4.7.0 from RC1 on, unchanged across RCs. New strings go into all 10 locales (de, es, fr, ja, ko, pt-rBR, ru, tr,
 uk, b+zh+Hans).
 
-- RC1, bugs and promises already made: 33, 25, 27, 24, 23, 3, 29. Item 26 joins once it reproduces; items 7 and
-  28 join if their reporters answer. Item 33 ships in 4.7.0 only (no 4.6.x point release).
+- RC1, bugs and promises already made: 33, 25, 27, 24, 23, 3, 29, plus 26 (signing subkey). Items 7 and 28 join
+  a later RC if their reporters answer. Item 33 ships in 4.7.0 only (no 4.6.x point release).
 - RC2, key management on soft keys: 22, then 10, then 31 (31 needs 22's stub check and 10's Verified level).
-  Certifying on a card waits for RC4.
+  Certifying on a card waits for RC4. Also 35 (label change, no new strings; RC1 was built before it was
+  added) and 36 (provider foreground service).
 - RC3: 15 (each file separately), 32 (duress PIN, builds on 33), 6, 21 remainder (protocol change shared with
   desktop and iOS PGPonyPair), 8.
 - RC4, card work: 13 (keytocard), card certification for 31, and 34 (card-generated key display), once a working card is on hand for testing.
