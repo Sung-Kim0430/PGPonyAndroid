@@ -159,8 +159,8 @@ private fun ShowKeySection(
                             selected = state.selectedKey?.fingerprint == key.fingerprint,
                             onClick = { viewModel.selectKey(key) }
                         )
-                        Text("${key.userName} (${key.shortFingerprint})",
-                            style = MaterialTheme.typography.bodyMedium)
+                        // 4.7.0 (item 35): name, email and short fingerprint.
+                        Text(key.pickerLabel, style = MaterialTheme.typography.bodyMedium)
                     }
                 }
                 Spacer(modifier = Modifier.height(12.dp))
@@ -230,7 +230,12 @@ private fun ShowKeySection(
                     Spacer(modifier = Modifier.height(12.dp))
                 }
                 state.selectedKey?.let { key ->
-                    Text(key.userName, style = MaterialTheme.typography.titleSmall)
+                    Text(key.userName.ifBlank { key.userEmail.ifBlank { key.userID } }, style = MaterialTheme.typography.titleSmall)
+                    // 4.7.0 (item 35): the email too, so the shown key is unmistakable.
+                    if (key.userName.isNotBlank() && key.userEmail.isNotBlank()) {
+                        Text(key.userEmail, style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                     Text(key.formattedFingerprint,
                         style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
                         color = MaterialTheme.colorScheme.onSurfaceVariant)

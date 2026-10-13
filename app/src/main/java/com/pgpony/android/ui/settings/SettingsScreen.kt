@@ -595,9 +595,7 @@ fun SettingsScreen(
                 Box(modifier = Modifier.padding(start = 16.dp, top = 8.dp, end = 16.dp)) {
                     OutlinedButton(onClick = { recipientMenuExpanded = true }) {
                         Text(
-                            text = pinned?.let {
-                                it.userName.ifBlank { it.userEmail }.ifBlank { it.userID }
-                            } ?: stringResource(R.string.settings_default_recipient_choose),
+                            text = pinned?.pickerLabel ?: stringResource(R.string.settings_default_recipient_choose),
                             maxLines = 1,
                         )
                         Icon(Icons.Filled.ArrowDropDown, contentDescription = null)
@@ -609,7 +607,7 @@ fun SettingsScreen(
                         state.recipientKeyChoices.forEach { key ->
                             DropdownMenuItem(
                                 text = {
-                                    Text(key.userName.ifBlank { key.userEmail }.ifBlank { key.userID })
+                                    Text(key.pickerLabel)
                                 },
                                 onClick = {
                                     viewModel.setDefaultRecipientKey(key.fingerprint)
@@ -741,7 +739,7 @@ fun SettingsScreen(
                             state.signingKeyChoices.forEach { key ->
                                 DropdownMenuItem(
                                     text = {
-                                        Text(key.userName.ifBlank { key.userEmail }.ifBlank { key.userID })
+                                        Text(key.pickerLabel)
                                     },
                                     onClick = {
                                         viewModel.setDefaultSigningKey(key.fingerprint)

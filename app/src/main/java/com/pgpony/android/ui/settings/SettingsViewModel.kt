@@ -324,9 +324,8 @@ class SettingsViewModel(
                 totalKeys = all.size,
                 totalKeyPairs = pairs.size,
                 clearKeysPreview = all,
-                defaultKeyName = defaultKey?.let {
-                    it.userName.ifBlank { it.userEmail }
-                },
+                // 4.7.0 (item 35): same label as the picker.
+                defaultKeyName = defaultKey?.pickerLabel,
                 defaultKeyFingerprint = defaultKey?.shortFingerprint,
                 // Phase A4 — pinned-recipient candidates: any non-revoked key
                 // with a usable public half (the same pool the encrypt picker

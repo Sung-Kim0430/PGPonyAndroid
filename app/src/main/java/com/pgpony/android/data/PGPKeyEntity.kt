@@ -279,6 +279,24 @@ data class PGPKeyEntity(
     val formattedFingerprint: String
         get() = fingerprint.uppercase().chunked(4).joinToString(" ")
 
+    /**
+     * 4.7.0 (item 35): the label for picking one of your own keys, so keys
+     * that share a name (one per mail account, say) read apart: "Name
+     * <email>", the email or the name alone when the other is blank, the User
+     * ID when both are, then the short fingerprint for two keys on one
+     * address.
+     */
+    val pickerLabel: String
+        get() {
+            val who = when {
+                userName.isNotBlank() && userEmail.isNotBlank() -> "$userName <$userEmail>"
+                userEmail.isNotBlank() -> userEmail
+                userName.isNotBlank() -> userName
+                else -> userID
+            }
+            return "$who \u00b7 $shortFingerprint"
+        }
+
     val isExpired: Boolean
         get() = expiresAt?.let { it < System.currentTimeMillis() } ?: false
 

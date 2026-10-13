@@ -805,6 +805,11 @@ Work: style card-backed key pairs as key pairs on the Keyring and its row action
 
 ## 35. Exchange key selector: show the email with the name (iOS 8.4.0 item 1.5)
 
+**Status:** RC2. PGPKeyEntity.pickerLabel ("Name <email>", the email or the name alone when the other is blank,
+the User ID when both are, then a middle dot and the short fingerprint). Used by the Exchange selector rows,
+both Settings dropdowns and the Default Signing Key button; the Exchange QR block adds the email line under the
+name. SignAsSheet already shows name, email and short fingerprint on separate lines. No new strings.
+
 Priority: medium (usability, cheap). Origin: user email (Oct 10, reported on iOS 8.3.0): four key pairs, one per
 mail account, all with the same name. The iOS Exchange picker lists that name four times and nothing else, so
 there is no way to pick the key for a given account. Asked: identify the name and the email together.
