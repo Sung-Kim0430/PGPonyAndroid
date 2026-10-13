@@ -1,0 +1,21 @@
+#!/bin/sh
+# Refuses a push that carries an unsigned commit (see SIGNING.md).
+zero=0000000000000000000000000000000000000000
+status=0
+while read local_ref local_sha remote_ref remote_sha; do
+    [ "$local_sha" = "$zero" ] && continue
+    case "$local_ref" in refs/tags/*) continue ;; esac
+    if [ "$remote_sha" = "$zero" ]; then
+        range="$local_sha"
+        bad=$(git log --format='%h %G? %s' "$local_sha" --not --remotes | grep -v '^[0-9a-f]* G ')
+    else
+        bad=$(git log --format='%h %G? %s' "$remote_sha..$local_sha" | grep -v '^[0-9a-f]* G ')
+    fi
+    if [ -n "$bad" ]; then
+        echo "Unsigned or unverified commits in this push:" >&2
+        echo "$bad" >&2
+        echo "Run: git rebase --force-rebase --gpg-sign origin/main" >&2
+        status=1
+    fi
+done
+exit $status

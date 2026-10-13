@@ -40,6 +40,14 @@ with nothing to push it does nothing.
 
 Never run it on commits that are already pushed.
 
+A pre-push hook enforces this: it refuses a push while any commit in it is
+unsigned, and prints the rebase command. Install it once per clone:
+
+```
+cp tools/hooks/pre-push .git/hooks/pre-push
+chmod +x .git/hooks/pre-push
+```
+
 ## Release tags
 
 `git tag v<version>` signs because of `tag.gpgsign`. Check before pushing the
