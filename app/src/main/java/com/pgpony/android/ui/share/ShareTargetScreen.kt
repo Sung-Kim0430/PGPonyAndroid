@@ -65,16 +65,16 @@ import com.pgpony.android.R
 import com.pgpony.android.i18n.ErrorText
 import com.pgpony.android.intent.ShareIntentContent
 import androidx.core.content.FileProvider
+import com.pgpony.android.ui.util.ObserveSafeSave
+import com.pgpony.android.ui.util.SafeSave
+import com.pgpony.android.ui.util.SafeSaveProgress
 import com.pgpony.android.ui.util.ScratchFiles
+import com.pgpony.android.ui.util.rememberSaveState
 import java.io.File
 import com.pgpony.android.PGPonyApp
 import com.pgpony.android.crypto.card.CardDecryptService
 import com.pgpony.android.crypto.card.OpenPgpCardException
 import com.pgpony.android.saf.findDocumentCreatorHost
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 // ── Root Composable ────────────────────────────────────────────────────
 
@@ -100,9 +100,31 @@ fun ShareTargetScreen(
     // result payload and the Context both are. Cleared whenever the phase
     // changes so a note from an earlier result cannot follow the user into
     // the next one.
-    val saveScope = rememberCoroutineScope()
     var saveNote by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(state.phase) { saveNote = null }
+    // 4.7.0 (item 37, #73): Save runs in SafeSave on the process scope, with
+    // "Saving" and bytes written under the result and a Cancel, and a failed
+    // or cancelled save deletes the half-written document. Closing the Quick
+    // Action mid-save lets the copy finish; it reports with a Toast then.
+    var quickSaveTask by remember { mutableStateOf<SafeSave.Task?>(SafeSave.running(SafeSave.KEY_QUICK)) }
+    val quickSaveState: SafeSave.State? = rememberSaveState(quickSaveTask)
+    ObserveSafeSave(SafeSave.KEY_QUICK)
+    val savedNoteText = stringResource(R.string.result_save_saved_note)
+    val failedNoteText = stringResource(R.string.result_save_failed_note)
+    val cancelledNoteText = stringResource(R.string.save_cancelled)
+    LaunchedEffect(quickSaveState) {
+        when (quickSaveState) {
+            is SafeSave.State.Done -> saveNote = savedNoteText
+            is SafeSave.State.Failed -> saveNote = failedNoteText
+            is SafeSave.State.Cancelled -> saveNote = cancelledNoteText
+            is SafeSave.State.Running, null -> { }
+        }
+    }
+    val cancelQuickSave: () -> Unit = { quickSaveTask?.cancel() }
+    val onQuickSaveTask: (SafeSave.Task) -> Unit = { task ->
+        saveNote = null
+        quickSaveTask = task
+    }
 
     // HW Phase 3 — strings captured here; the NFC op lambda runs on a
     // binder thread and can't call stringResource.
@@ -111,6 +133,10 @@ fun ShareTargetScreen(
     val cardPairFirstMsg = stringResource(R.string.card_sign_pair_first)
     val cardDecFailedMsg = stringResource(R.string.card_sign_failed_generic)
 
+    CompositionLocalProvider(
+        LocalShareSaveState provides quickSaveState,
+        LocalShareSaveCancel provides cancelQuickSave,
+    ) {
     ShareScaffold(
         title = ShareTitleForPhase(state.phase),
         onDismiss = onDismiss,
@@ -236,9 +262,10 @@ fun ShareTargetScreen(
                     onCopy = { copyToClipboard(context, state.outputText, encrypt = true) },
                     onSave = {
                         saveResult(
-                            context, saveScope,
+                            context,
                             state.outputText.toByteArray(Charsets.UTF_8),
                             null, "encrypted.asc",
+                            onTask = onQuickSaveTask,
                         ) { saveNote = it }
                     },
                     onShare = { shareText(context, state.outputText, encrypt = true) },
@@ -252,10 +279,11 @@ fun ShareTargetScreen(
                     // previously no way to put it anywhere.
                     onSave = {
                         saveResult(
-                            context, saveScope,
+                            context,
                             state.encryptedFileBytes,
                             state.encryptedFile,
                             state.encryptedFileName ?: "encrypted.gpg",
+                            onTask = onQuickSaveTask,
                         ) { saveNote = it }
                     },
                     saveNote = saveNote,
@@ -276,9 +304,10 @@ fun ShareTargetScreen(
                     onCopy = { copyToClipboard(context, state.outputText, encrypt = false) },
                     onSave = {
                         saveResult(
-                            context, saveScope,
+                            context,
                             state.outputText.toByteArray(Charsets.UTF_8),
                             null, "message.txt",
+                            onTask = onQuickSaveTask,
                         ) { saveNote = it }
                     },
                     onShare = { shareText(context, state.outputText, encrypt = false) },
@@ -292,10 +321,11 @@ fun ShareTargetScreen(
                     // file could only be shared back out, never kept.
                     onSave = {
                         saveResult(
-                            context, saveScope,
+                            context,
                             state.decryptedFileBytes,
                             state.decryptedFile,
                             state.decryptedFileName ?: "decrypted_file",
+                            onTask = onQuickSaveTask,
                         ) { saveNote = it }
                     },
                     saveNote = saveNote,
@@ -319,6 +349,7 @@ fun ShareTargetScreen(
                 )
             }
         }
+    }
     }
 }
 
@@ -808,7 +839,11 @@ private fun ShareEncryptFileResultContent(
     // Share pair read as lopsided. Now stacked full-width like the
     // in-app result screen: filled primary Save on top, outlined Share
     // below, Done unchanged on its own row.
-    Button(onClick = onSave, modifier = Modifier.fillMaxWidth()) {
+    Button(
+        onClick = onSave,
+        enabled = LocalShareSaveState.current !is SafeSave.State.Running,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
         Icon(
             imageVector = Icons.Filled.SaveAlt,
             contentDescription = null,
@@ -900,7 +935,11 @@ private fun ShareDecryptFileResultContent(
     // Share pair read as lopsided. Now stacked full-width like the
     // in-app result screen: filled primary Save on top, outlined Share
     // below, Done unchanged on its own row.
-    Button(onClick = onSave, modifier = Modifier.fillMaxWidth()) {
+    Button(
+        onClick = onSave,
+        enabled = LocalShareSaveState.current !is SafeSave.State.Running,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
         Icon(
             imageVector = Icons.Filled.SaveAlt,
             contentDescription = null,
@@ -1015,6 +1054,7 @@ private fun ShareResultActionRow(
         // result, which is fine for a paragraph and useless for a key.
         OutlinedButton(
             onClick = onSave,
+            enabled = LocalShareSaveState.current !is SafeSave.State.Running,
             modifier = Modifier.weight(1f),
         ) {
             Icon(
@@ -1052,14 +1092,22 @@ private fun ShareResultActionRow(
  * puts it. Absent until something has actually been saved or failed to
  * save; a cancelled picker leaves it absent.
  */
+/** 4.7.0 (item 37): the running Quick Action save, for ShareSaveNote and
+ *  the Save buttons, provided once at the root. */
+private val LocalShareSaveState = compositionLocalOf<SafeSave.State?> { null }
+private val LocalShareSaveCancel = compositionLocalOf<(() -> Unit)?> { null }
+
 @Composable
 private fun ShareSaveNote(note: String?) {
+    // 4.7.0 (item 37, #73): "Saving" with bytes written while a save runs.
+    SafeSaveProgress(state = LocalShareSaveState.current, onCancel = LocalShareSaveCancel.current)
     if (note == null) return
     // RC5 P4 (#13, CertainBot): success note in the shared success green,
     // failure in the theme error color. Every caller assigns either
     // result_save_saved_note or result_save_failed_note, so the failed
     // resource fully discriminates the two outcomes.
-    val failed = note == stringResource(R.string.result_save_failed_note)
+    val failed = note == stringResource(R.string.result_save_failed_note) ||
+        note == stringResource(R.string.save_cancelled)
     Text(
         text = note,
         style = MaterialTheme.typography.bodySmall,
@@ -1183,10 +1231,10 @@ private fun shareFile(
  */
 private fun saveResult(
     context: Context,
-    scope: CoroutineScope,
     bytes: ByteArray?,
     scratch: File?,
     filename: String,
+    onTask: (SafeSave.Task) -> Unit,
     onNote: (String) -> Unit,
 ) {
     val host = context.findDocumentCreatorHost()
@@ -1196,35 +1244,17 @@ private fun saveResult(
     }
     host.startDocumentCreator("application/octet-stream", filename) { uri ->
         if (uri == null) return@startDocumentCreator
-        scope.launch {
-            val ok = withContext(Dispatchers.IO) {
-                try {
-                    val sink = context.contentResolver.openOutputStream(uri)
-                        ?: return@withContext false
-                    sink.use { out ->
-                        // Exactly one carrier is ever populated: buffered
-                        // bytes, or a scratch file from the streaming path.
-                        if (scratch != null) {
-                            scratch.inputStream().buffered().use { src ->
-                                src.copyTo(out)
-                            }
-                        } else {
-                            out.write(bytes ?: ByteArray(0))
-                        }
-                        out.flush()
-                    }
-                    true
-                } catch (e: Exception) {
-                    false
-                }
-            }
-            onNote(
-                context.getString(
-                    if (ok) R.string.result_save_saved_note
-                    else R.string.result_save_failed_note
-                )
-            )
+        // 4.7.0 (item 37, #73): the copy runs in SafeSave on the process
+        // scope (still off the main thread, as above), chunked with progress,
+        // and the document is deleted again if it fails or is cancelled.
+        // Exactly one carrier is ever populated: buffered bytes, or a
+        // scratch file from the streaming path.
+        val task = if (scratch != null) {
+            SafeSave.saveFileToDocument(context, SafeSave.KEY_QUICK, uri, filename, scratch)
+        } else {
+            SafeSave.saveBytesToDocument(context, SafeSave.KEY_QUICK, uri, filename, bytes ?: ByteArray(0))
         }
+        onTask(task)
     }
 }
 

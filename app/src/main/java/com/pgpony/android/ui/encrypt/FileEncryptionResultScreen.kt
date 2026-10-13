@@ -51,7 +51,11 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
+import com.pgpony.android.ui.util.ObserveSafeSave
+import com.pgpony.android.ui.util.SafeSave
+import com.pgpony.android.ui.util.SafeSaveProgress
 import com.pgpony.android.ui.util.ScratchFiles
+import com.pgpony.android.ui.util.rememberSaveState
 import com.pgpony.android.R
 import com.pgpony.android.i18n.ErrorText
 import com.pgpony.android.MainActivity
@@ -87,6 +91,22 @@ fun FileEncryptionResultScreen(state: EncryptUiState, onDismiss: () -> Unit) {
     // Dispatchers.IO, with both buttons disabled while it does.
     val ioScope = rememberCoroutineScope()
     var copying by remember { mutableStateOf(false) }
+    // 4.7.0 (item 37, #73): Save runs in SafeSave on the process scope with
+    // progress, so a large ciphertext keeps saving when this sheet closes,
+    // and a failed or cancelled save deletes the half-written document.
+    var saveTask by remember { mutableStateOf<SafeSave.Task?>(SafeSave.running(SafeSave.KEY_ENCRYPT)) }
+    val saveState: SafeSave.State? = rememberSaveState(saveTask)
+    val saving = saveState is SafeSave.State.Running
+    ObserveSafeSave(SafeSave.KEY_ENCRYPT)
+    val saveCancelledText = stringResource(R.string.save_cancelled)
+    LaunchedEffect(saveState) {
+        when (val st = saveState) {
+            is SafeSave.State.Done -> saveStatus = SaveStatus.Saved
+            is SafeSave.State.Failed -> saveStatus = SaveStatus.Error(st.message)
+            is SafeSave.State.Cancelled -> saveStatus = SaveStatus.Error(saveCancelledText)
+            is SafeSave.State.Running, null -> { }
+        }
+    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -298,43 +318,40 @@ stringResource(R.string.file_enc_result_badge_can_decrypt),
                             // user cancelled, silent
                             return@startDocumentCreator
                         }
-                        copying = true
-                        ioScope.launch {
-                            saveStatus = try {
-                                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                                    val out = context.contentResolver.openOutputStream(uri)
-                                    if (out != null) {
-                                        if (wrapZip) {
-                                            // ZipPackaging owns and closes `out`.
-                                            com.pgpony.android.ui.util.ZipPackaging.writeSingleEntry(out, encryptedName) { dst ->
-                                                if (encryptedBytes != null) dst.write(encryptedBytes)
-                                                else streamed?.inputStream()?.buffered()?.use { it.copyTo(dst) }
-                                            }
-                                        } else {
-                                            out.use { sink ->
-                                                if (encryptedBytes != null) sink.write(encryptedBytes)
-                                                else streamed?.inputStream()?.buffered()?.use { it.copyTo(sink) }
-                                                sink.flush()
-                                            }
-                                        }
-                                    }
+                        saveStatus = SaveStatus.Idle
+                        val saveName = if (wrapZip) "$encryptedName.zip" else encryptedName
+                        saveTask = if (wrapZip) {
+                            // ZipPackaging owns and closes the stream; closing
+                            // twice is harmless in SafeSave. Ciphertext barely
+                            // deflates, so its size is a fair progress total.
+                            SafeSave.saveToDocument(
+                                context, SafeSave.KEY_ENCRYPT, uri, saveName,
+                                totalBytes = encryptedSize
+                            ) { out ->
+                                com.pgpony.android.ui.util.ZipPackaging.writeSingleEntry(out, encryptedName) { dst ->
+                                    if (encryptedBytes != null) dst.write(encryptedBytes)
+                                    else streamed?.inputStream()?.buffered()?.use { it.copyTo(dst) }
                                 }
-                                SaveStatus.Saved
-                            } catch (e: Exception) {
-                                SaveStatus.Error(ErrorText.localize(context, e.message) ?: context.getString(R.string.file_enc_result_save_failed_default))
-                            } finally {
-                                copying = false
                             }
+                        } else if (streamed != null) {
+                            SafeSave.saveFileToDocument(context, SafeSave.KEY_ENCRYPT, uri, saveName, streamed)
+                        } else if (encryptedBytes != null) {
+                            SafeSave.saveBytesToDocument(context, SafeSave.KEY_ENCRYPT, uri, saveName, encryptedBytes)
+                        } else {
+                            null
                         }
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = activity != null && !copying
+                enabled = activity != null && !copying && !saving
             ) {
                 Icon(Icons.Filled.SaveAlt, null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(stringResource(R.string.file_enc_result_save_button))
             }
+
+            // 4.7.0 (item 37): "Saving" with bytes written while the copy runs.
+            SafeSaveProgress(state = saveState, onCancel = { saveTask?.cancel() })
 
             OutlinedButton(
                 enabled = !copying,

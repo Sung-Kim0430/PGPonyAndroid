@@ -35,7 +35,11 @@ import androidx.compose.ui.unit.dp
 import com.pgpony.android.MainActivity
 import com.pgpony.android.R
 import com.pgpony.android.ui.decrypt.VerificationBanner
+import com.pgpony.android.ui.util.ObserveSafeSave
+import com.pgpony.android.ui.util.SafeSave
+import com.pgpony.android.ui.util.SafeSaveProgress
 import com.pgpony.android.ui.util.ScratchFiles
+import com.pgpony.android.ui.util.rememberSaveState
 
 private val BatchGreen = Color(0xFF22C55E)
 
@@ -64,6 +68,14 @@ fun FileBatchResultScreen(
     )
     var passphrase by remember { mutableStateOf("") }
     var shareError by remember { mutableStateOf<String?>(null) }
+    // 4.7.0 (item 37, #73): Save to a folder runs in SafeSave on the process
+    // scope; this follows its bytes written, and a save that ends after the
+    // sheet closed reports with a Toast instead.
+    ObserveSafeSave(SafeSave.KEY_BATCH)
+    val saveTask: SafeSave.Task? = remember(batch.saving) {
+        if (batch.saving) SafeSave.running(SafeSave.KEY_BATCH) else null
+    }
+    val saveState: SafeSave.State? = rememberSaveState(saveTask)
 
     ModalBottomSheet(
         onDismissRequest = { if (!batch.running) onDismiss() },
@@ -202,6 +214,9 @@ fun FileBatchResultScreen(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(stringResource(R.string.batch_share_all))
                 }
+            }
+            if (batch.saving) {
+                SafeSaveProgress(state = saveState, onCancel = { saveTask?.cancel() })
             }
             batch.saveSummary?.let {
                 Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)

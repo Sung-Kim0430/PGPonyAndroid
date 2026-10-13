@@ -58,7 +58,11 @@ import com.pgpony.android.R
 import com.pgpony.android.i18n.ErrorText
 import com.pgpony.android.ui.decrypt.VerificationBanner
 import com.pgpony.android.ui.util.ClipboardService
+import com.pgpony.android.ui.util.ObserveSafeSave
+import com.pgpony.android.ui.util.SafeSave
+import com.pgpony.android.ui.util.SafeSaveProgress
 import com.pgpony.android.ui.util.ScratchFiles
+import com.pgpony.android.ui.util.rememberSaveState
 import java.io.File
 import kotlinx.coroutines.launch
 
@@ -115,6 +119,22 @@ fun FileDecryptionResultScreen(state: DecryptUiState, onDismiss: () -> Unit) {
     val ioScope = rememberCoroutineScope()
     var copying by remember { mutableStateOf(false) }
     var copied by remember { mutableStateOf(false) }
+    // 4.7.0 (item 37, #73): the Save copy runs in SafeSave on the process
+    // scope, so leaving this sheet (or the app) no longer cuts it short. A
+    // save still running from an earlier sheet is picked up again here.
+    var saveTask by remember { mutableStateOf<SafeSave.Task?>(SafeSave.running(SafeSave.KEY_DECRYPT)) }
+    val saveState: SafeSave.State? = rememberSaveState(saveTask)
+    val saving = saveState is SafeSave.State.Running
+    ObserveSafeSave(SafeSave.KEY_DECRYPT)
+    val savedCancelledText = stringResource(R.string.save_cancelled)
+    LaunchedEffect(saveState) {
+        when (val st = saveState) {
+            is SafeSave.State.Done -> saveStatus = DecryptSaveStatus.Saved
+            is SafeSave.State.Failed -> saveStatus = DecryptSaveStatus.Error(st.message)
+            is SafeSave.State.Cancelled -> saveStatus = DecryptSaveStatus.Error(savedCancelledText)
+            is SafeSave.State.Running, null -> { }
+        }
+    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -239,38 +259,31 @@ fun FileDecryptionResultScreen(state: DecryptUiState, onDismiss: () -> Unit) {
                         suggestedName = outName
                     ) { uri ->
                         if (uri == null) return@startDocumentCreator
-                        copying = true
-                        ioScope.launch {
-                            saveStatus = try {
-                                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                                    context.contentResolver.openOutputStream(uri)?.use { sink ->
-                                        // 4.0.4: the streamed branch copies in
-                                        // chunks; writing a whole 13 MB array here
-                                        // would undo the point of streaming it.
-                                        if (bytes != null) {
-                                            sink.write(bytes)
-                                        } else if (streamed != null) {
-                                            streamed.inputStream().buffered().use { it.copyTo(sink) }
-                                        }
-                                        sink.flush()
-                                    }
-                                }
-                                DecryptSaveStatus.Saved
-                            } catch (e: Exception) {
-                                DecryptSaveStatus.Error(ErrorText.localize(context, e.message) ?: context.getString(R.string.result_file_decrypt_save_failed_fallback))
-                            } finally {
-                                copying = false
-                            }
+                        // 4.7.0 (item 37): chunked, with progress, and the
+                        // document is deleted again if the copy fails or is
+                        // cancelled. The streamed branch never loads the file.
+                        saveStatus = DecryptSaveStatus.Idle
+                        saveTask = when {
+                            streamed != null -> SafeSave.saveFileToDocument(
+                                context, SafeSave.KEY_DECRYPT, uri, outName, streamed
+                            )
+                            bytes != null -> SafeSave.saveBytesToDocument(
+                                context, SafeSave.KEY_DECRYPT, uri, outName, bytes
+                            )
+                            else -> null
                         }
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = activity != null && !copying
+                enabled = activity != null && !copying && !saving
             ) {
                 Icon(Icons.Filled.SaveAlt, null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(stringResource(R.string.result_file_decrypt_save_button))
             }
+
+            // 4.7.0 (item 37): "Saving" with bytes written while the copy runs.
+            SafeSaveProgress(state = saveState, onCancel = { saveTask?.cancel() })
 
             // ── 5. Share Decrypted File ──────────────────────────────
             OutlinedButton(

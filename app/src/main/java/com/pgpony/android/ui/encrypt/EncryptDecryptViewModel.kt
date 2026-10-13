@@ -3216,6 +3216,12 @@ class EncryptDecryptViewModel(private val repo: KeyRepository) : ViewModel() {
      * 4.7.0 (items 15 and 38): copy every finished output into the folder
      * the user picked (ACTION_OPEN_DOCUMENT_TREE), never over a file that is
      * already there: a taken name gets " (1)", " (2)" and so on.
+     *
+     * 4.7.0 (item 37, #73): the copy runs in SafeSave on the process scope,
+     * so it keeps going when the sheet closes, shows bytes written, can be
+     * cancelled, and writes each file as ".<name>.part" renamed only once it
+     * is complete. Results come back per file, on the main thread, and are
+     * dropped if the batch was closed (or replaced) in the meantime.
      */
     fun saveFileBatchToFolder(treeUri: android.net.Uri, decrypt: Boolean) {
         val batch = (if (decrypt) _decryptState.value.fileBatch else _encryptState.value.fileBatch) ?: return
@@ -3223,52 +3229,54 @@ class EncryptDecryptViewModel(private val repo: KeyRepository) : ViewModel() {
         val update: ((FileBatchState) -> FileBatchState) -> Unit =
             if (decrypt) this::updateDecryptBatch else this::updateEncryptBatch
         val app = PGPonyApp.instance
+        val indices: List<Int> = batch.items.indices.filter { i ->
+            val item = batch.items[i]
+            item.status is FileBatchStatus.Done && item.output != null
+        }
+        val treeItems: List<com.pgpony.android.ui.util.SafeSave.TreeItem> = indices.map { i ->
+            val item = batch.items[i]
+            val file: java.io.File = item.output!!
+            com.pgpony.android.ui.util.SafeSave.TreeItem(file, item.outputName ?: file.name)
+        }
+        val generation = ++batchSaveGeneration
         update { it.copy(saving = true, saveSummary = null) }
-        viewModelScope.launch {
-            val saved: List<FileBatchItem>? = withContext(Dispatchers.IO) {
-                val dir = try {
-                    androidx.documentfile.provider.DocumentFile.fromTreeUri(app, treeUri)
-                } catch (_: Exception) { null }
-                if (dir == null || !dir.isDirectory) return@withContext null
-                val taken = HashSet<String>()
-                try { dir.listFiles().forEach { f -> f.name?.let { taken.add(it) } } } catch (_: Exception) {}
-                batch.items.map { item ->
-                    val file = item.output
-                    if (item.status !is FileBatchStatus.Done || file == null) return@map item
-                    try {
-                        val name = FileBatchNaming.uniqueName(item.outputName ?: file.name, taken)
-                        val doc = dir.createFile("application/octet-stream", name)
-                            ?: throw java.io.IOException(app.getString(R.string.batch_save_failed_item))
-                        app.contentResolver.openOutputStream(doc.uri)?.use { sink ->
-                            file.inputStream().buffered().use { it.copyTo(sink) }
-                            sink.flush()
-                        } ?: throw java.io.IOException(app.getString(R.string.batch_save_failed_item))
-                        val actual = doc.name ?: name
-                        taken.add(name)
-                        taken.add(actual)
-                        item.copy(savedAs = actual, saveError = null)
-                    } catch (e: Exception) {
-                        item.copy(
-                            saveError = ErrorText.localize(e.message)?.takeIf { it.isNotBlank() }
-                                ?: app.getString(R.string.batch_save_failed_item)
-                        )
+        com.pgpony.android.ui.util.SafeSave.saveFilesToTree(
+            context = app,
+            key = com.pgpony.android.ui.util.SafeSave.KEY_BATCH,
+            treeUri = treeUri,
+            items = treeItems,
+            uniqueName = { desired, taken -> FileBatchNaming.uniqueName(desired, taken) },
+            onItem = { n, result ->
+                if (generation == batchSaveGeneration) {
+                    val target = indices[n]
+                    update { b ->
+                        b.copy(items = b.items.mapIndexed { j, item ->
+                            if (j == target) item.copy(savedAs = result.savedAs, saveError = result.error) else item
+                        })
+                    }
+                }
+            },
+            onFinished = { results ->
+                if (generation == batchSaveGeneration) {
+                    update { b ->
+                        if (results == null) {
+                            b.copy(saving = false, saveSummary = app.getString(R.string.batch_save_folder_unusable))
+                        } else {
+                            val count = results.count { it.savedAs != null }
+                            b.copy(
+                                saving = false,
+                                saveSummary = app.getString(R.string.batch_saved_summary_format, count, b.doneCount)
+                            )
+                        }
                     }
                 }
             }
-            update { b ->
-                if (saved == null) {
-                    b.copy(saving = false, saveSummary = app.getString(R.string.batch_save_folder_unusable))
-                } else {
-                    val count = saved.count { it.savedAs != null }
-                    b.copy(
-                        saving = false,
-                        items = saved,
-                        saveSummary = app.getString(R.string.batch_saved_summary_format, count, b.doneCount)
-                    )
-                }
-            }
-        }
+        )
     }
+
+    /** 4.7.0 (item 37): bumped when a batch save starts or its sheet closes,
+     *  so results from a save that outlived its batch touch nothing. */
+    private var batchSaveGeneration = 0
 
     /** 4.7.0 (items 15 and 38): close the batch sheet and drop its outputs. */
     fun dismissFileBatch(decrypt: Boolean) {
@@ -3277,6 +3285,9 @@ class EncryptDecryptViewModel(private val repo: KeyRepository) : ViewModel() {
             fileOpJob?.cancel()
             fileOpJob = null
         }
+        // 4.7.0 (item 37): a Save to a folder still running keeps going (its
+        // sources are already open); its results no longer belong anywhere.
+        batchSaveGeneration++
         ScratchFiles.clearScope(PGPonyApp.instance, ScratchFiles.SCOPE_BATCH)
         batchPassphrase = null
         batchPqcDecision = null

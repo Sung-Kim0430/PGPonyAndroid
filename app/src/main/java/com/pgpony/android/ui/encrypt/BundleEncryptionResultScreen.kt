@@ -71,6 +71,10 @@ import com.pgpony.android.MainActivity
 import com.pgpony.android.R
 import com.pgpony.android.crypto.mime.MimeBuilder
 import com.pgpony.android.ui.util.ClipboardService
+import com.pgpony.android.ui.util.ObserveSafeSave
+import com.pgpony.android.ui.util.SafeSave
+import com.pgpony.android.ui.util.SafeSaveProgress
+import com.pgpony.android.ui.util.rememberSaveState
 import java.io.File
 import kotlinx.coroutines.launch
 
@@ -130,6 +134,41 @@ fun BundleEncryptionResultScreen(state: EncryptUiState, onDismiss: () -> Unit) {
             )
         }
     )
+    // 4.7.0 (item 37, #73): Save runs in SafeSave on the process scope with
+    // progress, so it keeps going when the sheet closes, and a failed or
+    // cancelled save deletes the half-written document. Shares still use
+    // ExportControl and still hold the sheet open while they write.
+    var saveTask by remember { mutableStateOf<SafeSave.Task?>(SafeSave.running(SafeSave.KEY_BUNDLE)) }
+    val saveState: SafeSave.State? = rememberSaveState(saveTask)
+    val saving = saveState is SafeSave.State.Running
+    ObserveSafeSave(SafeSave.KEY_BUNDLE)
+    val savedNoteText = stringResource(R.string.result_save_saved_note)
+    val failedNoteText = stringResource(R.string.result_save_failed_note)
+    val cancelledNoteText = stringResource(R.string.save_cancelled)
+    LaunchedEffect(saveState) {
+        when (saveState) {
+            is SafeSave.State.Done -> exportNote = savedNoteText
+            is SafeSave.State.Failed -> exportNote = failedNoteText
+            is SafeSave.State.Cancelled -> exportNote = cancelledNoteText
+            is SafeSave.State.Running, null -> { }
+        }
+    }
+    val startSave: (String, Long, (java.io.OutputStream) -> Unit) -> Unit = { name, minBytes, write ->
+        activity?.startDocumentCreator(
+            mimeType = "application/octet-stream",
+            suggestedName = name
+        ) { uri ->
+            if (uri != null) {
+                exportNote = null
+                saveTask = SafeSave.saveToDocument(
+                    context, SafeSave.KEY_BUNDLE, uri, name,
+                    totalBytes = armoredFile?.length() ?: (armored?.length?.toLong() ?: 0L),
+                    minExpectedBytes = minBytes,
+                    write = write
+                )
+            }
+        }
+    }
     val recipients = state.selectedRecipients.size
     val attachmentCount = state.bundleAttachments.size
 
@@ -206,20 +245,22 @@ fun BundleEncryptionResultScreen(state: EncryptUiState, onDismiss: () -> Unit) {
                     Text(stringResource(R.string.bundle_result_share_eml))
                 }
                 OutlinedButton(
-                    enabled = !exporting,
+                    enabled = !exporting && !saving && activity != null,
                     onClick = {
-                        saveBundleStream(
-                            activity, context, scope, exportCtl, "message.eml",
-                            minExpectedBytes = armoredFile?.length() ?: 0L
-                        ) { out ->
+                        startSave("message.eml", armoredFile?.length() ?: 0L) { out ->
                             if (armored != null) {
                                 out.write(MimeBuilder.wrapEncrypted(armored, autocryptHeader = autocryptHeader))
                             } else {
-                                MimeBuilder.wrapEncryptedTo(
-                                    out,
-                                    { java.io.FileInputStream(armoredFile!!) },
-                                    autocryptHeader = autocryptHeader
-                                )
+                                // 4.7.0 (item 37): opened before the first
+                                // byte, so closing the sheet (which deletes
+                                // the scratch file) cannot cut the copy short.
+                                java.io.FileInputStream(armoredFile!!).use { src ->
+                                    MimeBuilder.wrapEncryptedTo(
+                                        out,
+                                        { src },
+                                        autocryptHeader = autocryptHeader
+                                    )
+                                }
                             }
                         }
                     }
@@ -273,12 +314,12 @@ fun BundleEncryptionResultScreen(state: EncryptUiState, onDismiss: () -> Unit) {
                     Text(stringResource(R.string.bundle_result_share_asc))
                 }
                 OutlinedButton(
-                    enabled = !exporting,
+                    enabled = !exporting && !saving && activity != null,
                     onClick = {
-                        saveBundleStream(
-                            activity, context, scope, exportCtl, ascName,
-                            minExpectedBytes = if (wrapZip) 0L else (armoredFile?.length() ?: 0L),
-                            write = writeAscOut
+                        startSave(
+                            ascName,
+                            if (wrapZip) 0L else (armoredFile?.length() ?: 0L),
+                            writeAscOut
                         )
                     }
                 ) {
@@ -304,6 +345,8 @@ fun BundleEncryptionResultScreen(state: EncryptUiState, onDismiss: () -> Unit) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+            // 4.7.0 (item 37): "Saving" with bytes written while a save runs.
+            SafeSaveProgress(state = saveState, onCancel = { saveTask?.cancel() })
             if (exporting) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -322,7 +365,7 @@ fun BundleEncryptionResultScreen(state: EncryptUiState, onDismiss: () -> Unit) {
                 }
             } else {
                 exportNote?.let {
-                    val failed = it == stringResource(R.string.result_save_failed_note)
+                    val failed = it == failedNoteText || it == cancelledNoteText
                     Text(
                         it,
                         style = MaterialTheme.typography.bodySmall,
@@ -345,11 +388,11 @@ fun BundleEncryptionResultScreen(state: EncryptUiState, onDismiss: () -> Unit) {
     }
 }
 
-// 3.1.0 Phase 5 Fix1 — SAF save: octet-stream so the suggested name is
-// kept verbatim (see Phase 2 Fix1).
-// 4.2.0 RC6 (#32, tail): takes a writer instead of bytes, and the write
-// runs on Dispatchers.IO — a file-backed result can be over a gigabyte,
-// which is seconds of copying that must not sit on the main thread.
+// 4.7.0 (item 37, #73): saveBundleStream (the screen-scoped SAF save with
+// its byte counter) became startSave above, through SafeSave, which keeps
+// the octet-stream picker (3.1.0 Phase 5 Fix1), the off-main-thread write
+// and the short-write check (4.2.0 RC6, #32), and adds progress, cancel and
+// delete-on-failure.
 /** 4.2.0 RC6 (#32, tail-2): begin/finish hooks the sheet uses to show
  *  export progress and gate its buttons. finish(true) = complete. Both
  *  are invoked on Main. */
@@ -357,71 +400,6 @@ private class ExportControl(
     val begin: () -> Unit,
     val finish: (ok: Boolean) -> Unit
 )
-
-private fun saveBundleStream(
-    activity: MainActivity?,
-    context: Context,
-    scope: kotlinx.coroutines.CoroutineScope,
-    ctl: ExportControl,
-    suggestedName: String,
-    minExpectedBytes: Long,
-    write: (java.io.OutputStream) -> Unit
-) {
-    activity?.startDocumentCreator(
-        mimeType = "application/octet-stream",
-        suggestedName = suggestedName
-    ) { uri ->
-        if (uri == null) return@startDocumentCreator
-        ctl.begin()
-        scope.launch(kotlinx.coroutines.Dispatchers.IO) {
-            // 4.2.0 RC6 (#32, tail-3): Throwable, not Exception — an
-            // OutOfMemoryError or provider Error must land in the failed
-            // note, not kill the coroutine with the spinner stuck on.
-            // Bytes are counted and checked against the minimum the
-            // export must contain, so a short write (disk full mid-way,
-            // provider truncation) can never be reported as Saved. The
-            // cause is logged for logcat diagnosis.
-            val counter = CountingOutputStream()
-            val ok = try {
-                val raw = context.contentResolver.openOutputStream(uri, "wt")
-                if (raw == null) false else {
-                    counter.delegate = raw
-                    java.io.BufferedOutputStream(counter).use(write)
-                    counter.count >= minExpectedBytes
-                }
-            } catch (t: Throwable) {
-                android.util.Log.e(
-                    "PGPonyBundleExport",
-                    "save $suggestedName failed after ${counter.count} bytes", t
-                )
-                false
-            }
-            if (ok && counter.count < minExpectedBytes) {
-                android.util.Log.e(
-                    "PGPonyBundleExport",
-                    "save $suggestedName short: ${counter.count} < $minExpectedBytes"
-                )
-            }
-            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
-                ctl.finish(ok)
-            }
-        }
-    }
-}
-
-/** 4.2.0 RC6 (#32, tail-3): counts bytes on the way through so a short
- *  write is detectable and the failure log can say where it stopped. */
-private class CountingOutputStream : java.io.OutputStream() {
-    lateinit var delegate: java.io.OutputStream
-    var count: Long = 0
-        private set
-    override fun write(b: Int) { delegate.write(b); count++ }
-    override fun write(b: ByteArray, off: Int, len: Int) {
-        delegate.write(b, off, len); count += len
-    }
-    override fun flush() = delegate.flush()
-    override fun close() = delegate.close()
-}
 
 @Composable
 private fun SectionLabel(text: String) {

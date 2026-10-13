@@ -2865,4 +2865,14 @@
     <string name="share_files_choice_message">%1$d of the %2$d files are encrypted messages. Decrypt those, or encrypt all of the files as one package?</string>
     <string name="share_files_choice_decrypt_format">Decrypt %1$d</string>
     <string name="share_files_choice_encrypt">Encrypt all</string>
+
+    <!-- 4.7.0 (item 37): saving a large file, with progress, kept going when the screen closes, and no unfinished file left behind. -->
+    <string name="save_progress_saving">Saving…</string>
+    <string name="save_progress_bytes_format">Saving %1$s of %2$s</string>
+    <string name="save_cancelled">Save cancelled. The unfinished file was removed.</string>
+    <string name="save_failed_generic">Couldn\'t save the file. Try again, or choose another place.</string>
+    <string name="save_failed_no_space">Not enough free space to save the file.</string>
+    <string name="save_toast_saved_format">Saved %1$s</string>
+    <string name="save_toast_failed_format">Couldn\'t save %1$s</string>
+    <string name="save_batch_item_cancelled">Not saved: the save was cancelled.</string>
 </resources>
