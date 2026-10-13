@@ -1517,6 +1517,10 @@ Vous pouvez aussi verrouiller l\'application derrière votre empreinte digitale 
     <string name="certify_done_body">Renvoyez la clé certifiée à son propriétaire pour que d\'autres puissent voir votre certification. keys.openpgp.org supprime les certifications faites par d\'autres personnes : envoyez-la donc directement ou via un autre serveur de clés.</string>
     <string name="certify_done_body_local">Votre certification locale reste sur cet appareil.</string>
     <string name="certify_done_mark_verified">Marquer comme Vérifiée</string>
+    <string name="passphrase_hold_channel_name">Phrase secrète mémorisée pour les apps de messagerie</string>
+    <string name="passphrase_hold_title">PGPony mémorise une phrase secrète</string>
+    <string name="passphrase_hold_text">Les apps de messagerie peuvent l\'utiliser sans la redemander. Touchez Effacer pour l\'oublier maintenant.</string>
+    <string name="passphrase_hold_clear">Effacer</string>
     <string name="key_detail_cert_by">Certifiée par %1$s</string>
     <string name="key_detail_cert_unknown_issuer">la clé %1$s, absente de votre trousseau</string>
     <string name="key_detail_cert_local">locale</string>

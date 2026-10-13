@@ -834,6 +834,10 @@
     <string name="certify_done_body">Надішліть сертифікований ключ назад власникові, щоб інші могли бачити вашу сертифікацію. Сервер keys.openpgp.org відкидає сертифікації, зроблені іншими людьми, тому надішліть ключ напряму або через інший сервер ключів.</string>
     <string name="certify_done_body_local">Ваша локальна сертифікація залишається на цьому пристрої.</string>
     <string name="certify_done_mark_verified">Позначити як «Перевірено»</string>
+    <string name="passphrase_hold_channel_name">Зберігання парольної фрази для поштових застосунків</string>
+    <string name="passphrase_hold_title">PGPony зберігає парольну фразу</string>
+    <string name="passphrase_hold_text">Поштові застосунки можуть використовувати її без повторного запиту. Натисніть «Очистити», щоб стерти її зараз.</string>
+    <string name="passphrase_hold_clear">Очистити</string>
     <string name="key_detail_cert_by">Сертифіковано: %1$s</string>
     <string name="key_detail_cert_unknown_issuer">ключ %1$s, якого немає у вашій зв’язці ключів</string>
     <string name="key_detail_cert_local">локальна</string>

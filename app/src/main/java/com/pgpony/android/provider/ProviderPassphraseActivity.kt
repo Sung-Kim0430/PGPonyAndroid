@@ -166,6 +166,8 @@ class ProviderPassphraseActivity : ComponentActivity() {
                             enabled = passphrase.isNotEmpty(),
                             onClick = {
                                 ProviderPassphraseCache.put(keyId, passphrase)
+                                // 4.7.0 (item 36): keep this process alive while it holds the passphrase.
+                                PassphraseHoldService.startIfWanted(this@ProviderPassphraseActivity)
                                 // 4.0.4: hand the original request back so the
                                 // client can re-execute it immediately, the
                                 // same contract ProviderKeyPickerActivity uses.

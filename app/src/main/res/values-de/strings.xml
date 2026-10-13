@@ -1517,6 +1517,10 @@ Optional kannst du die App hinter deinem Fingerabdruck oder Gesicht sperren, um 
     <string name="certify_done_body">Schicke den beglaubigten Schlüssel an seinen Inhaber zurück, damit andere deine Beglaubigung sehen können. keys.openpgp.org verwirft Beglaubigungen von anderen Personen, also schicke ihn direkt oder über einen anderen Schlüsselserver.</string>
     <string name="certify_done_body_local">Deine lokale Beglaubigung bleibt auf diesem Gerät.</string>
     <string name="certify_done_mark_verified">Als Verifiziert markieren</string>
+    <string name="passphrase_hold_channel_name">Passphrase für Mail-Apps gemerkt</string>
+    <string name="passphrase_hold_title">PGPony merkt sich eine Passphrase</string>
+    <string name="passphrase_hold_text">Mail-Apps können sie nutzen, ohne erneut zu fragen. Tippe auf Löschen, um sie jetzt zu vergessen.</string>
+    <string name="passphrase_hold_clear">Löschen</string>
     <string name="key_detail_cert_by">Beglaubigt von %1$s</string>
     <string name="key_detail_cert_unknown_issuer">Schlüssel %1$s, nicht in deinem Schlüsselbund</string>
     <string name="key_detail_cert_local">lokal</string>

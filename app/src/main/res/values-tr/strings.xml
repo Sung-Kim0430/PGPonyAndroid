@@ -830,6 +830,10 @@
     <string name="certify_done_body">Başkalarının onayınızı görebilmesi için onaylanan anahtarı sahibine geri gönderin. keys.openpgp.org başka kişilerin yaptığı onayları kaldırır, bu yüzden anahtarı doğrudan veya başka bir anahtar sunucusu üzerinden gönderin.</string>
     <string name="certify_done_body_local">Yerel onayınız bu cihazda kalır.</string>
     <string name="certify_done_mark_verified">Doğrulanmış olarak işaretle</string>
+    <string name="passphrase_hold_channel_name">E-posta uygulamaları için hatırlanan parola ifadesi</string>
+    <string name="passphrase_hold_title">PGPony bir parola ifadesini hatırlıyor</string>
+    <string name="passphrase_hold_text">E-posta uygulamaları tekrar sormadan bunu kullanabilir. Şimdi unutmak için Temizle düğmesine dokunun.</string>
+    <string name="passphrase_hold_clear">Temizle</string>
     <string name="key_detail_cert_by">Onaylayan: %1$s</string>
     <string name="key_detail_cert_unknown_issuer">%1$s anahtarı, anahtarlığınızda yok</string>
     <string name="key_detail_cert_local">yerel</string>

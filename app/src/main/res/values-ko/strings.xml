@@ -781,6 +781,10 @@
     <string name="certify_done_body">다른 사람들이 내 인증을 볼 수 있도록 인증한 키를 소유자에게 다시 보내세요. keys.openpgp.org는 다른 사람이 만든 인증을 제거하므로 직접 보내거나 다른 키 서버를 통해 보내세요.</string>
     <string name="certify_done_body_local">로컬 인증은 이 기기에 그대로 남습니다.</string>
     <string name="certify_done_mark_verified">검증됨으로 표시</string>
+    <string name="passphrase_hold_channel_name">메일 앱용으로 유지 중인 비밀구절</string>
+    <string name="passphrase_hold_title">PGPony가 비밀구절을 유지하고 있습니다</string>
+    <string name="passphrase_hold_text">메일 앱이 다시 묻지 않고 이 비밀구절을 사용할 수 있습니다. 지금 바로 잊게 하려면 지우기를 누르세요.</string>
+    <string name="passphrase_hold_clear">지우기</string>
     <string name="key_detail_cert_by">인증자: %1$s</string>
     <string name="key_detail_cert_unknown_issuer">키링에 없는 키 %1$s</string>
     <string name="key_detail_cert_local">로컬</string>

@@ -877,8 +877,13 @@ Test: on the reporter's class of device if one turns up, otherwise stock Android
 again; Clear from the notification and from Settings both stop it and the next decrypt asks; a 15 minute
 duration stops the service at expiry.
 
-Status: proposed. Asked the reporter whether a persistent notification while a passphrase is held is
-acceptable; waiting on the reply.
+Status: RC2. PassphraseHoldService (in :remote_api, specialUse, not exported) starts from
+ProviderPassphraseActivity right after put() when the duration is over 5 minutes, until cleared, or until the
+phone locks; low-importance silent channel; Clear in the notification wipes the provider, card PIN and in-app
+caches and stops it; it checks the cache every 30 seconds and stops when nothing is held; a clear from Settings
+(ProviderCacheClearReceiver) stops it too. Not sticky. Before this build reaches Play, the special-use
+declaration has to be filed in the Play Console. The reporter was asked about the notification; if they object,
+a setting to turn it off follows. 4 strings, all 10 locales.
 
 
 ## 37. Saving a large decrypted file shows nothing and can be cut short (#73)

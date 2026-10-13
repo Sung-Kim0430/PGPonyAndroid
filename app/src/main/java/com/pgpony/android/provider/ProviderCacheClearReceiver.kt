@@ -27,8 +27,11 @@ class ProviderCacheClearReceiver : BroadcastReceiver() {
             // 4.6.0 (item 17.10): a clear-all must reach every secret this process holds.
             com.pgpony.android.crypto.card.CardPinCache.clear()
             com.pgpony.android.session.InAppPassphraseCache.clearAll()
+            // 4.7.0 (item 36): nothing left to hold.
+            PassphraseHoldService.stop(context)
         } else {
             ProviderPassphraseCache.clearKeys(ids.toList())
+            if (!ProviderPassphraseCache.isHolding()) PassphraseHoldService.stop(context)
         }
     }
 

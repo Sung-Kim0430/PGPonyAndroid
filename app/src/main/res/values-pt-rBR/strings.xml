@@ -1517,6 +1517,10 @@ Opcionalmente, bloqueie o app com sua impressão digital ou rosto para mais tran
     <string name="certify_done_body">Envie a chave certificada de volta ao dono para que outras pessoas possam ver sua certificação. O keys.openpgp.org descarta certificações feitas por outras pessoas, então envie diretamente ou por outro servidor de chaves.</string>
     <string name="certify_done_body_local">Sua certificação local fica neste dispositivo.</string>
     <string name="certify_done_mark_verified">Marcar como Verificada</string>
+    <string name="passphrase_hold_channel_name">Frase-senha lembrada para apps de e-mail</string>
+    <string name="passphrase_hold_title">O PGPony está lembrando uma frase-senha</string>
+    <string name="passphrase_hold_text">Apps de e-mail podem usá-la sem pedir de novo. Toque em Apagar para esquecê-la agora.</string>
+    <string name="passphrase_hold_clear">Apagar</string>
     <string name="key_detail_cert_by">Certificado por %1$s</string>
     <string name="key_detail_cert_unknown_issuer">chave %1$s, que não está no seu chaveiro</string>
     <string name="key_detail_cert_local">local</string>

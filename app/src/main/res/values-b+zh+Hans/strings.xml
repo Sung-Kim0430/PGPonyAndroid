@@ -828,6 +828,10 @@
     <string name="certify_done_body">请将已认证的密钥发回给其所有者，以便其他人看到你的认证。keys.openpgp.org 会丢弃他人所做的认证，因此请直接发送，或通过其他密钥服务器发送。</string>
     <string name="certify_done_body_local">你的本地认证会保留在此设备上。</string>
     <string name="certify_done_mark_verified">标记为已验证</string>
+    <string name="passphrase_hold_channel_name">为邮件应用保留的口令</string>
+    <string name="passphrase_hold_title">PGPony 正在保留一个口令</string>
+    <string name="passphrase_hold_text">邮件应用无需再次询问即可使用该口令。点按“清除”可立即清除它。</string>
+    <string name="passphrase_hold_clear">清除</string>
     <string name="key_detail_cert_by">认证者：%1$s</string>
     <string name="key_detail_cert_unknown_issuer">不在你密钥环中的密钥 %1$s</string>
     <string name="key_detail_cert_local">本地</string>

@@ -1517,6 +1517,10 @@ Opcionalmente, bloquea la app con tu huella digital o cara para mayor tranquilid
     <string name="certify_done_body">Envía la clave certificada de vuelta a su propietario para que otros puedan ver tu certificación. keys.openpgp.org descarta las certificaciones hechas por otras personas, así que envíala directamente o a través de otro servidor de claves.</string>
     <string name="certify_done_body_local">Tu certificación local se queda en este dispositivo.</string>
     <string name="certify_done_mark_verified">Marcar como Verificada</string>
+    <string name="passphrase_hold_channel_name">Frase de contraseña recordada para apps de correo</string>
+    <string name="passphrase_hold_title">PGPony está recordando una frase de contraseña</string>
+    <string name="passphrase_hold_text">Las apps de correo pueden usarla sin volver a pedirla. Toca Borrar para olvidarla ahora.</string>
+    <string name="passphrase_hold_clear">Borrar</string>
     <string name="key_detail_cert_by">Certificado por %1$s</string>
     <string name="key_detail_cert_unknown_issuer">la clave %1$s, que no está en tu llavero</string>
     <string name="key_detail_cert_local">local</string>

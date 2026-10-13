@@ -776,6 +776,10 @@
     <string name="certify_done_body">Отправьте сертифицированный ключ обратно владельцу, чтобы другие могли увидеть вашу сертификацию. Сервер keys.openpgp.org удаляет сертификации, сделанные другими людьми, поэтому отправьте ключ напрямую или через другой сервер ключей.</string>
     <string name="certify_done_body_local">Ваша локальная сертификация остаётся на этом устройстве.</string>
     <string name="certify_done_mark_verified">Отметить как «Проверено»</string>
+    <string name="passphrase_hold_channel_name">Хранение парольной фразы для почтовых приложений</string>
+    <string name="passphrase_hold_title">PGPony хранит парольную фразу</string>
+    <string name="passphrase_hold_text">Почтовые приложения могут использовать её без повторного запроса. Нажмите «Очистить», чтобы стереть её сейчас.</string>
+    <string name="passphrase_hold_clear">Очистить</string>
     <string name="key_detail_cert_by">Сертифицировано: %1$s</string>
     <string name="key_detail_cert_unknown_issuer">ключ %1$s, которого нет в вашей связке ключей</string>
     <string name="key_detail_cert_local">локальная</string>

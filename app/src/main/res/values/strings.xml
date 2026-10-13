@@ -839,6 +839,10 @@
     <string name="certify_done_body">Send the certified key back to its owner so others can see your certification. keys.openpgp.org drops certifications made by other people, so send it directly or through another key server.</string>
     <string name="certify_done_body_local">Your local certification stays on this device.</string>
     <string name="certify_done_mark_verified">Mark as Verified</string>
+    <string name="passphrase_hold_channel_name">Passphrase kept for mail apps</string>
+    <string name="passphrase_hold_title">PGPony is keeping a passphrase</string>
+    <string name="passphrase_hold_text">Mail apps can use it without asking again. Tap Clear to forget it now.</string>
+    <string name="passphrase_hold_clear">Clear</string>
     <string name="key_detail_cert_by">Certified by %1$s</string>
     <string name="key_detail_cert_unknown_issuer">key %1$s, not in your keyring</string>
     <string name="key_detail_cert_local">local</string>

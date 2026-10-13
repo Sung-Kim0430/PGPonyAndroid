@@ -19,6 +19,10 @@
         after the user's first restart.
     -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- 4.7.0 (item 36): PassphraseHoldService keeps the provider process
+         alive while it holds a passphrase for mail apps. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <!--
       HW Phase 1 — NFC hardware-key (OpenPGP card) support.
@@ -404,6 +408,19 @@
           it would advertise an interface we do not implement to
           ancient clients.
         -->
+        <!-- 4.7.0 (item 36): holds a passphrase the user chose to keep for mail
+             apps, in the provider process, with an ongoing notification and a
+             Clear action. Not exported. -->
+        <service
+            android:name=".provider.PassphraseHoldService"
+            android:process=":remote_api"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Keeps a passphrase the user chose to keep in memory for the OpenPGP provider, so mail apps can decrypt and sign without asking again, until the user clears it." />
+        </service>
+
         <service
             android:name=".provider.PGPonyOpenPgpService"
             android:process=":remote_api"

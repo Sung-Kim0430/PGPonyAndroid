@@ -1517,6 +1517,10 @@ PGPony は、古い OpenPGP 実装との相互運用性のために従来の RSA
     <string name="certify_done_body">他の人があなたの認証を見られるように、認証した鍵を持ち主に送り返してください。keys.openpgp.org は他の人による認証を破棄するため、直接送るか、別の鍵サーバー経由で送ってください。</string>
     <string name="certify_done_body_local">ローカルの認証はこのデバイス内に保持されます。</string>
     <string name="certify_done_mark_verified">確認済みにする</string>
+    <string name="passphrase_hold_channel_name">メールアプリ用に保持中のパスフレーズ</string>
+    <string name="passphrase_hold_title">PGPony がパスフレーズを保持しています</string>
+    <string name="passphrase_hold_text">メールアプリは再入力なしでこのパスフレーズを使用できます。今すぐ消去するには「消去」をタップしてください。</string>
+    <string name="passphrase_hold_clear">消去</string>
     <string name="key_detail_cert_by">%1$s による認証</string>
     <string name="key_detail_cert_unknown_issuer">キーリングにない鍵 %1$s</string>
     <string name="key_detail_cert_local">ローカル</string>
