@@ -944,6 +944,20 @@ decrypts and verifies separately; a mixed selection offers the choice; plain fil
 
 ## 39. Signing picks an expired subkey (#83, #82)
 
+**Status:** RC3. signingSecretKeys keeps stubs and weak keys out as before, orders signing subkeys newest first
+then the primary, and keeps only keys whose CertificateBindings signerValidityAt is VALID now (bound by the newest
+binding, back-signed, unrevoked, unexpired). When the primary itself has expired nothing is valid, and the keys that
+are only expired are offered, since the Allow expired keys gate upstream already decided that case; a valid primary
+whose signing subkeys all expired or were revoked refuses with SigningError.SigningKeysExpired (new
+err_signing_keys_expired, 9 locales, no ko). pickSigningSecretKey and signingKeyOptions read that list, so a chosen
+subkey that has expired falls back to the automatic pick. A certificate the analyser cannot read keeps the old
+capability pick. Found while building it: ClassicalSubkeyGen (Add Subkey, Sign) called the three-argument
+addSubKey, which writes no 0x19 back-signature, so every signing subkey added in PGPony since 4.2.0 is not
+cross-certified (gpg warns, PGPony's own check grades it UNBOUND). It now passes the subkey's signer builder. Such
+a subkey is no longer picked; signing falls back to the primary when the primary can sign (PGPony's own v4 keys),
+and changing the subkey's expiry rebinds it with a back-signature (KeyExpirationService). Tests:
+SigningKeyPickTest, fixtures in test/resources/signsub (GnuPG 2.2, faked times).
+
 Priority: high (bug, visible to anyone with a renewed signing subkey). Origin: #83 (Oct 13): a signed-only mail
 from FairEmail is always signed with the key's expired signing subkey, with Allow expired keys off and with Ask
 which key to sign with on or off. #82 (Oct 13) reports the same on another key with two current signing subkeys.
@@ -984,6 +998,14 @@ show-unusable-subkeys, and import it with the same path PGPony uses. Candidates:
 CertificateBindings drops (hash policy, a missing or bad back-signature on a signing subkey), the
 CertificateMerge path on a re-import after delete (item 24), or the Key Details list filtering expired subkeys.
 Fix whichever it is.
+
+Oct 13 findings: the key has six subkeys (2017 E, S expired 2021, A; 2023 S expired 2025; 2025 S and 2025 S). The
+reporter's Key Details lists only the three from 2017. The 2023 binding and its back-signature use SHA-1 made after
+the Feb 2023 cutoff, so dropping that subkey is policy (as sq). The 2025 bindings are SHA-256 with valid
+back-signatures, and the public key from keys.openpgp.org imports on RC2 with all five expected subkeys, so the
+binding check is not it. The loss is on the secret key path: an older secret backup that predates the 2025
+subkeys (item 24 never adds subkeys from a public re-import), or the 2025 secrets exported as stubs before item 22.
+Asked on #82 for gpg -K, the PGPony version and where the secret key came from.
 
 
 ## 41. Recipient review from mail apps when some addresses have no key (#25, reopened)

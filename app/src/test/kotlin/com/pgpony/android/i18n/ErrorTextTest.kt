@@ -184,6 +184,7 @@ class ErrorTextTest {
         "No signing-capable key found in key ring" to R.string.err_no_signing_capable_key_found_key,
         "The primary key's secret is not on this device (offline primary). Sign with a signing subkey." to R.string.err_offline_primary_sign,
         "The primary key's secret is not on this device (offline primary). Make this change where the primary key is kept, then import the key here again." to R.string.err_offline_primary_edit,
+        "Every signing key in this key pair has expired or been revoked" to R.string.err_signing_keys_expired,
         "Recipient key is marked Don't use in PGPony: bob@example.org. Change its trust level in PGPony to encrypt to it." to R.string.err_provider_recipient_dont_use,
         "Signing key is marked Don't use in PGPony. Pick another signing key in your mail app, or change its trust level in PGPony." to R.string.err_provider_signer_dont_use,
         "This key cannot certify other keys" to R.string.err_certify_certifier,

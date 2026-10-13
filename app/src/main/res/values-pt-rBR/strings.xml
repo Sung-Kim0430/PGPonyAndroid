@@ -2514,6 +2514,7 @@ Opcionalmente, bloqueie o app com sua impressão digital ou rosto para mais tran
     <string name="err_malformed_signed_message">A mensagem assinada está malformada e não foi aberta.</string>
     <string name="err_nfc_openpgp_unavailable">Esta chave não abriu seu aplicativo OpenPGP via NFC. Algumas chaves, como a Nitrokey 3, desativam o OpenPGP via NFC. Se sua chave tiver USB, conecte-a e tente novamente.</string>
     <string name="err_offline_primary_sign">O segredo da chave principal não está neste dispositivo (chave principal offline). Assine com uma subchave de assinatura.</string>
+    <string name="err_signing_keys_expired">Todas as chaves de assinatura deste par de chaves expiraram ou foram revogadas</string>
     <string name="err_offline_primary_edit">O segredo da chave principal não está neste dispositivo (chave principal offline). Faça esta alteração onde a chave principal é guardada e depois importe a chave aqui novamente.</string>
     <string name="err_provider_recipient_dont_use">A chave do destinatário está marcada como \"Não usar\" no PGPony: %1$s. Altere o nível de confiança dela no PGPony para criptografar para ela.</string>
     <string name="err_provider_signer_dont_use">A chave de assinatura está marcada como \"Não usar\" no PGPony. Escolha outra chave de assinatura no seu app de e-mail ou altere o nível de confiança dela no PGPony.</string>

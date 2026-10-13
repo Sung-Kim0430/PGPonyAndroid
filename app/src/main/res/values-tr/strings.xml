@@ -2590,6 +2590,7 @@
     <string name="err_malformed_signed_message">İmzalı mesaj bozuk biçimli ve açılmadı.</string>
     <string name="err_nfc_openpgp_unavailable">Bu anahtar OpenPGP uygulamasını NFC üzerinden açmadı. Nitrokey 3 dahil bazı anahtarlar NFC üzerinden OpenPGP\'yi kapatır. Anahtarınızda USB varsa takın ve tekrar deneyin.</string>
     <string name="err_offline_primary_sign">Birincil anahtarın gizli kısmı bu cihazda değil (çevrimdışı birincil). İmzalamak için bir imzalama alt anahtarı kullanın.</string>
+    <string name="err_signing_keys_expired">Bu anahtar çiftindeki tüm imzalama anahtarlarının süresi dolmuş veya iptal edilmiş</string>
     <string name="err_offline_primary_edit">Birincil anahtarın gizli kısmı bu cihazda değil (çevrimdışı birincil). Bu değişikliği birincil anahtarın saklandığı yerde yapın, ardından anahtarı buraya yeniden içe aktarın.</string>
     <string name="err_provider_recipient_dont_use">Alıcı anahtarı PGPony\'de \"Kullanım dışı\" olarak işaretli: %1$s. Bu anahtara şifrelemek için PGPony\'de güven düzeyini değiştirin.</string>
     <string name="err_provider_signer_dont_use">İmzalama anahtarı PGPony\'de \"Kullanım dışı\" olarak işaretli. E-posta uygulamanızda başka bir imzalama anahtarı seçin veya PGPony\'de bu anahtarın güven düzeyini değiştirin.</string>

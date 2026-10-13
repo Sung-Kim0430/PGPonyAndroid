@@ -2602,6 +2602,7 @@
     <string name="err_malformed_signed_message">The signed message is malformed and was not opened.</string>
     <string name="err_nfc_openpgp_unavailable">This key did not open its OpenPGP application over NFC. Some keys, the Nitrokey 3 among them, turn OpenPGP off over NFC. If your key has USB, plug it in and try again.</string>
     <string name="err_offline_primary_sign">The primary key\'s secret is not on this device (offline primary). Sign with a signing subkey.</string>
+    <string name="err_signing_keys_expired">Every signing key in this key pair has expired or been revoked</string>
     <string name="err_offline_primary_edit">The primary key\'s secret is not on this device (offline primary). Make this change where the primary key is kept, then import the key here again.</string>
     <string name="err_provider_recipient_dont_use">Recipient key is marked Don\'t use in PGPony: %1$s. Change its trust level in PGPony to encrypt to it.</string>
     <string name="err_provider_signer_dont_use">Signing key is marked Don\'t use in PGPony. Pick another signing key in your mail app, or change its trust level in PGPony.</string>

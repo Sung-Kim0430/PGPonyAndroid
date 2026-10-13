@@ -2514,6 +2514,7 @@ Optional kannst du die App hinter deinem Fingerabdruck oder Gesicht sperren, um 
     <string name="err_malformed_signed_message">Die signierte Nachricht ist fehlerhaft und wurde nicht geöffnet.</string>
     <string name="err_nfc_openpgp_unavailable">Dieser Schlüssel hat seine OpenPGP-Anwendung über NFC nicht geöffnet. Manche Schlüssel, darunter der Nitrokey 3, schalten OpenPGP über NFC ab. Wenn dein Schlüssel USB hat, steck ihn ein und versuche es erneut.</string>
     <string name="err_offline_primary_sign">Der geheime Teil des Hauptschlüssels ist nicht auf diesem Gerät (Hauptschlüssel offline). Signiere mit einem Signatur-Unterschlüssel.</string>
+    <string name="err_signing_keys_expired">Jeder Signaturschlüssel in diesem Schlüsselpaar ist abgelaufen oder widerrufen</string>
     <string name="err_offline_primary_edit">Der geheime Teil des Hauptschlüssels ist nicht auf diesem Gerät (Hauptschlüssel offline). Nimm diese Änderung dort vor, wo der Hauptschlüssel aufbewahrt wird, und importiere den Schlüssel dann erneut hier.</string>
     <string name="err_provider_recipient_dont_use">Empfängerschlüssel ist in PGPony als „Nicht verwenden“ markiert: %1$s. Ändere seine Vertrauensstufe in PGPony, um an ihn zu verschlüsseln.</string>
     <string name="err_provider_signer_dont_use">Signaturschlüssel ist in PGPony als „Nicht verwenden“ markiert. Wähle in deiner Mail-App einen anderen Signaturschlüssel oder ändere seine Vertrauensstufe in PGPony.</string>

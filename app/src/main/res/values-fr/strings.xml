@@ -2514,6 +2514,7 @@ Vous pouvez aussi verrouiller l\'application derrière votre empreinte digitale 
     <string name="err_malformed_signed_message">Le message signé est mal formé et n\'a pas été ouvert.</string>
     <string name="err_nfc_openpgp_unavailable">Cette clé n\'a pas ouvert son application OpenPGP via NFC. Certaines clés, dont la Nitrokey 3, désactivent OpenPGP via NFC. Si votre clé dispose d\'un port USB, branchez-la et réessayez.</string>
     <string name="err_offline_primary_sign">Le secret de la clé principale n\'est pas sur cet appareil (clé principale hors ligne). Signez avec une sous-clé de signature.</string>
+    <string name="err_signing_keys_expired">Toutes les clés de signature de cette paire de clés ont expiré ou ont été révoquées</string>
     <string name="err_offline_primary_edit">Le secret de la clé principale n\'est pas sur cet appareil (clé principale hors ligne). Effectuez cette modification là où la clé principale est conservée, puis importez à nouveau la clé ici.</string>
     <string name="err_provider_recipient_dont_use">La clé du destinataire est marquée « Ne pas utiliser » dans PGPony : %1$s. Modifiez son niveau de confiance dans PGPony pour chiffrer pour cette clé.</string>
     <string name="err_provider_signer_dont_use">La clé de signature est marquée « Ne pas utiliser » dans PGPony. Choisissez une autre clé de signature dans votre application de messagerie, ou modifiez son niveau de confiance dans PGPony.</string>

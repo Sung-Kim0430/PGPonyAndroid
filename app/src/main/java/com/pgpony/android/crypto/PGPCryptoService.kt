@@ -3260,33 +3260,36 @@ class PGPCryptoService private constructor() {
      * and is correct for any key whose signing capability lives on a subkey.
      * BC has no isSigningKey() (unlike isEncryptionKey), so capability comes from
      * SubkeyCapability, which reads each key's KEY_FLAGS self/binding signature.
+     *
+     * 4.7.0 (item 39, #83): only keys that are valid signers now count, and a
+     * newer signing subkey wins over an older one; see [signingSecretKeys].
      */
     internal fun pickSigningSecretKey(ring: PGPSecretKeyRing, preferredKeyId: Long? = null): PGPSecretKey? {
-        // §4.5 (#22): honor a user-chosen signing subkey when it is a
-        // signing-capable key on this ring; otherwise fall back to the
-        // automatic pick (first signing subkey, else the primary).
-        if (preferredKeyId != null) {
-            signingSecretKeys(ring).firstOrNull { it.keyID == preferredKeyId }?.let { return it }
-        }
-        var primaryCandidate: PGPSecretKey? = null
-        val iterator = ring.secretKeys
-        while (iterator.hasNext()) {
-            val secretKey = iterator.next()
-            if (OfflineStub.isStub(secretKey)) continue // 4.7.0 (item 22): no secret here
-            val pub = secretKey.publicKey
-            if (KeyPolicy.isWeak(pub, ring.publicKey)) continue // 3.0.0 (5d-3): weak keys are read-only
-            val caps = SubkeyCapability.fromPgpPublicKey(pub, detectAlgorithm(pub), pub.isMasterKey)
-            if (SubkeyCapability.hasCapability(caps, SubkeyCapability.Sign)) {
-                if (!pub.isMasterKey) return secretKey       // prefer a signing subkey
-                if (primaryCandidate == null) primaryCandidate = secretKey
-            }
-        }
-        return primaryCandidate
+        // §4.5 (#22): honor a user-chosen signing subkey when it is one of the
+        // usable signing keys on this ring; otherwise the automatic pick.
+        // 4.7.0 (item 39, #83): a chosen subkey that has since expired or been
+        // revoked is no longer in that list, so it falls back to the automatic pick.
+        val keys = signingSecretKeys(ring)
+        if (preferredKeyId != null) keys.firstOrNull { it.keyID == preferredKeyId }?.let { return it }
+        return keys.firstOrNull()
     }
 
-    /** §4.5 (#22): every signing-capable secret key in [ring], the first
-     *  entry being the one [pickSigningSecretKey] auto-selects (signing
-     *  subkeys in ring order, then the primary if it can sign). */
+    /**
+     * §4.5 (#22): every signing-capable secret key in [ring] that may make a
+     * new signature, in the order [pickSigningSecretKey] prefers them: signing
+     * subkeys newest first, then the primary if it can sign.
+     *
+     * 4.7.0 (item 39, #83): each key must be a valid signer now by the
+     * certificate's own self-signatures (CertificateBindings signerValidityAt):
+     * a subkey bound by its newest binding, back-signed, unrevoked and
+     * unexpired. Before this the first Sign-capable subkey in ring order was
+     * used, so a key whose old signing subkey had expired signed with it. When
+     * the whole key has expired (the primary itself), nothing is valid; the
+     * "Allow expired keys" gate upstream has already decided that case, so the
+     * keys that are only expired are offered, newest first. A primary that is
+     * still valid with every signing subkey expired or revoked yields none. A
+     * certificate the analyser cannot read keeps the plain capability pick.
+     */
     internal fun signingSecretKeys(ring: PGPSecretKeyRing): List<PGPSecretKey> {
         val subs = mutableListOf<PGPSecretKey>()
         var primary: PGPSecretKey? = null
@@ -3301,19 +3304,36 @@ class PGPCryptoService private constructor() {
                 if (pub.isMasterKey) primary = sk else subs.add(sk)
             }
         }
-        return if (primary != null) subs + primary else subs
+        val ordered = subs.sortedByDescending { it.publicKey.creationTime.time } + listOfNotNull(primary)
+        val report = signingReport(ring) ?: return ordered
+        val now = System.currentTimeMillis()
+        fun validity(sk: PGPSecretKey) = report.signerValidityAt(SignerEvaluator.fpHex(sk.publicKey), now)
+        val valid = ordered.filter { validity(it) == CertificateBindings.SignerValidity.VALID }
+        if (valid.isNotEmpty()) return valid
+        val wholeKeyExpired = report.signerValidityAt(SignerEvaluator.fpHex(ring.publicKey), now) ==
+            CertificateBindings.SignerValidity.EXPIRED
+        return if (wholeKeyExpired) ordered.filter { validity(it) == CertificateBindings.SignerValidity.EXPIRED } else emptyList()
     }
+
+    /** 4.7.0 (item 39): the binding report for [ring]'s public half, or null
+     *  when the analyser cannot vouch for it (unsupported primary algorithm). */
+    private fun signingReport(ring: PGPSecretKeyRing): CertificateBindings.Report? =
+        runCatching { CertificateBindings.analyze(PGPPublicKeyRing(ring.publicKeys.asSequence().toList())) }
+            .getOrNull()?.takeIf { it.supported }
 
     /** 4.7.0 (item 22): the error when [ring] has no usable signing key. A
      *  ring whose only Sign-capable key is a stub (an offline primary) says
-     *  so, rather than claiming the key cannot sign at all. */
+     *  so, rather than claiming the key cannot sign at all. 4.7.0 (item 39):
+     *  a ring that has signing keys, all of them expired or revoked, says that. */
     internal fun noSigningKeyError(ring: PGPSecretKeyRing): SigningError {
-        val stubSigner = ring.secretKeys.asSequence().any { sk ->
-            OfflineStub.isStub(sk) && SubkeyCapability.hasCapability(
-                SubkeyCapability.fromPgpPublicKey(sk.publicKey, detectAlgorithm(sk.publicKey), sk.publicKey.isMasterKey),
-                SubkeyCapability.Sign
-            )
-        }
+        fun canSign(sk: PGPSecretKey) = SubkeyCapability.hasCapability(
+            SubkeyCapability.fromPgpPublicKey(sk.publicKey, detectAlgorithm(sk.publicKey), sk.publicKey.isMasterKey),
+            SubkeyCapability.Sign
+        )
+        val keys = ring.secretKeys.asSequence().toList()
+        val liveSigner = keys.any { !OfflineStub.isStub(it) && !KeyPolicy.isWeak(it.publicKey, ring.publicKey) && canSign(it) }
+        if (liveSigner) return SigningError.SigningKeysExpired()
+        val stubSigner = keys.any { OfflineStub.isStub(it) && canSign(it) }
         return if (stubSigner) SigningError.OfflinePrimary() else SigningError.NoSigningKey()
     }
 

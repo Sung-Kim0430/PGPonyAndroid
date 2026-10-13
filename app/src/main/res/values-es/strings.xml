@@ -2514,6 +2514,7 @@ Opcionalmente, bloquea la app con tu huella digital o cara para mayor tranquilid
     <string name="err_malformed_signed_message">El mensaje firmado está mal formado y no se abrió.</string>
     <string name="err_nfc_openpgp_unavailable">Esta llave no abrió su aplicación OpenPGP por NFC. Algunas llaves, como la Nitrokey 3, desactivan OpenPGP por NFC. Si tu llave tiene USB, conéctala e inténtalo de nuevo.</string>
     <string name="err_offline_primary_sign">El secreto de la clave principal no está en este dispositivo (clave principal sin conexión). Firma con una subclave de firma.</string>
+    <string name="err_signing_keys_expired">Todas las claves de firma de este par de claves han caducado o se han revocado</string>
     <string name="err_offline_primary_edit">El secreto de la clave principal no está en este dispositivo (clave principal sin conexión). Haz este cambio donde se guarda la clave principal y luego vuelve a importar la clave aquí.</string>
     <string name="err_provider_recipient_dont_use">La clave del destinatario está marcada como \"No usar\" en PGPony: %1$s. Cambia su nivel de confianza en PGPony para cifrar para ella.</string>
     <string name="err_provider_signer_dont_use">La clave de firma está marcada como \"No usar\" en PGPony. Elige otra clave de firma en tu app de correo o cambia su nivel de confianza en PGPony.</string>

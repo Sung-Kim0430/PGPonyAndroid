@@ -53,6 +53,8 @@ sealed class SigningError(message: String) : Exception(message) {
     class NoSigningKey : SigningError("No signing-capable key found in key ring")
     /** 4.7.0 (item 22): the only Sign-capable key is a stub (offline primary). */
     class OfflinePrimary : SigningError(OfflineStub.SIGN_MESSAGE)
+    /** 4.7.0 (item 39, #83): the key has signing keys, but every one has expired or been revoked. */
+    class SigningKeysExpired : SigningError("Every signing key in this key pair has expired or been revoked")
     /** Underlying BC failure, wrapped so the UI layer doesn't import BC types. */
     class SigningFailed(msg: String) : SigningError("Signing failed: $msg")
 }
