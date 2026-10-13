@@ -667,6 +667,12 @@ that chains its responses (fixed in 4.6.4 for the Nitrokey 3).
 Work: ask on #36 for the key model, the PGPony version and the exact error; reproduce with Thunderbird and a USB
 key once a working YubiKey is on hand; fix whichever it is.
 
+Oct 13: confirmed on #43 with a Nitrokey 3C over USB on 4.6.4. ProviderCardOpActivity only enables NFC reader mode,
+so a key plugged in over USB is never seen when a mail app asks for a card decrypt or sign; in the app the same key
+works over USB. Work: the provider card prompt also watches for a USB OpenPGP card (the main app's USB path, with
+the USB permission asked from that activity) and runs the operation on whichever arrives first. Joins RC4 with the
+card work.
+
 
 ## 29. Nitrokey 3 follow-ups (#43)
 
@@ -936,6 +942,108 @@ Test: share 2, 5 and 20 .asc files (armored and binary, signed and unsigned) fro
 decrypts and verifies separately; a mixed selection offers the choice; plain files still bundle.
 
 
+## 39. Signing picks an expired subkey (#83, #82)
+
+Priority: high (bug, visible to anyone with a renewed signing subkey). Origin: #83 (Oct 13): a signed-only mail
+from FairEmail is always signed with the key's expired signing subkey, with Allow expired keys off and with Ask
+which key to sign with on or off. #82 (Oct 13) reports the same on another key with two current signing subkeys.
+
+Cause (from the code): PGPCryptoService.pickSigningSecretKey and signingSecretKeys skip only offline stubs (item
+22) and weak keys, then take the first Sign-capable subkey in ring order. Nothing checks the binding, revocation
+or expiry, so a key whose old signing subkey comes first signs with it. findEncryptionKey already picks from
+CertificateBindings.verified and SignerEvaluator.isUsableEncryptionKey (4.6.0 item 17.1); signing never got the
+same treatment.
+
+Work:
+
+- Build the signing candidates from the verified view: a subkey must be bound, unrevoked and unexpired at signing
+  time (expiry read from the newest valid binding signature, so a renewed subkey counts as current). The primary
+  likewise, by its newest self-signature.
+- Among usable signing subkeys, prefer the newest by creation time (gpg's choice), then the primary if it can
+  sign.
+- Allow expired keys does not apply: it covers encrypting to an expired recipient, and nothing ever signs with an
+  expired or revoked subkey.
+- signingKeyOptions (the per-send and in-app picker) lists usable subkeys only, newest first, so a key with two
+  current signing subkeys offers both.
+- A user-chosen signing subkey (item 26 / 4.6 §4.5) that has since expired falls back to the automatic pick.
+- No usable signing key left: the existing no-signing-key error, worded for an expired subkey when that is why.
+
+Tests: a ring with an expired then a current signing subkey (both orders); a subkey renewed by a newer binding
+signature; a revoked signing subkey; two current subkeys, the newer picked and both offered. On device: FairEmail
+signed-only mail with the #83 key shape, and in-app Sign Text.
+
+
+## 40. Subkeys missing after removing and re-importing a key (#82)
+
+Priority: high (bug, needs the key). Origin: #82 (Oct 13): after deleting a 2017 RSA-4096 key and importing it
+again, Key Details shows fewer subkeys than gpg lists (E and A from 2017, two S from 2025). The screenshot and
+the key come from the reporter's public copies.
+
+Work: fetch the key (github.com/<user>.gpg and keys.openpgp.org), list every subkey with gpg's
+show-unusable-subkeys, and import it with the same path PGPony uses. Candidates: a binding that
+CertificateBindings drops (hash policy, a missing or bad back-signature on a signing subkey), the
+CertificateMerge path on a re-import after delete (item 24), or the Key Details list filtering expired subkeys.
+Fix whichever it is.
+
+
+## 41. Recipient review from mail apps when some addresses have no key (#25, reopened)
+
+Priority: medium (feature, provider). Origin: #25 (Oct 13, reopened): OpenKeychain answers an encrypt with
+addresses it has no key for by showing "Please review the list of recipients": the addresses without keys,
+then the keyring with the sender preselected, to pick keys for this send. Useful when a recipient's key lacks
+one of their addresses, and for addy.io's encrypt-a-reply flow.
+
+Where Android stands: encryptOp collects the missing addresses and returns GENERIC_ERROR "No PGPony key found
+for: ...". The provider already returns USER_INTERACTION_REQUIRED for the per-send sign key picker
+(ProviderKeyPickerActivity), and OpenPgpApi.EXTRA_KEY_IDS_SELECTED is in the bundled API.
+
+Work:
+
+- When any address has no usable key and the request is not opportunistic, return USER_INTERACTION_REQUIRED
+  with a recipient review screen: the addresses without keys, then a searchable keyring list (public keys and
+  own keys, Don't use keys left out), with the sender's own key preselected.
+- On confirm, re-run the same operation with EXTRA_KEY_IDS_SELECTED plus the keys already resolved. Cancel
+  returns the client's cancel result.
+- Opportunistic encryption keeps OPPORTUNISTIC_MISSING_KEYS, so Autocrypt-style "encrypt if possible" stays
+  silent.
+- Item 10: a Don't use key for an address shows as such on the screen, not as missing.
+- New strings in all 10 locales.
+
+Test: FairEmail and Thunderbird with one missing recipient, with all missing, and opportunistic; the picked key
+is used and the send succeeds; cancel leaves the draft.
+
+
+## 42. Look up a GitHub user's OpenPGP keys (#81)
+
+Priority: low-medium (feature). Origin: #81 (Oct 13): when a commit is signed by someone whose key you don't
+have, fetch that GitHub user's keys and import them.
+
+Work:
+
+- A GitHub source next to WKD and the keyserver in Import: a username fetches https://github.com/<user>.gpg
+  through the same network settings (offline switch, Tor, proxy) as the other lookups.
+- Each key found goes through the normal import preview; an empty answer says the user has no OpenPGP keys on
+  GitHub.
+- Out of scope: SSH keys, and generating allowed_signers files from a repository's contributors (git tooling,
+  not key management). Said so on #81.
+- New strings in all 10 locales.
+
+Test: a user with one key, several keys, none, and a username that doesn't exist; offline refuses; Tor on.
+
+
+## 43. Toggle and checkbox rows respond to a tap anywhere on the row (#79)
+
+Priority: low (UI). Origin: #79 (Oct 13, RC2): Local only and the fingerprint confirmation in the Certify sheet
+only respond to a tap on the control itself.
+
+Work: every row in the app that pairs a label with a Switch or Checkbox becomes the toggleable element
+(Modifier.toggleable with Role.Switch or Role.Checkbox on the Row, the control's own onCheckedChange set to
+null), so the whole row toggles and TalkBack reads it as one control. Covers the Certify sheet, Settings, the
+encrypt and sign options, the import preview and the remaining sheets. No new strings.
+
+Test: tap the label and the empty part of each row; TalkBack announces one switch or checkbox with its label.
+
+
 ## RC breakdown (set Oct 9 2026)
 
 One RC at a time: the next RC's work starts only after the current one is built and tested. versionCode 470 /
@@ -947,9 +1055,12 @@ uk, b+zh+Hans).
 - RC2, key management on soft keys: 22, then 10, then 31 (31 needs 22's stub check and 10's Verified level).
   Certifying on a card waits for RC4. Also 35 (label change, no new strings; RC1 was built before it was
   added) and 36 (provider foreground service).
-- RC3: 15 (each file separately), 38 and 37 (multi-file Quick Actions and large-file saves, same area as 15),
+- RC3: 39 first (signing picks an expired subkey), 40 once the #82 key is in hand, then 15 (each file
+  separately), 38 and 37 (multi-file Quick Actions and large-file saves, same area as 15), 41 (recipient review),
+  42 (GitHub key lookup), 43 (tappable rows),
   32 (duress PIN, builds on 33), 6, 21 remainder (protocol change shared with desktop and iOS PGPonyPair), 8.
-- RC4, card work: 13 (keytocard), card certification for 31, and 34 (card-generated key display), once a working card is on hand for testing.
+- RC4, card work: 13 (keytocard), card certification for 31, 34 (card-generated key display) and 28 (provider card
+  prompt over USB), once a working card is on hand for testing.
 - Last RC: the 12a on-device checks (Tor with Orbot, custom proxy, OpenKeychain restore, protected key over a
   contact, the provider with Thunderbird including a card).
 - Not RC-gated: 30 (README), 11 (SOP wrapper), 12 (external review follow-up).
