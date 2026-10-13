@@ -166,7 +166,11 @@ blue-violet star on a shield, Don't use red DoNotDisturbOn; check on device that
 "!" (the old comments described them the other way round). The Encrypt screen's primary button, Sign File and the
 Quick Action encrypt ask before using a Don't use recipient or signer (DontUseConfirmDialog), card paths
 included. The provider never picks a Don't use key for an address, refuses one asked for by key ID or as signer
-(opportunistic mode reports it as missing), and the Autocrypt status treats it as missing. The verify banner
+(opportunistic mode reports it as missing), and the Autocrypt status treats it as missing. On device (RC2): mail apps
+decide before they ever ask PGPony to encrypt, so Thunderbird does not offer encryption to a Don't use key at
+all and FairEmail reports no key found; the send is refused either way, and the explanation lives in the app.
+GET_KEY_IDS still returns the key when it is the only one for the address, for a client that goes on to
+encrypt and gets the Don't use message. The verify banner
 turns red for a valid signature from a Don't use key; decrypt and verify otherwise unchanged. Backups write the
 level's name ("Don't use") in metadata as before; restore never applies trust. 9 strings, all 10 locales (ko
 without the 2 provider errors). Test: TrustLevelDontUseTest.
