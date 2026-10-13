@@ -80,6 +80,27 @@ rebuilders, each labeled with what it means. Release candidates on
 pgpony.app have a `.sha256` file beside each APK; GitHub releases do
 not.
 
+Verify the source. From 4.7.0 on, release tags and the commits on main
+are signed with the norsehorse-dev SSH signing key:
+
+```
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPhzdDdquHgaZq8dgEQzcncPBnSZvIVlusBg0TvOA8To
+```
+
+To check a tag or commit locally, list the key in an allowed signers file
+and point git at it from inside a clone:
+
+```
+echo "norsehorse-dev@users.noreply.github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPhzdDdquHgaZq8dgEQzcncPBnSZvIVlusBg0TvOA8To" > allowed_signers
+git config gpg.ssh.allowedSignersFile "$PWD/allowed_signers"
+git verify-tag v<version>
+git log --show-signature -1
+```
+
+The same key is registered as a signing key on the norsehorse-dev GitHub
+account, so GitHub marks these commits and tags Verified; the copy here
+lets you check them without relying on that badge.
+
 Rebuild from source and compare. The release gate script clones a tag
 twice into clean, isolated build roots, proves the two builds are
 byte-identical, and compares them against a candidate APK:
