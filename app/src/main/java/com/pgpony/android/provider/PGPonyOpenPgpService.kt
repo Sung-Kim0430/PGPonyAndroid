@@ -422,7 +422,14 @@ class PGPonyOpenPgpService : Service() {
                     // 4.2.1 (#27): match ANY user id, not just the primary,
                     // so a secondary identity (4.2.0 #29) resolves here and
                     // the client is offered encryption to it.
+                    // 4.7.0 (item 10): when the only key for the address is
+                    // marked Don't use, still hand its id over, so the send
+                    // reaches encryptOp and fails with the Don't use message
+                    // instead of the mail app's own "no key found".
                     recipientCandidates(email).firstOrNull()
+                        ?: repo.getByAnyUserEmail(email).firstOrNull {
+                            !it.isRevoked && it.trustLevel == com.pgpony.android.data.TrustLevel.DONT_USE
+                        }
                 }
                 .map { entity -> java.lang.Long.parseUnsignedLong(entity.longKeyId, 16) }
                 .toLongArray()
