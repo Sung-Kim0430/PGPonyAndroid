@@ -29,12 +29,14 @@ signed on the Mac before they are pushed.
 Sign anything not yet pushed, check it, then push:
 
 ```
-git rebase --force-rebase --gpg-sign origin/main
+git rebase --autostash --force-rebase --gpg-sign origin/main
 git log --show-signature origin/main..HEAD
 git push
 ```
 
-Every commit listed must show `Good "git" signature`. The rebase only
+`--autostash` sets uncommitted work aside for the rebase and puts it back
+afterwards, so changes in progress (Play listing, screenshots) can stay
+uncommitted. Every commit listed must show `Good "git" signature`. The rebase only
 rewrites commits that are not on origin yet, so it is safe to run every time;
 with nothing to push it does nothing.
 
