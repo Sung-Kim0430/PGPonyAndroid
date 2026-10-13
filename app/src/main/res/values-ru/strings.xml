@@ -755,6 +755,36 @@
     <string name="key_detail_offline_primary_title">Основной ключ офлайн</string>
     <string name="key_detail_offline_primary_body">Закрытого основного ключа нет на этом устройстве. Подключи, хранящиеся здесь, работают как обычно. Для изменения идентификаторов пользователя, подключей или срока действия, а также для отзыва ключа нужен основной ключ: внесите эти изменения там, где он хранится, а затем снова импортируйте ключ сюда.</string>
     <string name="key_detail_offline_primary_body_card">Закрытый основной ключ хранится на аппаратном ключе, а не на этом устройстве. Подключи, хранящиеся здесь, работают как обычно. Для изменения идентификаторов пользователя, подключей или срока действия, а также для отзыва ключа нужен аппаратный ключ: внесите эти изменения в GnuPG, а затем снова импортируйте ключ сюда.</string>
+    <string name="key_detail_action_certify">Сертифицировать…</string>
+    <string name="certify_sheet_title">Сертифицировать этот ключ</string>
+    <string name="certify_sheet_subtitle">Сертификация означает, что вы проверили: этот ключ принадлежит человеку, указанному в каждом выбранном вами идентификаторе пользователя. Сначала сверьте полный отпечаток с его владельцем.</string>
+    <string name="certify_no_certifier">Ни одна из ваших пар ключей не может выполнить сертификацию здесь. Для сертификации нужна программная пара ключей, закрытый основной ключ которой находится на этом устройстве. Ключи ML-DSA и ключи на карте пока не могут сертифицировать.</string>
+    <string name="certify_userids_label">Идентификаторы пользователя для сертификации</string>
+    <string name="certify_certifier_label">Сертифицировать ключом</string>
+    <string name="certify_level_label">Насколько тщательно вы проверили</string>
+    <string name="certify_level_no_claim">Без заявления</string>
+    <string name="certify_level_persona">Не проверено</string>
+    <string name="certify_level_casual">Беглая проверка</string>
+    <string name="certify_level_positive">Тщательная проверка</string>
+    <string name="certify_expiry_label">Срок действия сертификации</string>
+    <string name="certify_local_only_label">Только локально</string>
+    <string name="certify_local_only_hint">Хранится на этом устройстве. Никогда не включается в ключ, когда им делятся, экспортируют его, загружают или передают при сопряжении.</string>
+    <string name="certify_fingerprint_confirm">Отпечаток сверен с копией владельца</string>
+    <string name="certify_apply">Сертифицировать</string>
+    <string name="certify_failed">Не удалось сертифицировать этот ключ</string>
+    <string name="certify_done_title">Ключ сертифицирован</string>
+    <string name="certify_done_body">Отправьте сертифицированный ключ обратно владельцу, чтобы другие могли увидеть вашу сертификацию. Сервер keys.openpgp.org удаляет сертификации, сделанные другими людьми, поэтому отправьте ключ напрямую или через другой сервер ключей.</string>
+    <string name="certify_done_body_local">Ваша локальная сертификация остаётся на этом устройстве.</string>
+    <string name="certify_done_mark_verified">Отметить как «Проверено»</string>
+    <string name="key_detail_cert_by">Сертифицировано: %1$s</string>
+    <string name="key_detail_cert_unknown_issuer">ключ %1$s, которого нет в вашей связке ключей</string>
+    <string name="key_detail_cert_local">локальная</string>
+    <string name="key_detail_cert_revoked">отозвана</string>
+    <string name="key_detail_cert_expired">истекла</string>
+    <string name="key_detail_cert_failed">не проходит проверку</string>
+    <string name="key_detail_cert_revoke_title">Отозвать вашу сертификацию?</string>
+    <string name="key_detail_cert_revoke_body_local">Ваша локальная сертификация %1$s будет удалена с этого устройства.</string>
+    <string name="key_detail_cert_revoke_body">К ключу будет добавлен отзыв вашей сертификации %1$s. Поделитесь ключом снова, чтобы другие его увидели.</string>
 
     <!-- ── 4.2.0 RC3 workstream I (#29): add/revoke/promote User IDs ── -->
     <string name="key_detail_userids_make_primary">Сделать основным</string>
@@ -2570,6 +2600,8 @@
     <string name="err_offline_primary_edit">Закрытого основного ключа нет на этом устройстве (основной ключ офлайн). Внесите это изменение там, где хранится основной ключ, а затем снова импортируйте ключ сюда.</string>
     <string name="err_provider_recipient_dont_use">Ключ получателя помечен в PGPony как «Не использовать»: %1$s. Чтобы шифровать для него, измените его уровень доверия в PGPony.</string>
     <string name="err_provider_signer_dont_use">Ключ подписи помечен в PGPony как «Не использовать». Выберите другой ключ подписи в почтовом приложении или измените его уровень доверия в PGPony.</string>
+    <string name="err_certify_certifier">Этот ключ не может сертифицировать другие ключи</string>
+    <string name="err_certify_target">Этот ключ нельзя сертифицировать здесь</string>
     <string name="err_session_key_block_too_short">блок сеансового ключа слишком короткий</string>
     <string name="err_session_key_checksum_mismatch">несовпадение контрольной суммы сеансового ключа</string>
     <string name="err_short_form_apdu_data_limited_255">Данные APDU в короткой форме ограничены 255 байтами (было %1$s). Для больших объёмов используйте цепочку команд (command chaining) или задайте extended = true.</string>

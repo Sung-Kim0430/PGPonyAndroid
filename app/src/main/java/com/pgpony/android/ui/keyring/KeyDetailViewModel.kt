@@ -161,6 +161,20 @@ data class KeyDetailUiState(
     /** 4.7.0 (item 22): the stored primary is a stub (offline primary or
      *  divert-to-card), so the edits that need the primary are hidden. */
     val primaryStub: com.pgpony.android.crypto.OfflineStub.Kind? = null,
+    // 4.7.0 (item 31, #79): certifications of this key's User IDs, and the
+    // Certify flow (public keys only).
+    val certifications: List<com.pgpony.android.data.repository.KeyRepository.CertificationRow> = emptyList(),
+    val canCertify: Boolean = false,
+    val showCertifySheet: Boolean = false,
+    val certifierChoices: List<PGPKeyEntity> = emptyList(),
+    val certifyInFlight: Boolean = false,
+    val certifyError: String? = null,
+    /** Set after a certification is made: true when it was exportable (so
+     *  the done dialog offers to share the key back). */
+    val certifyDoneExportable: Boolean? = null,
+    val certRevokeRequest: com.pgpony.android.data.repository.KeyRepository.CertificationRow? = null,
+    val certRevokeInFlight: Boolean = false,
+    val certRevokeError: String? = null,
     val signingDefaults: com.pgpony.android.data.SigningDefaultsEntity? = null,
     val signerChoices: List<PGPKeyEntity> = emptyList(),
     /** True while the initial load() coroutine is in flight. */
@@ -417,6 +431,8 @@ class KeyDetailViewModel(
                 primaryStub = loaded?.takeIf { it.isKeyPair && !it.isCardBacked }?.let {
                     withContext(Dispatchers.IO) { runCatching { repo.primaryStubKind(it.fingerprint) }.getOrNull() }
                 },
+                certifications = loaded?.let { runCatching { repo.certificationsOf(it.fingerprint) }.getOrNull() }.orEmpty(),
+                canCertify = loaded?.let { withContext(Dispatchers.IO) { runCatching { repo.canBeCertified(it) }.getOrDefault(false) } } ?: false,
                 signingDefaults = loaded?.takeIf { it.isKeyPair }
                     ?.let { repo.signingDefaultsFor(it.fingerprint) },
                 signerChoices = loaded?.takeIf { it.isKeyPair }
@@ -1770,6 +1786,101 @@ PGPonyApp.instance.getString(R.string.kd_vm_upload_verify_skipped)
                 )
             }
         }
+    }
+
+    // ── 4.7.0 (item 31, #79): certify this key ─────────────────────────
+
+    fun openCertifySheet() {
+        val key = _state.value.key ?: return
+        viewModelScope.launch {
+            val choices = runCatching { repo.certifierChoices(key.fingerprint) }.getOrDefault(emptyList())
+            _state.value = _state.value.copy(
+                showCertifySheet = true,
+                certifierChoices = choices,
+                certifyError = null
+            )
+        }
+    }
+
+    fun dismissCertifySheet() {
+        _state.value = _state.value.copy(showCertifySheet = false, certifyError = null)
+    }
+
+    fun certify(
+        certifierFingerprint: String,
+        passphrase: String?,
+        userIds: List<String>,
+        level: com.pgpony.android.crypto.CertificationService.Level,
+        expirySeconds: Long?,
+        exportable: Boolean
+    ) {
+        val key = _state.value.key ?: return
+        _state.value = _state.value.copy(certifyInFlight = true, certifyError = null)
+        viewModelScope.launch {
+            try {
+                repo.certifyKey(key.fingerprint, certifierFingerprint, passphrase, userIds, level, expirySeconds, exportable)
+                val reloaded = repo.getByFingerprint(key.fingerprint)
+                _state.value = _state.value.copy(
+                    key = reloaded ?: key,
+                    certifications = runCatching { repo.certificationsOf(key.fingerprint) }.getOrDefault(_state.value.certifications),
+                    certifyInFlight = false,
+                    showCertifySheet = false,
+                    certifyDoneExportable = exportable
+                )
+            } catch (e: Exception) {
+                _state.value = _state.value.copy(certifyInFlight = false, certifyError = certifyErrorText(e))
+            }
+        }
+    }
+
+    fun dismissCertifyDone() {
+        _state.value = _state.value.copy(certifyDoneExportable = null)
+    }
+
+    /** From the done dialog: the key was just certified, so mark it Verified. */
+    fun markVerifiedAfterCertify() {
+        dismissCertifyDone()
+        setTrustLevel(TrustLevel.VERIFIED)
+    }
+
+    fun requestRevokeCertification(row: com.pgpony.android.data.repository.KeyRepository.CertificationRow) {
+        _state.value = _state.value.copy(certRevokeRequest = row, certRevokeError = null)
+    }
+
+    fun dismissRevokeCertification() {
+        _state.value = _state.value.copy(certRevokeRequest = null, certRevokeError = null)
+    }
+
+    fun confirmRevokeCertification(passphrase: String?) {
+        val key = _state.value.key ?: return
+        val row = _state.value.certRevokeRequest ?: return
+        val issuer = row.issuer ?: return
+        _state.value = _state.value.copy(certRevokeInFlight = true, certRevokeError = null)
+        viewModelScope.launch {
+            try {
+                repo.revokeCertification(
+                    key.fingerprint, issuer.fingerprint, passphrase,
+                    row.certification.userId, localOnly = !row.certification.exportable
+                )
+                val reloaded = repo.getByFingerprint(key.fingerprint)
+                _state.value = _state.value.copy(
+                    key = reloaded ?: key,
+                    certifications = runCatching { repo.certificationsOf(key.fingerprint) }.getOrDefault(_state.value.certifications),
+                    certRevokeInFlight = false,
+                    certRevokeRequest = null
+                )
+            } catch (e: Exception) {
+                _state.value = _state.value.copy(certRevokeInFlight = false, certRevokeError = certifyErrorText(e))
+            }
+        }
+    }
+
+    private fun certifyErrorText(e: Exception): String = when (e) {
+        is com.pgpony.android.crypto.PGPCryptoError.PassphraseRequired ->
+            PGPonyApp.instance.getString(R.string.kd_vm_error_revoke_passphrase_required)
+        is com.pgpony.android.crypto.PGPCryptoError.InvalidPassphrase ->
+            PGPonyApp.instance.getString(R.string.kd_vm_error_revoke_incorrect_passphrase)
+        else -> ErrorText.localize(e.message) ?: PGPonyApp.instance.getString(R.string.certify_failed)
     }
 
     fun addUserId(userId: String, makePrimary: Boolean, passphrase: String?) {

@@ -187,6 +187,9 @@ internal object ErrorTextRules {
             // 4.7.0 (item 10): keys marked Don't use, refused through the provider.
             ErrorText.Rule("""\QRecipient key is marked Don't use in PGPony: \E(.*?)\Q. Change its trust level in PGPony to encrypt to it.\E""", R.string.err_provider_recipient_dont_use),
             ErrorText.Rule("""\QSigning key is marked Don't use in PGPony. Pick another signing key in your mail app, or change its trust level in PGPony.\E""", R.string.err_provider_signer_dont_use),
+            // 4.7.0 (item 31): certifying other people's keys.
+            ErrorText.Rule("""\QThis key cannot certify other keys\E""", R.string.err_certify_certifier),
+            ErrorText.Rule("""\QThis key cannot be certified here\E""", R.string.err_certify_target),
             ErrorText.Rule("""\Qv4 algo-35 subkey secret is unavailable\E""", R.string.err_v4_algo_35_subkey_secret_unavailable),
             ErrorText.Rule("""\Qwrapped session key length out of range\E""", R.string.err_wrapped_session_key_length_out_range),
             ErrorText.Rule("""\Qprotect requires a non-empty passphrase\E""", R.string.err_protect_requires_non_empty_passphrase),

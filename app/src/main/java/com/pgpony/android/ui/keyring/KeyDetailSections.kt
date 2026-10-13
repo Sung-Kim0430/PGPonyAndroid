@@ -64,6 +64,8 @@ import androidx.compose.material.icons.filled.Report
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.VpnKey
+import androidx.compose.material.icons.filled.Verified
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -902,7 +904,10 @@ fun UserIdsSection(
     onRevoke: ((String) -> Unit)? = null,
     onRemove: ((String) -> Unit)? = null,
     onAddUserId: (() -> Unit)? = null,
-    onCopyEmail: ((String) -> Unit)? = null
+    onCopyEmail: ((String) -> Unit)? = null,
+    // 4.7.0 (item 31, #79): who certified each User ID.
+    certifications: List<com.pgpony.android.data.repository.KeyRepository.CertificationRow> = emptyList(),
+    onRevokeCertification: ((com.pgpony.android.data.repository.KeyRepository.CertificationRow) -> Unit)? = null
 ) {
     SectionGroup(title = stringResource(R.string.key_detail_userids_title)) {
         userIds.forEach { uid ->
@@ -971,6 +976,9 @@ fun UserIdsSection(
                         onCopy = onCopyEmail
                     )
                 }
+                certifications.filter { it.certification.userId == uid.raw }.forEach { row ->
+                    CertificationLine(row = row, onRevoke = onRevokeCertification)
+                }
                 if (canEdit && !uid.isRevoked) {
                     // #76: Revoke and Remove come first so they sit in the same place on
                     // every row; Make Primary, shown only on non-primary rows, goes last.
@@ -1010,6 +1018,59 @@ fun UserIdsSection(
                     .padding(horizontal = 8.dp, vertical = 4.dp)
             ) {
                 Text(stringResource(R.string.key_detail_userids_add_action))
+            }
+        }
+    }
+}
+
+/**
+ * 4.7.0 (item 31, #79): one certification of a User ID: who made it (their
+ * name when the key is in the keyring), the level, and whether it is local,
+ * revoked, expired or fails to verify. Your own get a Revoke action.
+ */
+@Composable
+private fun CertificationLine(
+    row: com.pgpony.android.data.repository.KeyRepository.CertificationRow,
+    onRevoke: ((com.pgpony.android.data.repository.KeyRepository.CertificationRow) -> Unit)?
+) {
+    val c = row.certification
+    val who = row.issuer?.let { it.userName.ifBlank { it.userEmail.ifBlank { it.shortFingerprint } } }
+        ?: stringResource(
+            R.string.key_detail_cert_unknown_issuer,
+            (c.issuerFingerprint?.takeLast(16) ?: String.format("%016X", c.issuerKeyId)).takeLast(8)
+        )
+    val notes = buildList {
+        add(certifyLevelLabel(c.level))
+        if (!c.exportable) add(stringResource(R.string.key_detail_cert_local))
+        if (c.revoked) add(stringResource(R.string.key_detail_cert_revoked))
+        if (c.expiredAt(System.currentTimeMillis())) add(stringResource(R.string.key_detail_cert_expired))
+        if (c.status == com.pgpony.android.crypto.CertificationService.Status.FAILED) {
+            add(stringResource(R.string.key_detail_cert_failed))
+        }
+    }
+    val good = c.status == com.pgpony.android.crypto.CertificationService.Status.VERIFIED && !c.revoked &&
+        !c.expiredAt(System.currentTimeMillis())
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 2.dp)) {
+        Icon(
+            imageVector = if (good) Icons.Filled.Verified else Icons.Filled.Info,
+            contentDescription = null,
+            tint = if (good) Color(0xFF22C55E) else MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(14.dp)
+        )
+        Spacer(Modifier.width(6.dp))
+        Text(
+            text = stringResource(R.string.key_detail_cert_by, who) + " (" + notes.joinToString(", ") + ")",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f)
+        )
+        if (row.isMine && !c.revoked && onRevoke != null) {
+            TextButton(onClick = { onRevoke(row) }, contentPadding = PaddingValues(horizontal = 8.dp)) {
+                Text(
+                    stringResource(R.string.key_detail_userids_revoke),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.error
+                )
             }
         }
     }

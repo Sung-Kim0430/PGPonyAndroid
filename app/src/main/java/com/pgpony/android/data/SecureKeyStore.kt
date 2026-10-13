@@ -77,6 +77,8 @@ class SecureKeyStore(context: Context) {
         private const val KEY_PREFIX_PUBLIC = "pgpony_key_"
         private const val KEY_SUFFIX_PUBLIC = "_public"
         private const val KEY_SUFFIX_PRIVATE = "_private"
+        // 4.7.0 (item 31): local-only certifications this user made on the key.
+        private const val KEY_SUFFIX_LOCAL_CERTS = "_localcerts"
 
         private const val STORE_DIR = "secure_keystore_v2"
         private const val HW_ALIAS = "pgpony_keystore_v2_hw"
@@ -436,6 +438,7 @@ class SecureKeyStore(context: Context) {
     // fingerprint <-> blob-name plumbing (names kept for migration parity).
     private fun pubName(fp: String) = "$KEY_PREFIX_PUBLIC$fp$KEY_SUFFIX_PUBLIC"
     private fun privName(fp: String) = "$KEY_PREFIX_PUBLIC$fp$KEY_SUFFIX_PRIVATE"
+    private fun localCertName(fp: String) = "$KEY_PREFIX_PUBLIC$fp$KEY_SUFFIX_LOCAL_CERTS"
 
     private fun readWithMigration(fp: String, name: String): ByteArray? {
         readBlob(fp, name)?.let { return it }
@@ -479,11 +482,34 @@ class SecureKeyStore(context: Context) {
         return readWithMigration(fp, privName(fp))
     }
 
+    /**
+     * 4.7.0 (item 31): the local-only certifications (Exportable Certification
+     * false, gpg's --lsign-key) this user made on [fingerprint]'s key. Kept
+     * apart from the certificate on purpose: nothing that exports, shares,
+     * uploads or pairs a key reads this blob, so a local certification can
+     * never leave the device. Sealed under the key's own DEK like its
+     * certificate; empty [data] removes it.
+     */
+    fun storeLocalCertifications(fingerprint: String, data: ByteArray) {
+        val fp = fingerprint.lowercase()
+        if (data.isEmpty()) {
+            synchronized(lock) { blobFile(localCertName(fp)).delete() }
+            return
+        }
+        writeBlob(fp, localCertName(fp), data)
+    }
+
+    fun loadLocalCertifications(fingerprint: String): ByteArray? {
+        val fp = fingerprint.lowercase()
+        return readBlob(fp, localCertName(fp))
+    }
+
     fun deleteKeys(fingerprint: String) {
         synchronized(lock) {
             val fp = fingerprint.lowercase()
             blobFile(pubName(fp)).delete()
             blobFile(privName(fp)).delete()
+            blobFile(localCertName(fp)).delete()
             envelopeFile(fp).delete()
             legacyPrefs?.let { prefs ->
                 try {

@@ -760,6 +760,36 @@
     <string name="key_detail_offline_primary_title">오프라인 기본 키</string>
     <string name="key_detail_offline_primary_body">기본 키의 개인 키가 이 기기에 없습니다. 여기 있는 보조 키는 평소처럼 사용할 수 있습니다. 사용자 ID, 보조 키, 만료일 변경과 키 철회에는 기본 키가 필요합니다. 기본 키가 보관된 곳에서 변경한 후 이 키를 여기로 다시 가져오세요.</string>
     <string name="key_detail_offline_primary_body_card">기본 키의 개인 키는 이 기기가 아니라 하드웨어 키에 있습니다. 여기 있는 보조 키는 평소처럼 사용할 수 있습니다. 사용자 ID, 보조 키, 만료일 변경과 키 철회에는 하드웨어 키가 필요합니다. GnuPG에서 변경한 후 이 키를 여기로 다시 가져오세요.</string>
+    <string name="key_detail_action_certify">인증…</string>
+    <string name="certify_sheet_title">이 키 인증</string>
+    <string name="certify_sheet_subtitle">인증하면 선택한 각 사용자 ID에 적힌 사람이 이 키의 소유자임을 확인했다고 밝히게 됩니다. 먼저 전체 지문을 소유자와 비교하세요.</string>
+    <string name="certify_no_certifier">여기서 인증할 수 있는 키쌍이 없습니다. 인증하려면 기본 키의 개인 키가 이 기기에 있는 소프트웨어 키쌍이 필요합니다. ML-DSA 키와 카드에 있는 키로는 아직 인증할 수 없습니다.</string>
+    <string name="certify_userids_label">인증할 사용자 ID</string>
+    <string name="certify_certifier_label">인증에 사용할 키</string>
+    <string name="certify_level_label">확인한 정도</string>
+    <string name="certify_level_no_claim">밝히지 않음</string>
+    <string name="certify_level_persona">확인하지 않음</string>
+    <string name="certify_level_casual">간단히 확인함</string>
+    <string name="certify_level_positive">꼼꼼히 확인함</string>
+    <string name="certify_expiry_label">인증 만료</string>
+    <string name="certify_local_only_label">로컬 전용</string>
+    <string name="certify_local_only_hint">이 기기에 보관됩니다. 키를 공유하거나 내보내거나 올리거나 페어링할 때 절대 포함되지 않습니다.</string>
+    <string name="certify_fingerprint_confirm">이 지문을 소유자가 가진 사본과 비교했습니다</string>
+    <string name="certify_apply">인증</string>
+    <string name="certify_failed">이 키를 인증하지 못했습니다</string>
+    <string name="certify_done_title">키를 인증했습니다</string>
+    <string name="certify_done_body">다른 사람들이 내 인증을 볼 수 있도록 인증한 키를 소유자에게 다시 보내세요. keys.openpgp.org는 다른 사람이 만든 인증을 제거하므로 직접 보내거나 다른 키 서버를 통해 보내세요.</string>
+    <string name="certify_done_body_local">로컬 인증은 이 기기에 그대로 남습니다.</string>
+    <string name="certify_done_mark_verified">검증됨으로 표시</string>
+    <string name="key_detail_cert_by">인증자: %1$s</string>
+    <string name="key_detail_cert_unknown_issuer">키링에 없는 키 %1$s</string>
+    <string name="key_detail_cert_local">로컬</string>
+    <string name="key_detail_cert_revoked">철회됨</string>
+    <string name="key_detail_cert_expired">만료됨</string>
+    <string name="key_detail_cert_failed">검증 실패</string>
+    <string name="key_detail_cert_revoke_title">인증을 철회할까요?</string>
+    <string name="key_detail_cert_revoke_body_local">%1$s에 대한 로컬 인증이 이 기기에서 삭제됩니다.</string>
+    <string name="key_detail_cert_revoke_body">%1$s에 대한 내 인증의 철회가 키에 추가됩니다. 다른 사람들이 볼 수 있도록 키를 다시 공유하세요.</string>
 
     <!-- ── 4.2.0 RC3 workstream I (#29): add/revoke/promote User IDs ── -->
     <string name="key_detail_userids_make_primary">기본으로 만들기</string>

@@ -807,6 +807,36 @@
     <string name="key_detail_offline_primary_title">离线主钥</string>
     <string name="key_detail_offline_primary_body">主钥的私钥不在此设备上。此处的子钥可照常使用。更改用户 ID、子钥或有效期，以及吊销密钥，都需要主钥：请在保存主钥的地方进行这些更改，然后将密钥重新导入此处。</string>
     <string name="key_detail_offline_primary_body_card">主钥的私钥位于硬件密钥上，不在此设备上。此处的子钥可照常使用。更改用户 ID、子钥或有效期，以及吊销密钥，都需要硬件密钥：请在 GnuPG 中进行这些更改，然后将密钥重新导入此处。</string>
+    <string name="key_detail_action_certify">认证…</string>
+    <string name="certify_sheet_title">认证此密钥</string>
+    <string name="certify_sheet_subtitle">认证即表明你已确认此密钥属于所选各用户 ID 中列出的人。请先与密钥所有者核对完整指纹。</string>
+    <string name="certify_no_certifier">你的密钥对都无法在此认证。认证需要主钥私钥位于此设备上的软件密钥对。ML-DSA 密钥和卡上的密钥暂时还不能用于认证。</string>
+    <string name="certify_userids_label">要认证的用户 ID</string>
+    <string name="certify_certifier_label">认证所用密钥</string>
+    <string name="certify_level_label">核实程度</string>
+    <string name="certify_level_no_claim">不作说明</string>
+    <string name="certify_level_persona">未核实</string>
+    <string name="certify_level_casual">简单核实</string>
+    <string name="certify_level_positive">仔细核实</string>
+    <string name="certify_expiry_label">认证有效期</string>
+    <string name="certify_local_only_label">仅限本地</string>
+    <string name="certify_local_only_hint">保存在此设备上。共享、导出、上传或配对密钥时绝不会包含在内。</string>
+    <string name="certify_fingerprint_confirm">我已将此指纹与所有者手中的副本核对过</string>
+    <string name="certify_apply">认证</string>
+    <string name="certify_failed">无法认证此密钥</string>
+    <string name="certify_done_title">已认证密钥</string>
+    <string name="certify_done_body">请将已认证的密钥发回给其所有者，以便其他人看到你的认证。keys.openpgp.org 会丢弃他人所做的认证，因此请直接发送，或通过其他密钥服务器发送。</string>
+    <string name="certify_done_body_local">你的本地认证会保留在此设备上。</string>
+    <string name="certify_done_mark_verified">标记为已验证</string>
+    <string name="key_detail_cert_by">认证者：%1$s</string>
+    <string name="key_detail_cert_unknown_issuer">不在你密钥环中的密钥 %1$s</string>
+    <string name="key_detail_cert_local">本地</string>
+    <string name="key_detail_cert_revoked">已吊销</string>
+    <string name="key_detail_cert_expired">已过期</string>
+    <string name="key_detail_cert_failed">验证失败</string>
+    <string name="key_detail_cert_revoke_title">要撤回你的认证吗？</string>
+    <string name="key_detail_cert_revoke_body_local">你对 %1$s 的本地认证将从此设备中移除。</string>
+    <string name="key_detail_cert_revoke_body">你对 %1$s 所做认证的吊销将添加到密钥中。请再次共享密钥，让其他人也能看到。</string>
 
     <!-- ── 4.2.0 RC3 workstream I (#29): add/revoke/promote User IDs ── -->
     <string name="key_detail_userids_make_primary">设为主要</string>
@@ -2543,6 +2573,8 @@
     <string name="err_offline_primary_edit">主钥的私钥不在此设备上（离线主钥）。请在保存主钥的地方进行此更改，然后将密钥重新导入此处。</string>
     <string name="err_provider_recipient_dont_use">收件人密钥在 PGPony 中被标记为「弃用」：%1$s。在 PGPony 中更改其信任级别即可向其加密。</string>
     <string name="err_provider_signer_dont_use">签名密钥在 PGPony 中被标记为「弃用」。请在邮件应用中选择其他签名密钥，或在 PGPony 中更改其信任级别。</string>
+    <string name="err_certify_certifier">此密钥无法认证其他密钥</string>
+    <string name="err_certify_target">此密钥无法在此处认证</string>
     <string name="err_session_key_block_too_short">会话密钥块过短</string>
     <string name="err_session_key_checksum_mismatch">会话密钥校验和不匹配</string>
     <string name="err_short_form_apdu_data_limited_255">短格式 APDU 数据最多 255 字节（实际为 %1$s）。较大的数据请使用命令链接，或设置 extended = true。</string>

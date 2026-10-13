@@ -818,6 +818,36 @@
     <string name="key_detail_offline_primary_title">Offline primary key</string>
     <string name="key_detail_offline_primary_body">The primary key\'s secret is not on this device. The subkeys stored here work as usual. Changing User IDs, subkeys or expiry, and revoking the key, need the primary: make those changes where it is kept, then import the key here again.</string>
     <string name="key_detail_offline_primary_body_card">The primary key\'s secret is on a hardware key, not on this device. The subkeys stored here work as usual. Changing User IDs, subkeys or expiry, and revoking the key, need the hardware key: make those changes in GnuPG, then import the key here again.</string>
+    <string name="key_detail_action_certify">Certify…</string>
+    <string name="certify_sheet_title">Certify this key</string>
+    <string name="certify_sheet_subtitle">Certifying says you checked that this key belongs to the person named in each User ID you pick. Compare the full fingerprint with its owner first.</string>
+    <string name="certify_no_certifier">None of your key pairs can certify here. Certifying needs a software key pair whose primary key\'s secret is on this device. ML-DSA keys and keys on a card can\'t certify yet.</string>
+    <string name="certify_userids_label">User IDs to certify</string>
+    <string name="certify_certifier_label">Certify with</string>
+    <string name="certify_level_label">How carefully you checked</string>
+    <string name="certify_level_no_claim">No claim</string>
+    <string name="certify_level_persona">Not checked</string>
+    <string name="certify_level_casual">Casual check</string>
+    <string name="certify_level_positive">Careful check</string>
+    <string name="certify_expiry_label">Certification expires</string>
+    <string name="certify_local_only_label">Local only</string>
+    <string name="certify_local_only_hint">Kept on this device. Never included when the key is shared, exported, uploaded or paired.</string>
+    <string name="certify_fingerprint_confirm">I compared this fingerprint with the owner\'s copy</string>
+    <string name="certify_apply">Certify</string>
+    <string name="certify_failed">Could not certify this key</string>
+    <string name="certify_done_title">Key certified</string>
+    <string name="certify_done_body">Send the certified key back to its owner so others can see your certification. keys.openpgp.org drops certifications made by other people, so send it directly or through another key server.</string>
+    <string name="certify_done_body_local">Your local certification stays on this device.</string>
+    <string name="certify_done_mark_verified">Mark as Verified</string>
+    <string name="key_detail_cert_by">Certified by %1$s</string>
+    <string name="key_detail_cert_unknown_issuer">key %1$s, not in your keyring</string>
+    <string name="key_detail_cert_local">local</string>
+    <string name="key_detail_cert_revoked">revoked</string>
+    <string name="key_detail_cert_expired">expired</string>
+    <string name="key_detail_cert_failed">does not verify</string>
+    <string name="key_detail_cert_revoke_title">Withdraw your certification?</string>
+    <string name="key_detail_cert_revoke_body_local">Your local certification of %1$s is removed from this device.</string>
+    <string name="key_detail_cert_revoke_body">A revocation of your certification of %1$s is added to the key. Share the key again so others see it.</string>
 
     <!-- ── 4.2.0 RC3 workstream I (#29): add/revoke/promote User IDs ── -->
     <string name="key_detail_userids_make_primary">Make Primary</string>
@@ -2569,6 +2599,8 @@
     <string name="err_offline_primary_edit">The primary key\'s secret is not on this device (offline primary). Make this change where the primary key is kept, then import the key here again.</string>
     <string name="err_provider_recipient_dont_use">Recipient key is marked Don\'t use in PGPony: %1$s. Change its trust level in PGPony to encrypt to it.</string>
     <string name="err_provider_signer_dont_use">Signing key is marked Don\'t use in PGPony. Pick another signing key in your mail app, or change its trust level in PGPony.</string>
+    <string name="err_certify_certifier">This key cannot certify other keys</string>
+    <string name="err_certify_target">This key cannot be certified here</string>
     <string name="err_session_key_block_too_short">session key block too short</string>
     <string name="err_session_key_checksum_mismatch">session key checksum mismatch</string>
     <string name="err_short_form_apdu_data_limited_255">Short-form APDU data limited to 255 bytes (was %1$s). Use command chaining or set extended = true for larger payloads.</string>

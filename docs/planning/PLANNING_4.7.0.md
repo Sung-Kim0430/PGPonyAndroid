@@ -693,6 +693,22 @@ Priority: medium (docs, promised). Not gated on 4.7.0; can land on main at any t
 
 ## 31. Certify other people's keys, like gpg's --sign-key (#79)
 
+**Status:** RC2, software certifiers. Key Details of a public key has Certify… (CertifySheet): pick the User
+IDs, the certifying key pair (software, classical, unrevoked, unexpired, not Don't use, primary secret here with
+Certify; never an offline stub), the level (no claim 0x10 by default, persona, casual, positive), an optional
+expiry, and Local only; Certify stays disabled until the full fingerprint is confirmed as compared. Exportable
+certifications go into the stored certificate and its cached armor, so sharing the key carries them; the done
+dialog offers Share and Mark as Verified and says keys.openpgp.org drops third-party certifications. Local-only
+ones (Exportable Certification false, critical) are kept in their own sealed blob next to the key
+(SecureKeyStore.storeLocalCertifications), which no export, share, upload, QR, backup or pairing path reads, and
+which goes with the key on purge and Clear All Data. Each User ID lists who certified it (name when held, level,
+local, revoked, expired, fails to verify); your own have Revoke: a 0x30 added to the certificate for an
+exportable one, removal for a local one. CertificateMerge already keeps third-party certifications on merge.
+Not in RC2: an ML-DSA certifier or target (a composite signature inside a classical certificate stops Bouncy
+Castle from loading it; needs the raw-packet path) and certifying on a card (RC4). Tests: CertificationTest. On
+device: `gpg --check-sigs` on an exported certified key at each level, v4 and v6 both ways; a local-only one is
+absent from Share, Export, QR and an upload.
+
 Priority: medium-high (feature). Origin: #79: certify another person's User IDs with your own key to take part in
 the Web of Trust from the phone, including when the certifying primary lives on an OpenPGP card.
 

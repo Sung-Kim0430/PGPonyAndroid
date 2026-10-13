@@ -186,6 +186,8 @@ class ErrorTextTest {
         "The primary key's secret is not on this device (offline primary). Make this change where the primary key is kept, then import the key here again." to R.string.err_offline_primary_edit,
         "Recipient key is marked Don't use in PGPony: bob@example.org. Change its trust level in PGPony to encrypt to it." to R.string.err_provider_recipient_dont_use,
         "Signing key is marked Don't use in PGPony. Pick another signing key in your mail app, or change its trust level in PGPony." to R.string.err_provider_signer_dont_use,
+        "This key cannot certify other keys" to R.string.err_certify_certifier,
+        "This key cannot be certified here" to R.string.err_certify_target,
         "v4 algo-35 subkey secret is unavailable" to R.string.err_v4_algo_35_subkey_secret_unavailable,
         "wrapped session key length out of range" to R.string.err_wrapped_session_key_length_out_range,
         "protect requires a non-empty passphrase" to R.string.err_protect_requires_non_empty_passphrase,

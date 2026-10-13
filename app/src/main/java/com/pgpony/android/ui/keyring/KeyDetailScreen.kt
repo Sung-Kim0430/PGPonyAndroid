@@ -70,6 +70,7 @@ import androidx.compose.material.icons.filled.Report
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.Terminal
+import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material.icons.filled.VpnKey
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
@@ -372,6 +373,14 @@ fun KeyDetailScreen(
                                     onClick = { menuOpen = false; dispatchAction(KeyDetailActionIds.EXPORT_PRIVATE_KEY) }
                                 )
                             }
+                            // 4.7.0 (item 31, #79): certify someone else's key.
+                            if (!menuKey.isKeyPair && state.canCertify) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.key_detail_action_certify)) },
+                                    leadingIcon = { Icon(Icons.Filled.Verified, null) },
+                                    onClick = { menuOpen = false; viewModel.openCertifySheet() }
+                                )
+                            }
                             if (menuKey.isKeyPair && !menuKey.isCardBacked) {
                                 DropdownMenuItem(
                                     text = { Text(stringResource(R.string.key_detail_action_change_passphrase)) },
@@ -496,7 +505,8 @@ fun KeyDetailScreen(
                 onToggleFallback = { fp -> viewModel.toggleFallback(fp) },
                 onMoveFallback = { fp, delta -> viewModel.moveFallback(fp, delta) },
                 onPickSigningDefault = { slot, fp -> viewModel.setSigningDefault(slot, fp) },
-                onStrictFallbacksChange = { enabled -> viewModel.setStrictFallbacks(enabled) }
+                onStrictFallbacksChange = { enabled -> viewModel.setStrictFallbacks(enabled) },
+                onRevokeCertification = { row -> viewModel.requestRevokeCertification(row) }
             )
         }
     }
@@ -858,6 +868,99 @@ fun KeyDetailScreen(
                 viewModel.addSubkey(choice, expiresAt, passphrase)
             },
             onDismiss = { viewModel.dismissAddSubkeySheet() }
+        )
+    }
+
+    // ── 4.7.0 (item 31, #79): certify, done, and withdraw ───────────────
+    val keyForCertify = state.key
+    if (state.showCertifySheet && keyForCertify != null) {
+        CertifySheet(
+            formattedFingerprint = keyForCertify.formattedFingerprint,
+            userIds = state.userIds,
+            certifiers = state.certifierChoices,
+            isProcessing = state.certifyInFlight,
+            errorMessage = state.certifyError,
+            onApply = { certifierFp, passphrase, uids, level, expirySeconds, exportable ->
+                viewModel.certify(certifierFp, passphrase, uids, level, expirySeconds, exportable)
+            },
+            onDismiss = { viewModel.dismissCertifySheet() }
+        )
+    }
+    state.certifyDoneExportable?.let { exportable ->
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissCertifyDone() },
+            title = { Text(stringResource(R.string.certify_done_title)) },
+            text = {
+                Text(
+                    stringResource(
+                        if (exportable) R.string.certify_done_body else R.string.certify_done_body_local
+                    )
+                )
+            },
+            confirmButton = {
+                Row {
+                    if (state.key?.trustLevel != com.pgpony.android.data.TrustLevel.VERIFIED) {
+                        TextButton(onClick = { viewModel.markVerifiedAfterCertify() }) {
+                            Text(stringResource(R.string.certify_done_mark_verified))
+                        }
+                    }
+                    if (exportable) {
+                        TextButton(onClick = {
+                            viewModel.dismissCertifyDone()
+                            dispatchAction(KeyDetailActionIds.SHARE_PUBLIC_KEY)
+                        }) { Text(stringResource(R.string.common_button_share)) }
+                    }
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.dismissCertifyDone() }) {
+                    Text(stringResource(R.string.common_button_close))
+                }
+            }
+        )
+    }
+    state.certRevokeRequest?.let { row ->
+        var certRevokePass by remember(row) { mutableStateOf("") }
+        val local = !row.certification.exportable
+        AlertDialog(
+            onDismissRequest = { if (!state.certRevokeInFlight) viewModel.dismissRevokeCertification() },
+            title = { Text(stringResource(R.string.key_detail_cert_revoke_title)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        stringResource(
+                            if (local) R.string.key_detail_cert_revoke_body_local else R.string.key_detail_cert_revoke_body,
+                            row.certification.userId
+                        )
+                    )
+                    if (!local) {
+                        OutlinedTextField(
+                            value = certRevokePass,
+                            onValueChange = { certRevokePass = it },
+                            label = { Text(stringResource(R.string.key_detail_userid_action_passphrase_label)) },
+                            visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                            singleLine = true,
+                            enabled = !state.certRevokeInFlight
+                        )
+                    }
+                    state.certRevokeError?.let {
+                        Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = { viewModel.confirmRevokeCertification(certRevokePass.ifBlank { null }) },
+                    enabled = !state.certRevokeInFlight
+                ) {
+                    Text(stringResource(R.string.key_detail_userids_revoke), color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.dismissRevokeCertification() }, enabled = !state.certRevokeInFlight) {
+                    Text(stringResource(R.string.common_button_cancel))
+                }
+            }
         )
     }
 
@@ -1509,7 +1612,9 @@ private fun LoadedBody(
     onToggleFallback: (String) -> Unit,
     onMoveFallback: (String, Int) -> Unit,
     onPickSigningDefault: (Int, String?) -> Unit,
-    onStrictFallbacksChange: (Boolean) -> Unit
+    onStrictFallbacksChange: (Boolean) -> Unit,
+    // 4.7.0 (item 31)
+    onRevokeCertification: (com.pgpony.android.data.repository.KeyRepository.CertificationRow) -> Unit
 ) {
     val key = state.key ?: return  // Defensive — caller already filtered
     val hideDestructiveActions = DestructiveActionsDisabled.isEnabled(androidx.compose.ui.platform.LocalContext.current)
@@ -1561,7 +1666,10 @@ private fun LoadedBody(
         val canEditUserIds = key.isKeyPair && !key.isCardBacked && state.primaryStub == null
         // 4.7.0 (item 27): also shown for a single User ID carrying the
         // weak-hash mark, so the mark is never hidden.
-        if (state.userIds.size > 1 || canEditUserIds || state.userIds.any { it.weakHash }) {
+        // 4.7.0 (item 31): and whenever someone has certified one of them.
+        if (state.userIds.size > 1 || canEditUserIds || state.userIds.any { it.weakHash } ||
+            state.certifications.isNotEmpty()
+        ) {
             item {
                 UserIdsSection(
                     userIds = state.userIds,
@@ -1570,7 +1678,9 @@ private fun LoadedBody(
                     onRevoke = onRevokeUserId,
                     onRemove = if (hideDestructiveActions) null else onRemoveUserId,
                     onAddUserId = onAddUserId,
-                    onCopyEmail = onCopyEmail
+                    onCopyEmail = onCopyEmail,
+                    certifications = state.certifications,
+                    onRevokeCertification = onRevokeCertification
                 )
             }
         }
