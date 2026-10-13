@@ -1822,6 +1822,13 @@ private fun ProxySection() {
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun PassphraseCacheSection() {
+    // 4.7.0: Clear now confirms itself; the cache state alone gave no feedback.
+    val clearedContext = androidx.compose.ui.platform.LocalContext.current
+    val showCleared: () -> Unit = {
+        android.widget.Toast.makeText(
+            clearedContext, clearedContext.getString(R.string.settings_passphrase_cache_cleared_toast), android.widget.Toast.LENGTH_SHORT
+        ).show()
+    }
     var durationSec by remember {
         mutableStateOf(com.pgpony.android.provider.ProviderPassphraseCache.durationSec())
     }
@@ -1910,6 +1917,7 @@ private fun PassphraseCacheSection() {
                         com.pgpony.android.session.InAppPassphraseCache.clearAll()
                         com.pgpony.android.provider.ProviderCacheClearReceiver.requestClearAll()
                         remainingMs = 0
+                        showCleared()
                     }) {
                         Text(stringResource(R.string.settings_card_pin_cache_clear))
                     }
@@ -1938,6 +1946,7 @@ private fun PassphraseCacheSection() {
                         com.pgpony.android.session.InAppPassphraseCache.clearAll()
                         com.pgpony.android.provider.ProviderCacheClearReceiver.requestClearAll()
                         remainingMs = 0
+                        showCleared()
                     }) {
                         Text(stringResource(R.string.settings_card_pin_cache_clear))
                     }
@@ -1962,6 +1971,7 @@ private fun PassphraseCacheSection() {
                     com.pgpony.android.session.InAppPassphraseCache.clearAll()
                     com.pgpony.android.provider.ProviderCacheClearReceiver.requestClearAll()
                     remainingMs = 0
+                    showCleared()
                 }) {
                     Text(stringResource(R.string.settings_card_pin_cache_clear))
                 }
@@ -1974,6 +1984,13 @@ private fun PassphraseCacheSection() {
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun CardPinCacheSection() {
+    // 4.7.0: Clear now confirms itself; the cache state alone gave no feedback.
+    val clearedContext = androidx.compose.ui.platform.LocalContext.current
+    val showCleared: () -> Unit = {
+        android.widget.Toast.makeText(
+            clearedContext, clearedContext.getString(R.string.settings_card_pin_cache_cleared_toast), android.widget.Toast.LENGTH_SHORT
+        ).show()
+    }
     var enabled by remember {
         mutableStateOf(com.pgpony.android.crypto.card.CardPinCache.isEnabled())
     }
@@ -2067,6 +2084,7 @@ private fun CardPinCacheSection() {
                             // process (ProviderCardOpActivity caches it there).
                             com.pgpony.android.provider.ProviderCacheClearReceiver.requestClearAll()
                             remainingMs = 0
+                            showCleared()
                         }) {
                             Text(stringResource(R.string.settings_card_pin_cache_clear))
                         }
@@ -2094,6 +2112,7 @@ private fun CardPinCacheSection() {
                             // process (ProviderCardOpActivity caches it there).
                             com.pgpony.android.provider.ProviderCacheClearReceiver.requestClearAll()
                             remainingMs = 0
+                            showCleared()
                         }) {
                             Text(stringResource(R.string.settings_card_pin_cache_clear))
                         }

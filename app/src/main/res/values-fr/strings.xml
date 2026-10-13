@@ -1287,6 +1287,8 @@ Vous pouvez aussi verrouiller l\'application derrière votre empreinte digitale 
     <string name="settings_card_pin_cache_countdown_format">PIN mémorisé — effacé dans %1$s</string>
     <string name="settings_card_pin_cache_none_held">Aucun PIN n\'est mémorisé actuellement.</string>
     <string name="settings_card_pin_cache_clear">Effacer maintenant</string>
+    <string name="settings_passphrase_cache_cleared_toast">Phrases secrètes mémorisées effacées</string>
+    <string name="settings_card_pin_cache_cleared_toast">PIN de la carte effacé</string>
     <!-- 3.1.0 Phase 8 (E4/E5) — email send + sign by default -->
     <string name="result_send_email_button">Envoyer par e-mail</string>
     <string name="settings_sign_by_default_title">Signer par défaut</string>

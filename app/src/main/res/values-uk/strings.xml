@@ -1898,6 +1898,8 @@
     <string name="settings_card_pin_cache_countdown_format">PIN запам’ятовано. Очиститься через %1$s</string>
     <string name="settings_card_pin_cache_none_held">Зараз жоден PIN не запам’ятовано.</string>
     <string name="settings_card_pin_cache_clear">Очистити зараз</string>
+    <string name="settings_passphrase_cache_cleared_toast">Запам’ятовані парольні фрази очищено</string>
+    <string name="settings_card_pin_cache_cleared_toast">PIN картки очищено</string>
     <!-- 4.0.0 Phase 9 (G9): "Until I clear it" PIN cache mode -->
     <string name="settings_card_pin_cache_until_cleared">Доки я не очищу</string>
     <string name="settings_session_until_locked">До блокування телефона</string>

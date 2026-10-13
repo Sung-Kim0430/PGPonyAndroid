@@ -1287,6 +1287,8 @@ Opcionalmente, bloqueie o app com sua impressão digital ou rosto para mais tran
     <string name="settings_card_pin_cache_countdown_format">PIN lembrado — apaga em %1$s</string>
     <string name="settings_card_pin_cache_none_held">Nenhum PIN está lembrado no momento.</string>
     <string name="settings_card_pin_cache_clear">Apagar agora</string>
+    <string name="settings_passphrase_cache_cleared_toast">Frases-senha lembradas apagadas</string>
+    <string name="settings_card_pin_cache_cleared_toast">PIN do cartão apagado</string>
     <!-- 3.1.0 Phase 8 (E4/E5) — email send + sign by default -->
     <string name="result_send_email_button">Enviar por e-mail</string>
     <string name="settings_sign_by_default_title">Assinar por padrão</string>

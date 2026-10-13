@@ -1287,6 +1287,8 @@ Opcionalmente, bloquea la app con tu huella digital o cara para mayor tranquilid
     <string name="settings_card_pin_cache_countdown_format">PIN recordado — se borra en %1$s</string>
     <string name="settings_card_pin_cache_none_held">No hay ningún PIN recordado actualmente.</string>
     <string name="settings_card_pin_cache_clear">Borrar ahora</string>
+    <string name="settings_passphrase_cache_cleared_toast">Frases de contraseña recordadas borradas</string>
+    <string name="settings_card_pin_cache_cleared_toast">PIN de la tarjeta borrado</string>
     <!-- 3.1.0 Phase 8 (E4/E5) — email send + sign by default -->
     <string name="result_send_email_button">Enviar por correo</string>
     <string name="settings_sign_by_default_title">Firmar por defecto</string>

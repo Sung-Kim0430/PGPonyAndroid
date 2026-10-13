@@ -1886,6 +1886,8 @@
     <string name="settings_card_pin_cache_countdown_format">PIN 已记住。将在 %1$s 后清除</string>
     <string name="settings_card_pin_cache_none_held">当前没有记住的 PIN。</string>
     <string name="settings_card_pin_cache_clear">立即清除</string>
+    <string name="settings_passphrase_cache_cleared_toast">已清除记住的口令</string>
+    <string name="settings_card_pin_cache_cleared_toast">已清除卡 PIN</string>
     <!-- 4.0.0 Phase 9 (G9): "Until I clear it" PIN cache mode -->
     <string name="settings_card_pin_cache_until_cleared">直到我手动清除</string>
     <string name="settings_session_until_locked">直到手机锁定</string>

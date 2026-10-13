@@ -1807,6 +1807,8 @@
     <string name="settings_card_pin_cache_countdown_format">PIN 기억 중. %1$s 후 지워집니다</string>
     <string name="settings_card_pin_cache_none_held">현재 기억된 PIN이 없습니다.</string>
     <string name="settings_card_pin_cache_clear">지금 비우기</string>
+    <string name="settings_passphrase_cache_cleared_toast">기억된 비밀구절을 지웠습니다</string>
+    <string name="settings_card_pin_cache_cleared_toast">카드 PIN을 지웠습니다</string>
     <!-- 4.0.0 Phase 9 (G9) — "Until I clear it" PIN cache mode -->
     <string name="settings_card_pin_cache_until_cleared">내가 지울 때까지</string>
     <string name="settings_session_until_locked">폰이 잠길 때까지</string>

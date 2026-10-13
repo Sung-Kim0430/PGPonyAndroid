@@ -1287,6 +1287,8 @@ PGPony は、古い OpenPGP 実装との相互運用性のために従来の RSA
     <string name="settings_card_pin_cache_countdown_format">PINを記憶中 — %1$s後に消去</string>
     <string name="settings_card_pin_cache_none_held">現在記憶されているPINはありません。</string>
     <string name="settings_card_pin_cache_clear">今すぐ消去</string>
+    <string name="settings_passphrase_cache_cleared_toast">記憶していたパスフレーズを消去しました</string>
+    <string name="settings_card_pin_cache_cleared_toast">カードPINを消去しました</string>
     <!-- 3.1.0 Phase 8 (E4/E5) — email send + sign by default -->
     <string name="result_send_email_button">メールで送信</string>
     <string name="settings_sign_by_default_title">デフォルトで署名</string>

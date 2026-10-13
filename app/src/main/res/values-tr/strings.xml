@@ -1890,6 +1890,8 @@
     <string name="settings_card_pin_cache_countdown_format">PIN hatırlanıyor. Temizlenmesine kalan süre: %1$s</string>
     <string name="settings_card_pin_cache_none_held">Şu anda hatırlanan bir PIN yok.</string>
     <string name="settings_card_pin_cache_clear">Şimdi temizle</string>
+    <string name="settings_passphrase_cache_cleared_toast">Hatırlanan parola ifadeleri temizlendi</string>
+    <string name="settings_card_pin_cache_cleared_toast">Kart PIN\'i temizlendi</string>
     <!-- 4.0.0 Phase 9 (G9): "Until I clear it" PIN cache mode -->
     <string name="settings_card_pin_cache_until_cleared">Ben temizleyene kadar</string>
     <string name="settings_session_until_locked">Telefon kilitlenene kadar</string>
