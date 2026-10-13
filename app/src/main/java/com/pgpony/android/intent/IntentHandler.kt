@@ -119,6 +119,18 @@ sealed class IntentAction {
     // J4). Mirrors iOS ExtensionEncryptView's multi-file route.
     data class ComposeBundle(val files: List<ShareFileRef>) : IntentAction()
 
+    /** 4.7.0 (item 38, #72): every shared file is an encrypted message, so
+     *  each one is decrypted and verified on its own (multi-file decrypt). */
+    data class DecryptFiles(val files: List<ShareFileRef>) : IntentAction()
+
+    /** 4.7.0 (item 38, #72): encrypted messages shared together with other
+     *  files. The user chooses: decrypt [encrypted], or encrypt [all] as one
+     *  package. Guessing either way was the bug. */
+    data class ChooseSharedFiles(
+        val all: List<ShareFileRef>,
+        val encrypted: List<ShareFileRef>
+    ) : IntentAction()
+
     /** 4.2.0 RC6 (#32): one shared file as uri + metadata, unread. The
      *  bundle streams it at encrypt time; size is -1 when the provider
      *  declares none. */
@@ -395,6 +407,9 @@ object IntentHandler {
      * they populate), capture each as a ShareFileRef, and route:
      * 2+ readable files → ComposeBundle; exactly one → the normal
      * single-file classification (handleFileUri); none readable → None.
+     * 4.7.0 (item 38, #72): 2+ files are now routed by what they are (see
+     * SharedSelection): all encrypted → DecryptFiles, a mix →
+     * ChooseSharedFiles, otherwise ComposeBundle as before.
      */
     private fun handleSendMultiple(intent: Intent, resolver: ContentResolver): IntentAction {
         val uris = LinkedHashSet<Uri>()
@@ -424,7 +439,31 @@ object IntentHandler {
                 uri = uri
             )
         }
-        return IntentAction.ComposeBundle(files)
+        // 4.7.0 (item 38, #72): look at the files before choosing a route.
+        // Only a bounded head of each is read (SharedSelection.HEAD_BYTES),
+        // so a share of large files costs a few KB per file, not the files.
+        val kinds = files.map { classifySharedHead(it.uri, resolver) }
+        return when (SharedSelection.route(kinds)) {
+            SharedSelection.Route.DECRYPT_ALL -> IntentAction.DecryptFiles(files)
+            SharedSelection.Route.ASK -> IntentAction.ChooseSharedFiles(
+                all = files,
+                encrypted = files.filterIndexed { i, _ -> kinds[i] == SharedSelection.Kind.ENCRYPTED }
+            )
+            SharedSelection.Route.PACKAGE -> IntentAction.ComposeBundle(files)
+        }
+    }
+
+    /** 4.7.0 (item 38, #72): one shared file's kind, from its head only. An
+     *  unreadable file counts as plain, so it surfaces at encrypt time as
+     *  before instead of being dropped here. */
+    private fun classifySharedHead(uri: Uri, resolver: ContentResolver): SharedSelection.Kind {
+        val head = DocumentBytes.readHead(resolver, uri, SharedSelection.HEAD_BYTES)
+            ?: return SharedSelection.Kind.OTHER
+        return SharedSelection.classify(
+            head = head,
+            complete = head.size < SharedSelection.HEAD_BYTES,
+            bcSaysEncrypted = { looksEncryptedBinary(it) }
+        )
     }
 
     private fun classifySend(intent: Intent, resolver: ContentResolver): ShareIntentContent {

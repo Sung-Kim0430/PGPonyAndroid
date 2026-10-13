@@ -304,6 +304,8 @@ block (its user ID is personal data). Add a round trip with an in-test v6 ML-DSA
 
 ## 15. Package mode: ML-DSA signing, and encrypting or signing each file separately (#72)
 
+**Status:** RC3. Built: when Bundle mode holds two or more files it offers "One package" (the bundle, unchanged) or "Each file on its own", with Encrypt, Encrypt and sign, or Sign only (a binary detached .sig per file). It runs through encryptBundle into EncryptDecryptViewModel.encryptEachFile, one file at a time on fileOpJob, reusing streamEncryptToScratch (new openInput and outFile parameters), loadRecipientsStrict, resolveEffectiveSigner, the composite ML-DSA signer and the PQC v4 prompt (asked once per batch). A card-backed signer is refused for the signing choices, with the reason shown, since every file would need a tap. The passphrase is asked once in the batch sheet and used for every file. One failed file does not stop the rest. FileBatchResultScreen shows per-file status (waiting, working, done, failed with the error text), then Save to a folder (ACTION_OPEN_DOCUMENT_TREE through the new MainActivity.startDocumentTreePicker, DocumentFile, never overwriting: a taken name gets " (1)") or Share all (ACTION_SEND_MULTIPLE through the FileProvider, from ScratchFiles.SCOPE_BATCH). The Decrypt screen picker now allows several files; two or more go to the multi-file decrypt from item 38 with a signature result per file. New files: ui/encrypt/FileBatch.kt (BundleOutputMode, PerFileOp, FileBatchState, FileBatchNaming), ui/encrypt/FileBatchResultScreen.kt. Tests: FileBatchNamingTest (output names, .asc/.gpg/.pgp stripping, the literal packet name, collision-safe names). Left out: verifying several detached .sig files at once (Verify still takes one pair); armored output for each-file encrypt (binary .gpg, as in File mode). English strings only so far.
+
 **Status:** The ML-DSA signing bug shipped in 4.6.3 (PLANNING_4.6.3.md item 5). Encrypting or signing each file separately is still open here.
 
 Priority: high for the bug, medium for the feature. Origin: #72.
@@ -718,6 +720,8 @@ Not in RC2: an ML-DSA certifier or target (a composite signature inside a classi
 Castle from loading it; needs the raw-packet path) and certifying on a card (RC4). Tests: CertificationTest. On
 device: `gpg --check-sigs` on an exported certified key at each level, v4 and v6 both ways; a local-only one is
 absent from Share, Export, QR and an upload.
+Oct 13 (#79, RC2): interop confirmed both ways by the requester: a PGPony certification read by other OpenPGP
+tools, and a key certified in Kleopatra shows its certifications in PGPony. Request: whole-row taps (item 43).
 
 Priority: medium-high (feature). Origin: #79: certify another person's User IDs with your own key to take part in
 the Web of Trust from the phone, including when the certifying primary lives on an OpenPGP card.
@@ -918,6 +922,13 @@ confirm no partial file is left under the final name.
 
 
 ## 38. Quick Actions with several encrypted files encrypts them as one bundle (#72)
+
+**Status:** RC3. Built: IntentHandler.handleSendMultiple reads only a 64 KB head of each shared file and classifies it with the new intent/SharedSelection.kt (armor first line, multipart/encrypted, PacketSniff.looksLikeEncryptedMessage and isDetachedSignature, isKnownNonOpenPgp, then the BouncyCastle recipient check). All encrypted routes to the new IntentAction.DecryptFiles, which opens the Decrypt tab and runs EncryptDecryptViewModel.startDecryptBatch: each file streams through streamDecryptToFile (factored out of decryptFileStreamingPath, so the envelope skip, progress, cancel and composite rings are the same), is named from its literal packet filename or its name without .asc/.gpg/.pgp, and gets its own signature banner in FileBatchResultScreen. There was no multi-file decrypt before; the in-app picker was single-file. Encrypted files mixed with other files (or with detached signatures) route to IntentAction.ChooseSharedFiles, a dialog in MainActivity: Decrypt the encrypted ones, Encrypt all as one package, or Cancel. Plain files keep ComposeBundle, now with item 15's each-file choice. Tests: SharedSelectionTest. Left out: detached signatures with their data files and no encrypted file still go to the package route, since verifying several pairs is not built; .zip and .eml wait for the reporter; a decrypted package in a batch is saved as one .eml file instead of being split into its attachments; card-encrypted files in a batch fail with "None of your keys can decrypt this file" (decrypt those one at a time).
+On device (Oct 13): a batch from the Decrypt screen's picker loaded no secret keys and failed every file as "no
+matching key"; the key pairs are now read from the repository, small files take the single-file in-memory decrypt
+with the fallback cascade, and a name like "message.asc (8)" becomes "message (8).txt" (copy number kept, extension
+from the content when the name has none). Sharing several files, the choice dialog and each-file encrypt, sign,
+save and share all green.
 
 Priority: medium-high (bug). Origin: #72 (RC1): selecting several .asc files in a file manager and sharing them
 to PGPony gives one consolidated file, with no signature results; the in-app Decrypt File picker decrypts the

@@ -228,6 +228,10 @@ class MainActivity :
     // 3.1.0 Phase 5 Fix2 — photo-picker callback (Bundle "Add photos").
     private var pendingPhotoPickerCallback: ((List<android.net.Uri>) -> Unit)? = null
 
+    // 4.7.0 (items 15 and 38, #72): folder picker for saving a multi-file
+    // result. Same one-slot pattern as the pickers above.
+    private var pendingDocumentTreeCallback: ((android.net.Uri?) -> Unit)? = null
+
     // ── Phase A10b: Document creator helper ───────────────────────────
     //
     // Sibling slot for ACTION_CREATE_DOCUMENT — the Save flow in
@@ -413,6 +417,9 @@ class MainActivity :
 
         // 3.1.0 Phase 5 Fix2 — system photo picker for Bundle photos.
         private const val REQ_PHOTO_PICKER = 1005
+
+        // 4.7.0 (items 15 and 38): folder picker for multi-file results.
+        private const val REQ_DOCUMENT_TREE_PICKER = 1006
     }
 
     /**
@@ -568,6 +575,36 @@ class MainActivity :
                 pendingPhotoPickerCallback = null
                 cb?.invoke(uris)
             }
+            // 4.7.0 (items 15 and 38): the folder the user picked, or null.
+            REQ_DOCUMENT_TREE_PICKER -> {
+                suppressAutoLock = false
+                val uri = if (resultCode == RESULT_OK) data?.data else null
+                val cb = pendingDocumentTreeCallback
+                pendingDocumentTreeCallback = null
+                cb?.invoke(uri)
+            }
+        }
+    }
+
+    /**
+     * 4.7.0 (items 15 and 38, #72): ACTION_OPEN_DOCUMENT_TREE, so a
+     * multi-file result can be written into one folder. Same
+     * FragmentActivity request-code workaround as startDocumentPicker; the
+     * result grants read and write on the tree for this session, which is
+     * all the save needs, so no persistable grant is taken.
+     */
+    fun startDocumentTreePicker(callback: (android.net.Uri?) -> Unit) {
+        pendingDocumentTreeCallback = callback
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+        }
+        try {
+            suppressAutoLock = true
+            ActivityCompat.startActivityForResult(this, intent, REQ_DOCUMENT_TREE_PICKER, null)
+        } catch (e: android.content.ActivityNotFoundException) {
+            suppressAutoLock = false
+            pendingDocumentTreeCallback = null
+            callback(null)
         }
     }
 
@@ -965,6 +1002,46 @@ fun PGPonyMainScreen(
         }
     }
 
+    // 4.7.0 (item 38, #72): a share that mixes encrypted and other files
+    // waits here for the user's choice.
+    var sharedFilesChoice by remember { mutableStateOf<IntentAction.ChooseSharedFiles?>(null) }
+    sharedFilesChoice?.let { choice ->
+        AlertDialog(
+            onDismissRequest = { sharedFilesChoice = null },
+            title = { Text(stringResource(R.string.share_files_choice_title)) },
+            text = {
+                Text(
+                    stringResource(
+                        R.string.share_files_choice_message,
+                        choice.encrypted.size,
+                        choice.all.size
+                    )
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    sharedFilesChoice = null
+                    pendingAction.value = IntentAction.DecryptFiles(choice.encrypted)
+                }) {
+                    Text(stringResource(R.string.share_files_choice_decrypt_format, choice.encrypted.size))
+                }
+            },
+            dismissButton = {
+                Row {
+                    TextButton(onClick = { sharedFilesChoice = null }) {
+                        Text(stringResource(R.string.common_button_cancel))
+                    }
+                    TextButton(onClick = {
+                        sharedFilesChoice = null
+                        pendingAction.value = IntentAction.ComposeBundle(choice.all)
+                    }) {
+                        Text(stringResource(R.string.share_files_choice_encrypt))
+                    }
+                }
+            }
+        )
+    }
+
     // Handle pending intent actions
     val action = pendingAction.value
     LaunchedEffect(action) {
@@ -1091,6 +1168,25 @@ fun PGPonyMainScreen(
                     popUpTo(navController.graph.startDestinationId) { saveState = true }
                     launchSingleTop = true
                 }
+                pendingAction.value = IntentAction.None
+            }
+            is IntentAction.DecryptFiles -> {
+                // 4.7.0 (item 38, #72): several encrypted files shared in.
+                // Each one decrypts and verifies on its own in the batch
+                // sheet on the Decrypt tab, instead of being wrapped into a
+                // new encrypted package.
+                encDecVm.setDecryptMode(DecryptMode.FILE)
+                encDecVm.startDecryptBatch(action.files.map { it.toBundleRef() })
+                navController.navigate(Screen.Decrypt.route) {
+                    popUpTo(navController.graph.startDestinationId) { saveState = true }
+                    launchSingleTop = true
+                }
+                pendingAction.value = IntentAction.None
+            }
+            is IntentAction.ChooseSharedFiles -> {
+                // 4.7.0 (item 38, #72): encrypted and other files together.
+                // The dialog below asks; nothing is guessed.
+                sharedFilesChoice = action
                 pendingAction.value = IntentAction.None
             }
             is IntentAction.VerifyDetachedSignature -> {
@@ -1513,3 +1609,12 @@ private fun PrivacyCover(isSuppressed: () -> Boolean) {
         }
     }
 }
+
+/** 4.7.0 (item 38, #72): a shared file as the ref the batch decrypt reads. */
+private fun IntentAction.ShareFileRef.toBundleRef() =
+    com.pgpony.android.ui.encrypt.BundleAttachmentRef(
+        filename = filename,
+        contentType = contentType,
+        size = size,
+        uri = uri
+    )

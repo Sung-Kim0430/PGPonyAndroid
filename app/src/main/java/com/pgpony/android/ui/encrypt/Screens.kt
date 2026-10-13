@@ -35,6 +35,8 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.horizontalScroll
@@ -392,7 +394,11 @@ fun EncryptScreen(viewModel: EncryptDecryptViewModel) {
                                 state.signingKey?.isCardBacked == true
                             val hasBundleInput = state.bundleBody.isNotBlank() ||
                                 state.bundleAttachments.isNotEmpty()
-                            if (cardSign && state.selectedRecipients.isNotEmpty() &&
+                            // 4.7.0 (item 15, #72): each file on its own never
+                            // takes the card path (a tap per file); the VM
+                            // refuses a card signer there with a message.
+                            if (cardSign && state.bundleOutputMode == BundleOutputMode.PACKAGE &&
+                                state.selectedRecipients.isNotEmpty() &&
                                 hasBundleInput
                             ) {
                                 cardSignPin = ""
@@ -432,6 +438,13 @@ fun EncryptScreen(viewModel: EncryptDecryptViewModel) {
                             state.fileEncryptMethod == FileEncryptMethod.RECIPIENTS &&
                                 state.signMessage && state.signingKey != null &&
                                 state.signingKey?.isCardBacked != true
+                        // 4.7.0 (item 15, #72): each file on its own signs only
+                        // for the two signing choices.
+                        EncryptMode.BUNDLE ->
+                            (state.bundleOutputMode == BundleOutputMode.PACKAGE ||
+                                state.perFileOp != PerFileOp.ENCRYPT) &&
+                                state.signMessage && state.signingKey != null &&
+                                state.signingKey?.isCardBacked != true
                         else -> state.signMessage && state.signingKey != null &&
                             state.signingKey?.isCardBacked != true
                     }
@@ -452,7 +465,8 @@ fun EncryptScreen(viewModel: EncryptDecryptViewModel) {
                         EncryptMode.PASSWORD -> false
                         // 4.1.0 Phase 15: Bundle card-signs now, so the
                         // biometric gate has to predict it like the others.
-                        EncryptMode.BUNDLE -> state.signMessage &&
+                        EncryptMode.BUNDLE -> state.bundleOutputMode == BundleOutputMode.PACKAGE &&
+                            state.signMessage &&
                             state.signingKey?.isCardBacked == true &&
                             state.selectedRecipients.isNotEmpty() &&
                             (state.bundleBody.isNotBlank() ||
@@ -508,7 +522,16 @@ fun EncryptScreen(viewModel: EncryptDecryptViewModel) {
                             if (state.fileEncryptMethod == FileEncryptMethod.RECIPIENTS)
                                 com.pgpony.android.ui.components.dontUseKeys(state.selectedRecipients + signer)
                             else emptyList()
-                        EncryptMode.BUNDLE -> com.pgpony.android.ui.components.dontUseKeys(state.selectedRecipients + signer)
+                        EncryptMode.BUNDLE ->
+                            if (state.bundleOutputMode == BundleOutputMode.EACH_FILE) {
+                                // 4.7.0 (item 15): only the keys this choice uses.
+                                val perFileSigner = signer.takeIf { state.perFileOp != PerFileOp.ENCRYPT }
+                                val perFileRecipients = if (state.perFileOp == PerFileOp.SIGN_ONLY)
+                                    emptyList() else state.selectedRecipients
+                                com.pgpony.android.ui.components.dontUseKeys(perFileRecipients + perFileSigner)
+                            } else {
+                                com.pgpony.android.ui.components.dontUseKeys(state.selectedRecipients + signer)
+                            }
                         else -> emptyList()
                     }
                     if (flagged.isEmpty()) { proceedPrimary() } else { dontUsePrompt = flagged to proceedPrimary }
@@ -525,8 +548,14 @@ fun EncryptScreen(viewModel: EncryptDecryptViewModel) {
                                 && state.selectedRecipients.isNotEmpty()
                     // 3.1.0 Phase 5 (J3): a Bundle needs recipients and
                     // something to send (body or at least one attachment).
-                    EncryptMode.BUNDLE -> state.selectedRecipients.isNotEmpty()
-                        && (state.bundleBody.isNotBlank() || state.bundleAttachments.isNotEmpty())
+                    // 4.7.0 (item 15): each file on its own needs files, and
+                    // recipients unless it only signs.
+                    EncryptMode.BUNDLE ->
+                        if (state.bundleOutputMode == BundleOutputMode.EACH_FILE)
+                            state.bundleAttachments.isNotEmpty() &&
+                                (state.perFileOp == PerFileOp.SIGN_ONLY || state.selectedRecipients.isNotEmpty())
+                        else state.selectedRecipients.isNotEmpty()
+                            && (state.bundleBody.isNotBlank() || state.bundleAttachments.isNotEmpty())
                     else -> true
                 }
             ) {
@@ -538,6 +567,12 @@ fun EncryptScreen(viewModel: EncryptDecryptViewModel) {
                     when (state.mode) {
                         EncryptMode.SIGN -> stringResource(R.string.encrypt_action_sign)
                         EncryptMode.FILE -> stringResource(R.string.encrypt_action_encrypt_file)
+                        // 4.7.0 (item 15): signing each file, no encryption.
+                        EncryptMode.BUNDLE ->
+                            if (state.bundleOutputMode == BundleOutputMode.EACH_FILE &&
+                                state.perFileOp == PerFileOp.SIGN_ONLY
+                            ) stringResource(R.string.encrypt_action_sign)
+                            else stringResource(R.string.encrypt_action_encrypt)
                         else -> stringResource(R.string.encrypt_action_encrypt)
                     }
                 )
@@ -934,6 +969,19 @@ fun EncryptScreen(viewModel: EncryptDecryptViewModel) {
         FileEncryptionResultScreen(
             state = state,
             onDismiss = { viewModel.dismissFileEncryptResult() }
+        )
+    }
+    // 4.7.0 (item 15, #72): each file on its own, per-file status.
+    state.fileBatch?.let { batch ->
+        FileBatchResultScreen(
+            batch = batch,
+            processedBytes = state.processedBytes,
+            totalBytes = state.totalBytes,
+            onResume = { viewModel.resumeEncryptBatch(it) },
+            onSkipPassphrase = { viewModel.skipFileBatchPassphrase(decrypt = false) },
+            onSaveToFolder = { viewModel.saveFileBatchToFolder(it, decrypt = false) },
+            onCancel = { viewModel.cancelFileOperation() },
+            onDismiss = { viewModel.dismissFileBatch(decrypt = false) }
         )
     }
 
@@ -1992,53 +2040,57 @@ private fun BundleModeBody(state: EncryptUiState, viewModel: EncryptDecryptViewM
     }
 
     // 1) Body editor
-    OutlinedTextField(
-        value = state.bundleBody,
-        onValueChange = { viewModel.updateBundleBody(it) },
-        label = { Text(stringResource(R.string.encrypt_bundle_body_label)) },
-        modifier = Modifier.fillMaxWidth().heightIn(min = 120.dp),
-        maxLines = 10
-    )
-    // 4.0.0 Phase 9 (iOS v7.1.1 F6) — character count + Paste + Clear on
-    // the Bundle body, matching the Message and Decrypt editors. Clear
-    // here empties only the body text; the toolbar Clear remains the
-    // full reset (attachments, recipients, results).
-    Spacer(modifier = Modifier.height(8.dp))
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            stringResource(R.string.encrypt_bundle_char_count_format, state.bundleBody.length),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.weight(1f)
+    // 4.7.0 (item 15, #72): the body belongs to the package; each file on
+    // its own has no message to carry it, so the editor hides.
+    if (state.bundleOutputMode == BundleOutputMode.PACKAGE) {
+        OutlinedTextField(
+            value = state.bundleBody,
+            onValueChange = { viewModel.updateBundleBody(it) },
+            label = { Text(stringResource(R.string.encrypt_bundle_body_label)) },
+            modifier = Modifier.fillMaxWidth().heightIn(min = 120.dp),
+            maxLines = 10
         )
-        OutlinedButton(
-            onClick = { viewModel.updateBundleBody("") },
-            enabled = state.bundleBody.isNotEmpty(),
-            colors = ButtonDefaults.outlinedButtonColors(
-                contentColor = MaterialTheme.colorScheme.error
-            )
+        // 4.0.0 Phase 9 (iOS v7.1.1 F6): character count + Paste + Clear on
+        // the Bundle body, matching the Message and Decrypt editors. Clear
+        // here empties only the body text; the toolbar Clear remains the
+        // full reset (attachments, recipients, results).
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(stringResource(R.string.common_button_clear))
-        }
-        Spacer(modifier = Modifier.width(8.dp))
-        FilledTonalButton(
-            onClick = {
-                clipboard.getText()?.text?.let { viewModel.updateBundleBody(it) }
+            Text(
+                stringResource(R.string.encrypt_bundle_char_count_format, state.bundleBody.length),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.weight(1f)
+            )
+            OutlinedButton(
+                onClick = { viewModel.updateBundleBody("") },
+                enabled = state.bundleBody.isNotEmpty(),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.error
+                )
+            ) {
+                Text(stringResource(R.string.common_button_clear))
             }
-        ) {
-            Icon(
-                Icons.Filled.ContentPaste,
-                contentDescription = null,
-                modifier = Modifier.size(18.dp)
-            )
-            Spacer(modifier = Modifier.width(6.dp))
-            Text(stringResource(R.string.common_button_paste), fontWeight = FontWeight.SemiBold)
+            Spacer(modifier = Modifier.width(8.dp))
+            FilledTonalButton(
+                onClick = {
+                    clipboard.getText()?.text?.let { viewModel.updateBundleBody(it) }
+                }
+            ) {
+                Icon(
+                    Icons.Filled.ContentPaste,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(stringResource(R.string.common_button_paste), fontWeight = FontWeight.SemiBold)
+            }
         }
+        Spacer(modifier = Modifier.height(12.dp))
     }
-    Spacer(modifier = Modifier.height(12.dp))
 
     // 2) Attachment pickers
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -2077,9 +2129,19 @@ private fun BundleModeBody(state: EncryptUiState, viewModel: EncryptDecryptViewM
         }
     }
 
+    // 4.7.0 (item 15, #72): one package, or each file on its own.
+    if (state.bundleAttachments.size >= 2 || state.bundleOutputMode == BundleOutputMode.EACH_FILE) {
+        Spacer(modifier = Modifier.height(12.dp))
+        BundleOutputChoice(state = state, viewModel = viewModel)
+    }
+    val eachFile = state.bundleOutputMode == BundleOutputMode.EACH_FILE
+
     // 3) Recipients + sign controls, same composition as FileSection.
-    RecipientPickerCard(state = state, viewModel = viewModel)
-    Spacer(modifier = Modifier.height(16.dp))
+    // 4.7.0 (item 15): signing each file on its own has no recipients.
+    if (!(eachFile && state.perFileOp == PerFileOp.SIGN_ONLY)) {
+        RecipientPickerCard(state = state, viewModel = viewModel)
+        Spacer(modifier = Modifier.height(16.dp))
+    }
     // 4.1.0 Phase 14c. Two problems, one block.
     //
     // First, Bundle had the toggle but never the Sign as picker that
@@ -2103,7 +2165,11 @@ private fun BundleModeBody(state: EncryptUiState, viewModel: EncryptDecryptViewM
     // 4.1.0 Phase 15: no longer filtered. Card keys sign bundles now.
     // #36: one selector with a None option, no separate switch.
     val bundleSigningKey = state.signingKey
-    if (bundleSigningKey != null && state.availableSigningKeys.isNotEmpty()) {
+    // 4.7.0 (item 15): each file on its own shows the signer only for the
+    // two signing choices.
+    if (bundleSigningKey != null && state.availableSigningKeys.isNotEmpty() &&
+        (!eachFile || state.perFileOp != PerFileOp.ENCRYPT)
+    ) {
         OptionalSignAsSelector(state = state, viewModel = viewModel)
     }
 
@@ -2200,6 +2266,106 @@ private fun BundleModeBody(state: EncryptUiState, viewModel: EncryptDecryptViewM
                     } else {
                         stringResource(R.string.encrypt_bundle_show_fewer)
                     }
+                )
+            }
+        }
+    }
+}
+
+// 4.7.0 (item 15, #72): what Bundle mode does with several files. One
+// package is the existing bundle; each file on its own makes one output per
+// file. Signing each file with a hardware key would need a tap for every
+// file, so the signing choices are disabled for a card-backed signer, with
+// the reason shown, instead of half supporting it.
+@Composable
+private fun BundleOutputChoice(state: EncryptUiState, viewModel: EncryptDecryptViewModel) {
+    Text(
+        stringResource(R.string.batch_output_title),
+        style = MaterialTheme.typography.labelLarge
+    )
+    Spacer(modifier = Modifier.height(4.dp))
+    BatchChoiceRow(
+        selected = state.bundleOutputMode == BundleOutputMode.PACKAGE,
+        label = stringResource(R.string.batch_output_package),
+        subtitle = stringResource(R.string.batch_output_package_subtitle),
+        onClick = { viewModel.setBundleOutputMode(BundleOutputMode.PACKAGE) }
+    )
+    BatchChoiceRow(
+        selected = state.bundleOutputMode == BundleOutputMode.EACH_FILE,
+        label = stringResource(R.string.batch_output_each),
+        subtitle = stringResource(R.string.batch_output_each_subtitle),
+        onClick = { viewModel.setBundleOutputMode(BundleOutputMode.EACH_FILE) }
+    )
+    if (state.bundleOutputMode == BundleOutputMode.EACH_FILE) {
+        val cardSigner = state.signingKey?.isCardBacked == true
+        val canSign = state.availableSigningKeys.isNotEmpty() && !cardSigner
+        Column(modifier = Modifier.padding(start = 24.dp)) {
+            BatchChoiceRow(
+                selected = state.perFileOp == PerFileOp.ENCRYPT,
+                label = stringResource(R.string.batch_op_encrypt),
+                onClick = { viewModel.setPerFileOp(PerFileOp.ENCRYPT) }
+            )
+            BatchChoiceRow(
+                selected = state.perFileOp == PerFileOp.ENCRYPT_AND_SIGN,
+                label = stringResource(R.string.batch_op_encrypt_sign),
+                enabled = canSign,
+                onClick = { viewModel.setPerFileOp(PerFileOp.ENCRYPT_AND_SIGN) }
+            )
+            BatchChoiceRow(
+                selected = state.perFileOp == PerFileOp.SIGN_ONLY,
+                label = stringResource(R.string.batch_op_sign_only),
+                subtitle = stringResource(R.string.batch_op_sign_only_subtitle),
+                enabled = canSign,
+                onClick = { viewModel.setPerFileOp(PerFileOp.SIGN_ONLY) }
+            )
+            if (cardSigner) {
+                Text(
+                    stringResource(R.string.batch_card_signing_unavailable),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(vertical = 4.dp)
+                )
+            }
+        }
+    }
+    Spacer(modifier = Modifier.height(8.dp))
+}
+
+/** 4.7.0 (item 15): a radio choice that responds to a tap anywhere on the row. */
+@Composable
+private fun BatchChoiceRow(
+    selected: Boolean,
+    label: String,
+    subtitle: String? = null,
+    enabled: Boolean = true,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .selectable(
+                selected = selected,
+                enabled = enabled,
+                role = Role.RadioButton,
+                onClick = onClick
+            )
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        RadioButton(selected = selected, onClick = null, enabled = enabled)
+        Spacer(modifier = Modifier.width(8.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                label,
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (enabled) MaterialTheme.colorScheme.onSurface
+                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+            )
+            if (subtitle != null) {
+                Text(
+                    subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -3489,7 +3655,28 @@ private fun DecryptFileSection(state: DecryptUiState, viewModel: EncryptDecryptV
     val activity = context.findEncryptMainActivity()
 
     val onPickFile: () -> Unit = {
-        activity?.startDocumentPicker(arrayOf("*/*")) { uri ->
+        // 4.7.0 (item 38, #72): several files can be picked at once. One file
+        // keeps the single-file path below; two or more decrypt one by one
+        // in the batch sheet, each verified on its own.
+        activity?.startMultiDocumentPicker(arrayOf("*/*")) { uris ->
+            if (uris.size >= 2) {
+                val refs = uris.mapNotNull { picked ->
+                    try {
+                        val (name, size) = queryDocumentMetadata(context, picked)
+                        BundleAttachmentRef(
+                            filename = name ?: picked.lastPathSegment?.substringAfterLast('/') ?: "file",
+                            contentType = context.contentResolver.getType(picked) ?: "application/octet-stream",
+                            size = size ?: -1L,
+                            uri = picked
+                        )
+                    } catch (_: Exception) {
+                        null
+                    }
+                }
+                viewModel.startDecryptBatch(refs)
+                return@startMultiDocumentPicker
+            }
+            val uri = uris.firstOrNull()
             if (uri != null) {
                 try {
                     val (name, size) = queryDocumentMetadata(context, uri)
@@ -4236,6 +4423,20 @@ fun DecryptScreen(viewModel: EncryptDecryptViewModel) {
         FileDecryptionResultScreen(
             state = state,
             onDismiss = { viewModel.dismissFileDecryptResult() }
+        )
+    }
+    // 4.7.0 (item 38, #72): several files decrypted one by one, each with
+    // its own signature result.
+    state.fileBatch?.let { batch ->
+        FileBatchResultScreen(
+            batch = batch,
+            processedBytes = state.processedBytes,
+            totalBytes = state.totalBytes,
+            onResume = { viewModel.resumeDecryptBatch(it) },
+            onSkipPassphrase = { viewModel.skipFileBatchPassphrase(decrypt = true) },
+            onSaveToFolder = { viewModel.saveFileBatchToFolder(it, decrypt = true) },
+            onCancel = { viewModel.cancelFileOperation() },
+            onDismiss = { viewModel.dismissFileBatch(decrypt = true) }
         )
     }
 

@@ -288,6 +288,13 @@ data class EncryptUiState(
     // Exactly one of the two is non-null when the result sheet shows.
     val encryptedBundleFile: java.io.File? = null,
     val showBundleResultSheet: Boolean = false,
+    // 4.7.0 (item 15, #72): one package (the bundle above) or each file on
+    // its own, and what happens to each file in that case.
+    val bundleOutputMode: BundleOutputMode = BundleOutputMode.PACKAGE,
+    val perFileOp: PerFileOp = PerFileOp.ENCRYPT,
+    // 4.7.0 (item 15, #72): the running or finished each-file batch; the
+    // batch sheet shows while this is non-null.
+    val fileBatch: FileBatchState? = null,
     // ── Phase A5: "Sign a file" (detached signature, software key) ─────
     //
     // Sign a file on its own (no encryption) → standalone detached signature
@@ -433,6 +440,9 @@ data class DecryptUiState(
     val totalBytes: Long = 0L,
     val decryptedOutputFilename: String? = null,
     val showFileDecryptResultSheet: Boolean = false,
+    // 4.7.0 (item 38, #72): a multi-file decrypt (several encrypted files
+    // shared in, or picked together); the batch sheet shows while non-null.
+    val fileBatch: FileBatchState? = null,
     // ── Phase A3: "Verify a file" (detached signature) sheet ───────────
     //
     // Self-contained from the decrypt result above: the user picks the
@@ -1722,6 +1732,22 @@ class EncryptDecryptViewModel(private val repo: KeyRepository) : ViewModel() {
         _decryptState.value = _decryptState.value.copy(
             isProcessing = false, processedBytes = 0L, totalBytes = 0L
         )
+        // 4.7.0 (items 15 and 38): a cancelled batch keeps the files already
+        // done; the rest are marked cancelled.
+        val cancelled = PGPonyApp.instance.getString(R.string.batch_item_cancelled)
+        val markCancelled: (FileBatchState) -> FileBatchState = { b ->
+            b.copy(
+                running = false,
+                needsPassphrase = false,
+                items = b.items.map { item ->
+                    if (item.status is FileBatchStatus.Pending || item.status is FileBatchStatus.Running)
+                        item.copy(status = FileBatchStatus.Failed(cancelled))
+                    else item
+                }
+            )
+        }
+        updateEncryptBatch(markCancelled)
+        updateDecryptBatch(markCancelled)
     }
 
     /**
@@ -1766,7 +1792,9 @@ class EncryptDecryptViewModel(private val repo: KeyRepository) : ViewModel() {
         }
 
     private suspend fun streamEncryptToScratch(
-        uri: android.net.Uri,
+        // 4.7.0 (item 15, #72): nullable, for a batch file that is opened
+        // through [openInput] instead (a byte-backed bundle attachment).
+        uri: android.net.Uri?,
         outName: String,
         recipientRings: List<org.bouncycastle.openpgp.PGPPublicKeyRing>,
         signingRing: org.bouncycastle.openpgp.PGPSecretKeyRing?,
@@ -1781,12 +1809,18 @@ class EncryptDecryptViewModel(private val repo: KeyRepository) : ViewModel() {
         compositeSecret: ByteArray? = null,
         compositeFingerprint: ByteArray? = null,
         compositeSignInSeipdV1: Boolean = true,
-        recipientSubkeyChoices: Map<String, Long> = emptyMap()
+        recipientSubkeyChoices: Map<String, Long> = emptyMap(),
+        // 4.7.0 (item 15, #72): the each-file batch passes its own input
+        // opener and an output already allocated in SCOPE_BATCH, because
+        // allocate() would clear the batch's earlier outputs.
+        openInput: (() -> java.io.InputStream)? = null,
+        outFile: java.io.File? = null
     ): java.io.File = withContext(Dispatchers.IO) {
         val job = coroutineContext[kotlinx.coroutines.Job]
-        val out = ScratchFiles.allocate(PGPonyApp.instance, outName, ScratchFiles.SCOPE_ENCRYPT)
+        val out = outFile ?: ScratchFiles.allocate(PGPonyApp.instance, outName, ScratchFiles.SCOPE_ENCRYPT)
         val resolver = PGPonyApp.instance.contentResolver
-        val raw = resolver.openInputStream(uri)
+        val raw = openInput?.invoke()
+            ?: uri?.let { resolver.openInputStream(it) }
             ?: throw java.io.IOException(PGPonyApp.instance.getString(R.string.encdec_error_cannot_open_selected_file))
         val input = ProgressInputStream(
             delegate = raw,
@@ -2379,6 +2413,13 @@ class EncryptDecryptViewModel(private val repo: KeyRepository) : ViewModel() {
      */
     fun encryptBundle(passphrase: String? = null) {
         val s = _encryptState.value
+        // 4.7.0 (item 15, #72): "Each file on its own" runs the per-file
+        // batch instead. Every caller (the Encrypt button, both passphrase
+        // dialogs, the PQC v4 prompt) reaches it through here.
+        if (s.bundleOutputMode == BundleOutputMode.EACH_FILE) {
+            encryptEachFile(passphrase)
+            return
+        }
         expiredKeyBlock(if (s.signMessage) s.signingKey else null, s.selectedRecipients)?.let {
             _encryptState.value = _encryptState.value.copy(errorMessage = it, isProcessing = false)
             return
@@ -2653,6 +2694,604 @@ class EncryptDecryptViewModel(private val repo: KeyRepository) : ViewModel() {
                     }
                 )
             }
+        }
+    }
+
+    // ── 4.7.0 (items 15 and 38, #72): several files, each on its own ─────
+    //
+    // Item 15: Bundle mode can encrypt, encrypt and sign, or sign (detached
+    // .sig) each file separately instead of making one package. Item 38:
+    // several encrypted files decrypt and verify one by one. Both run per
+    // file through the same streaming paths the single-file modes use
+    // (streamEncryptToScratch, streamDecryptToFile, the detached signers),
+    // one file operation at a time (fileOpJob). A failed file is marked and
+    // the rest carry on. The passphrase is asked once, in the batch sheet,
+    // and used for every file.
+
+    /** The passphrase for the running batch; dropped when the sheet closes. */
+    private var batchPassphrase: String? = null
+
+    /** The PQC v4 prompt's answer, kept for a batch resumed after a passphrase. */
+    private var batchPqcDecision: Boolean? = null
+
+    /** The decrypt batch's inputs, in the same order as its items. */
+    private var decryptBatchInputs: List<BundleAttachmentRef> = emptyList()
+
+    fun setBundleOutputMode(mode: BundleOutputMode) {
+        _encryptState.value = _encryptState.value.copy(bundleOutputMode = mode, errorMessage = null)
+    }
+
+    /** A signing choice switches signing on, so the Sign as row agrees with it. */
+    fun setPerFileOp(op: PerFileOp) {
+        val s = _encryptState.value
+        _encryptState.value = s.copy(
+            perFileOp = op,
+            signMessage = if (op == PerFileOp.ENCRYPT) s.signMessage else true,
+            errorMessage = null
+        )
+    }
+
+    private fun FileBatchState.withItem(i: Int, f: (FileBatchItem) -> FileBatchItem): FileBatchState =
+        copy(items = items.mapIndexed { j, item -> if (j == i) f(item) else item })
+
+    private fun updateEncryptBatch(f: (FileBatchState) -> FileBatchState) {
+        val b = _encryptState.value.fileBatch ?: return
+        _encryptState.value = _encryptState.value.copy(fileBatch = f(b))
+    }
+
+    private fun updateDecryptBatch(f: (FileBatchState) -> FileBatchState) {
+        val b = _decryptState.value.fileBatch ?: return
+        _decryptState.value = _decryptState.value.copy(fileBatch = f(b))
+    }
+
+    private fun isPassphraseError(e: Throwable): Boolean =
+        e is SigningError.PassphraseRequired || e is SigningError.InvalidPassphrase ||
+            e is com.pgpony.android.crypto.PGPCryptoError.PassphraseRequired ||
+            e is com.pgpony.android.crypto.PGPCryptoError.InvalidPassphrase
+
+    private fun batchItemError(e: Throwable): String {
+        val app = PGPonyApp.instance
+        return when (e) {
+            is OutOfMemoryError -> app.getString(R.string.encdec_error_file_too_large)
+            is com.pgpony.android.crypto.PGPCryptoError.NoMatchingKey ->
+                app.getString(R.string.batch_error_no_matching_key)
+            else -> ErrorText.detail(e.message)?.takeIf { it.isNotBlank() }
+                ?: app.getString(R.string.batch_item_failed_unknown)
+        }
+    }
+
+    /**
+     * 4.7.0 (item 15, #72): Bundle mode's "Each file on its own". Reached
+     * through encryptBundle, so the Encrypt button, the PQC v4 prompt and
+     * the resume after a passphrase all land here. A card-backed signer is
+     * refused: it would need a tap for every file.
+     */
+    private fun encryptEachFile(passphrase: String?) {
+        val s = _encryptState.value
+        if (fileOpJob?.isActive == true) return
+        val app = PGPonyApp.instance
+        fun refuse(message: String) {
+            _encryptState.value = _encryptState.value.copy(errorMessage = message, isProcessing = false)
+        }
+        val inputs = s.bundleAttachments
+        if (inputs.isEmpty()) { refuse(app.getString(R.string.batch_error_no_files)); return }
+        val op = s.perFileOp
+        val signs = op != PerFileOp.ENCRYPT
+        val baseSigner = if (signs) s.signingKey?.takeIf { s.signMessage } else null
+        if (signs && baseSigner == null) { refuse(app.getString(R.string.batch_error_pick_signer)); return }
+        if (baseSigner?.isCardBacked == true) { refuse(app.getString(R.string.batch_card_signing_unavailable)); return }
+        val recipients = if (op == PerFileOp.SIGN_ONLY) emptyList() else s.selectedRecipients
+        if (op != PerFileOp.SIGN_ONLY && recipients.isEmpty()) {
+            refuse(app.getString(R.string.encdec_error_no_recipients)); return
+        }
+        expiredKeyBlock(baseSigner, recipients)?.let { refuse(it); return }
+        if (recipients.isNotEmpty()) DefaultRecipientPrefs.recordLastUsed(appPrefs, recipients.first().fingerprint)
+
+        val kind = when (op) {
+            PerFileOp.ENCRYPT -> FileBatchKind.ENCRYPT
+            PerFileOp.ENCRYPT_AND_SIGN -> FileBatchKind.ENCRYPT_AND_SIGN
+            PerFileOp.SIGN_ONLY -> FileBatchKind.SIGN_ONLY
+        }
+        // Resuming after the passphrase prompt keeps the files already done.
+        val resuming = s.fileBatch?.takeIf { it.needsPassphrase && it.kind == kind && it.items.size == inputs.size }
+        if (resuming == null) {
+            ScratchFiles.clearScope(app, ScratchFiles.SCOPE_BATCH)
+            batchPassphrase = null
+            batchPqcDecision = null
+        }
+        if (passphrase != null) batchPassphrase = passphrase.ifEmpty { null }
+        val pass = batchPassphrase
+        val names = FileBatchNaming.uniqueWithin(inputs.map {
+            if (op == PerFileOp.SIGN_ONLY) FileBatchNaming.signatureName(it.filename)
+            else FileBatchNaming.encryptedName(it.filename)
+        })
+        val startBatch = resuming ?: FileBatchState(
+            kind = kind,
+            items = inputs.mapIndexed { i, ref -> FileBatchItem(ref.filename, ref.size, outputName = names[i]) }
+        )
+
+        fileOpJob = viewModelScope.launch {
+            _encryptState.value = _encryptState.value.copy(
+                isProcessing = true, errorMessage = null, processedBytes = 0L, totalBytes = 0L
+            )
+            // Everything shared by the files: recipients, signer, unlock.
+            val setup = try {
+                val loaded: Pair<List<org.bouncycastle.openpgp.PGPPublicKeyRing>, List<com.pgpony.android.crypto.pqc.V4Algo35Recipient>> =
+                    if (recipients.isEmpty()) Pair(emptyList(), emptyList()) else loadRecipientsStrict(recipients)
+                val resolved: PGPKeyEntity? = if (baseSigner != null) {
+                    resolveEffectiveSigner(baseSigner, recipients, signOnly = op == PerFileOp.SIGN_ONLY)
+                } else null
+                Triple(loaded.first, loaded.second, resolved)
+            } catch (e: Throwable) {
+                _encryptState.value = _encryptState.value.copy(
+                    isProcessing = false,
+                    errorMessage = app.getString(
+                        R.string.encdec_error_encryption_failed_format, ErrorText.detail(e.message) ?: ""
+                    )
+                )
+                return@launch
+            }
+            val recipientRings = setup.first
+            val v4Recipients = setup.second
+            var signer: PGPKeyEntity? = setup.third
+            // 4.6.0 (item 14) once for the whole batch: an ML-DSA signature to
+            // a v4 recipient reads in PGPony but not in GnuPG or Thunderbird.
+            val composite = signer?.algorithm?.isCompositeSign == true
+            val pqcInV1 = composite && op == PerFileOp.ENCRYPT_AND_SIGN &&
+                crypto.compositeSignatureInSeipdV1(recipientRings, s.recipientSubkeyChoices, v4Recipients)
+            val pqcDecision = if (resuming != null) batchPqcDecision
+                else pqcV4Decision.also { pqcV4Decision = null }
+            if (pqcInV1 && pqcDecision == null) {
+                pqcV4PendingPassphrase = pass
+                _encryptState.value = _encryptState.value.copy(isProcessing = false, showPqcV4SignPrompt = true)
+                return@launch
+            }
+            batchPqcDecision = pqcDecision
+            if (pqcInV1 && pqcDecision == false) signer = null
+            val signerNow = signer
+
+            _encryptState.value = _encryptState.value.copy(
+                fileBatch = startBatch.copy(running = true, needsPassphrase = false, passphraseError = null)
+            )
+            fun pauseForPassphrase(wrong: Boolean) {
+                _encryptState.value = _encryptState.value.copy(
+                    isProcessing = false, processedBytes = 0L, totalBytes = 0L
+                )
+                updateEncryptBatch {
+                    it.copy(
+                        running = false,
+                        needsPassphrase = true,
+                        passphraseError = if (wrong) app.getString(R.string.encdec_error_incorrect_passphrase_retry) else null
+                    )
+                }
+            }
+
+            val signingRing = try {
+                if (signerNow != null && !composite) {
+                    withContext(Dispatchers.IO) { repo.loadSecretKeyRing(signerNow.fingerprint) }
+                        ?: throw SigningError.NoSigningKey()
+                } else null
+            } catch (e: Throwable) {
+                _encryptState.value = _encryptState.value.copy(isProcessing = false, fileBatch = null,
+                    errorMessage = app.getString(R.string.encdec_error_encryption_failed_format, ErrorText.detail(e.message) ?: ""))
+                return@launch
+            }
+            // A wrong passphrase makes loadCompositeKeyInfo throw; treat it as
+            // a failed unlock and ask again instead of letting it escape.
+            val compositeInfo = if (signerNow != null && composite) {
+                try {
+                    withContext(Dispatchers.IO) { repo.loadCompositeKeyInfo(signerNow.fingerprint, pass?.toCharArray()) }
+                } catch (e: kotlin.coroutines.cancellation.CancellationException) {
+                    throw e
+                } catch (_: Exception) {
+                    null
+                }
+            } else null
+            if (signerNow != null && composite && compositeInfo?.signingSecret == null) {
+                pauseForPassphrase(wrong = pass != null)
+                return@launch
+            }
+            if (signingRing != null && pass.isNullOrEmpty() &&
+                withContext(Dispatchers.Default) { crypto.isPassphraseProtected(signingRing) }
+            ) {
+                pauseForPassphrase(wrong = false)
+                return@launch
+            }
+
+            val items = _encryptState.value.fileBatch?.items ?: return@launch
+            for (i in items.indices) {
+                val status = _encryptState.value.fileBatch?.items?.getOrNull(i)?.status ?: return@launch
+                if (status is FileBatchStatus.Done || status is FileBatchStatus.Failed) continue
+                val ref = inputs[i]
+                val outName = items[i].outputName ?: names[i]
+                updateEncryptBatch { b -> b.withItem(i) { it.copy(status = FileBatchStatus.Running) } }
+                _encryptState.value = _encryptState.value.copy(
+                    processedBytes = 0L, totalBytes = ref.size.coerceAtLeast(0L)
+                )
+                try {
+                    val out = withContext(Dispatchers.IO) {
+                        ScratchFiles.allocateKeep(app, outName, ScratchFiles.SCOPE_BATCH)
+                    }
+                    if (op == PerFileOp.SIGN_ONLY) {
+                        val sig = withContext(Dispatchers.IO) {
+                            val job = coroutineContext[kotlinx.coroutines.Job]
+                            ProgressInputStream(
+                                delegate = ref.openStream(),
+                                isCancelled = { job?.isActive == false },
+                            ) { read ->
+                                _encryptState.value = _encryptState.value.copy(processedBytes = read)
+                            }.use { input ->
+                                if (compositeInfo != null) {
+                                    CompositeDocumentSigner.signDetachedStream(
+                                        compositeInfo.signingSuite, compositeInfo.signingSecret!!,
+                                        compositeInfo.signingFingerprint, input, armor = false
+                                    )
+                                } else {
+                                    signing.signDetachedStream(
+                                        input = input,
+                                        secretKeyRing = signingRing!!,
+                                        passphrase = pass,
+                                        armor = false,
+                                        signingKeyId = s.selectedSigningKeyId
+                                    )
+                                }
+                            }
+                        }
+                        withContext(Dispatchers.IO) { out.writeBytes(sig) }
+                    } else {
+                        streamEncryptToScratch(
+                            uri = ref.uri,
+                            outName = outName,
+                            recipientRings = recipientRings,
+                            signingRing = signingRing,
+                            signPassphrase = pass,
+                            literalFilename = ref.filename,
+                            messagePassword = null,
+                            signingKeyId = s.selectedSigningKeyId,
+                            v4Recipients = v4Recipients,
+                            totalBytes = ref.size,
+                            compositeSuite = compositeInfo?.signingSuite,
+                            compositeSecret = compositeInfo?.signingSecret,
+                            compositeFingerprint = compositeInfo?.signingFingerprint,
+                            compositeSignInSeipdV1 = true,
+                            recipientSubkeyChoices = s.recipientSubkeyChoices,
+                            openInput = { ref.openStream() },
+                            outFile = out
+                        )
+                    }
+                    updateEncryptBatch { b ->
+                        b.withItem(i) { it.copy(status = FileBatchStatus.Done, output = out, outputName = out.name) }
+                    }
+                } catch (e: Throwable) {
+                    if (!isActive) return@launch
+                    if (isPassphraseError(e)) {
+                        updateEncryptBatch { b -> b.withItem(i) { it.copy(status = FileBatchStatus.Pending) } }
+                        pauseForPassphrase(wrong = !pass.isNullOrEmpty())
+                        return@launch
+                    }
+                    updateEncryptBatch { b -> b.withItem(i) { it.copy(status = FileBatchStatus.Failed(batchItemError(e))) } }
+                }
+            }
+            _encryptState.value = _encryptState.value.copy(
+                isProcessing = false, processedBytes = 0L, totalBytes = 0L,
+                sentUnsignedPqc = pqcInV1 && pqcDecision == false
+            )
+            updateEncryptBatch { it.copy(running = false) }
+            if ((_encryptState.value.fileBatch?.doneCount ?: 0) > 0) _events.tryEmit(Event.EncryptSuccess)
+        }
+    }
+
+    /** 4.7.0 (item 15): the batch sheet's passphrase field, encrypt side. */
+    fun resumeEncryptBatch(passphrase: String) = encryptEachFile(passphrase)
+
+    /**
+     * 4.7.0 (item 38, #72): decrypt [files] one by one, each verified on its
+     * own. Reached from a share of several encrypted files and from the
+     * Decrypt screen's picker when several files are chosen.
+     */
+    fun startDecryptBatch(files: List<BundleAttachmentRef>) {
+        if (fileOpJob?.isActive == true || files.isEmpty()) return
+        ScratchFiles.clearScope(PGPonyApp.instance, ScratchFiles.SCOPE_BATCH)
+        batchPassphrase = null
+        decryptBatchInputs = files
+        _decryptState.value = _decryptState.value.copy(
+            errorMessage = null,
+            fileBatch = FileBatchState(
+                kind = FileBatchKind.DECRYPT,
+                items = files.map { FileBatchItem(it.filename, it.size) }
+            )
+        )
+        runDecryptBatch(null)
+    }
+
+    /** 4.7.0 (item 38): the batch sheet's passphrase field, decrypt side. */
+    fun resumeDecryptBatch(passphrase: String) = runDecryptBatch(passphrase)
+
+    private fun runDecryptBatch(passphrase: String?) {
+        if (fileOpJob?.isActive == true) return
+        val inputs = decryptBatchInputs
+        val start = _decryptState.value.fileBatch ?: return
+        if (start.items.size != inputs.size) return
+        if (passphrase != null) batchPassphrase = passphrase.ifEmpty { null }
+        val app = PGPonyApp.instance
+        fileOpJob = viewModelScope.launch {
+            val s = _decryptState.value
+            val cacheFp = s.selectedKeyFingerprint
+            // §3 (#15): a cached in-app passphrase counts as already asked.
+            val pass = batchPassphrase ?: s.passphrase.ifBlank { null }
+                ?: cacheFp?.let { com.pgpony.android.session.InAppPassphraseCache.get(it) }
+            _decryptState.value = _decryptState.value.copy(
+                isProcessing = true, errorMessage = null, processedBytes = 0L, totalBytes = 0L,
+                fileBatch = start.copy(running = true, needsPassphrase = false, passphraseError = null)
+            )
+            fun pauseForPassphrase(wrong: Boolean) {
+                _decryptState.value = _decryptState.value.copy(
+                    isProcessing = false, processedBytes = 0L, totalBytes = 0L
+                )
+                updateDecryptBatch {
+                    it.copy(
+                        running = false,
+                        needsPassphrase = true,
+                        passphraseError = if (wrong) app.getString(R.string.encdec_error_incorrect_passphrase) else null
+                    )
+                }
+            }
+            // Same order as the single-file path (the key picked in "Decrypt
+            // with" and its fallbacks first), but every key pair is in the set:
+            // the files in a batch can be addressed to different keys, and the
+            // picker's key (or its "only this key" setting) must not make the
+            // others fail as "no matching key". BouncyCastle still matches by
+            // the key IDs the message names. The key pairs come from the
+            // repository, not the screen state: a batch started straight from
+            // the file picker found no secret keys at all on device.
+            val rings = try {
+                val pool = withContext(Dispatchers.IO) { repo.getAllKeys().filter { it.isKeyPair } }
+                val orderedKeys = fallbackOrderedKeys(s).let { first ->
+                    first + pool.filter { k -> first.none { it.fingerprint == k.fingerprint } }
+                }
+                val secret = withContext(Dispatchers.IO) { orderedKeys.mapNotNull { secretRingForDecrypt(it) } }
+                val compositeRaw = withContext(Dispatchers.IO) {
+                    orderedKeys.filter { it.algorithm.isCompositeSign }
+                        .mapNotNull { repo.loadCompositePrivateRing(it.fingerprint) }
+                }
+                val verify = withContext(Dispatchers.IO) {
+                    repo.getAllKeys().mapNotNull { repo.loadPublicKeyRing(it.fingerprint) }
+                }
+                Triple(secret, compositeRaw, verify)
+            } catch (e: Throwable) {
+                if (!isActive) return@launch
+                val message = batchItemError(e)
+                _decryptState.value = _decryptState.value.copy(isProcessing = false)
+                updateDecryptBatch { b ->
+                    b.copy(running = false, items = b.items.map { item ->
+                        if (item.status is FileBatchStatus.Done) item
+                        else item.copy(status = FileBatchStatus.Failed(message))
+                    })
+                }
+                return@launch
+            }
+            val (secretRings, compositeRings, verifyRings) = rings
+
+            val usedNames = HashSet<String>()
+            start.items.forEach { item -> if (item.status is FileBatchStatus.Done) item.outputName?.let { usedNames.add(it) } }
+            for (i in inputs.indices) {
+                val status = _decryptState.value.fileBatch?.items?.getOrNull(i)?.status ?: return@launch
+                if (status is FileBatchStatus.Done || status is FileBatchStatus.Failed) continue
+                val ref = inputs[i]
+                updateDecryptBatch { b -> b.withItem(i) { it.copy(status = FileBatchStatus.Running) } }
+                _decryptState.value = _decryptState.value.copy(
+                    processedBytes = 0L, totalBytes = ref.size.coerceAtLeast(0L)
+                )
+                try {
+                    val out = withContext(Dispatchers.IO) {
+                        ScratchFiles.allocateKeep(
+                            app, FileBatchNaming.decryptedName(ref.filename, null), ScratchFiles.SCOPE_BATCH
+                        )
+                    }
+                    // Same split as the single-file path: a file up to
+                    // INLINE_FILE_LIMIT goes through the in-memory decrypt with
+                    // the per-ring fallback cascade, a larger one streams. The
+                    // first build streamed every file, and messages the
+                    // single-file path opens came back as "no matching key".
+                    val small = ref.size in 0..INLINE_FILE_LIMIT
+                    val literalName: String?
+                    val verification: VerificationResult
+                    if (small) {
+                        val bytes = withContext(Dispatchers.IO) { ref.openStream().use { it.readBytes() } }
+                        val result = withContext(Dispatchers.Default) {
+                            decryptWithFallbackCascade(secretRings) { rings ->
+                                crypto.decrypt(
+                                    encryptedData = effectiveDecryptFileBytes(bytes),
+                                    secretKeyRings = rings,
+                                    passphrase = pass,
+                                    verificationKeys = verifyRings,
+                                    compositePrimaryRings = compositeRings
+                                )
+                            }
+                        }
+                        withContext(Dispatchers.IO) { out.writeBytes(result.data) }
+                        literalName = result.filename
+                        verification = buildVerificationResultForEncrypted(result)
+                    } else {
+                        val result = decryptWithFallbackCascade(secretRings) { rings ->
+                            streamDecryptToFile(
+                                open = { ref.openStream() },
+                                out = out,
+                                secretRings = rings,
+                                passphrase = pass,
+                                verifyRings = verifyRings,
+                                compositeRings = compositeRings
+                            )
+                        }
+                        literalName = result.filename
+                        verification = buildVerificationResultForStream(result)
+                    }
+                    // The literal-data packet's name when the message has one.
+                    var name = FileBatchNaming.decryptedName(ref.filename, literalName)
+                    // A decrypted package is a MIME container; .eml opens it.
+                    if (withContext(Dispatchers.IO) { MimeStreamExtractor.looksLikeBundle(out) } &&
+                        !name.lowercase().endsWith(".eml")
+                    ) {
+                        name += ".eml"
+                    } else if (!FileBatchNaming.hasExtension(name)) {
+                        // 4.7.0 (item 38): "message.asc" decrypts to "message";
+                        // name it by its content (".txt" for text) so it opens.
+                        val head = withContext(Dispatchers.IO) {
+                            out.inputStream().use { input ->
+                                val buf = ByteArray(64 * 1024)
+                                val n = input.read(buf).coerceAtLeast(0)
+                                buf.copyOf(n)
+                            }
+                        }
+                        name = FileBatchNaming.withContentExtension(name, head)
+                    }
+                    name = FileBatchNaming.uniqueName(name, usedNames)
+                    usedNames.add(name)
+                    val finalFile = withContext(Dispatchers.IO) {
+                        if (name == out.name) out else {
+                            val target = ScratchFiles.safeChild(out.parentFile!!, name, "decrypted_output")
+                            if (out.renameTo(target)) target else out
+                        }
+                    }
+                    updateDecryptBatch { b ->
+                        b.withItem(i) {
+                            it.copy(
+                                status = FileBatchStatus.Done,
+                                output = finalFile,
+                                outputName = finalFile.name,
+                                verification = verification
+                            )
+                        }
+                    }
+                } catch (e: Throwable) {
+                    if (!isActive) return@launch
+                    if (isPassphraseError(e)) {
+                        val wrong = e is com.pgpony.android.crypto.PGPCryptoError.InvalidPassphrase ||
+                            e is SigningError.InvalidPassphrase
+                        if (wrong && cacheFp != null) com.pgpony.android.session.InAppPassphraseCache.clear(cacheFp)
+                        updateDecryptBatch { b -> b.withItem(i) { it.copy(status = FileBatchStatus.Pending) } }
+                        pauseForPassphrase(wrong = wrong)
+                        return@launch
+                    }
+                    val message = if (e is com.pgpony.android.crypto.PGPCryptoError.MessageIncomplete) {
+                        ErrorText.localize(e.message) ?: batchItemError(e)
+                    } else batchItemError(e)
+                    updateDecryptBatch { b -> b.withItem(i) { it.copy(status = FileBatchStatus.Failed(message)) } }
+                }
+            }
+            _decryptState.value = _decryptState.value.copy(isProcessing = false, processedBytes = 0L, totalBytes = 0L)
+            updateDecryptBatch { it.copy(running = false) }
+            val done = _decryptState.value.fileBatch?.doneCount ?: 0
+            if (done > 0) {
+                _events.tryEmit(Event.DecryptSuccess)
+                if (cacheFp != null && !pass.isNullOrEmpty()) {
+                    com.pgpony.android.session.InAppPassphraseCache.put(cacheFp, pass)
+                }
+            }
+        }
+    }
+
+    /**
+     * 4.7.0 (items 15 and 38): skip the passphrase. The files still waiting
+     * are marked failed, and the ones already done stay done.
+     */
+    fun skipFileBatchPassphrase(decrypt: Boolean) {
+        val message = PGPonyApp.instance.getString(R.string.batch_item_skipped_passphrase)
+        val f: (FileBatchState) -> FileBatchState = { b ->
+            b.copy(
+                running = false,
+                needsPassphrase = false,
+                passphraseError = null,
+                items = b.items.map { item ->
+                    if (item.status is FileBatchStatus.Pending || item.status is FileBatchStatus.Running)
+                        item.copy(status = FileBatchStatus.Failed(message))
+                    else item
+                }
+            )
+        }
+        if (decrypt) updateDecryptBatch(f) else updateEncryptBatch(f)
+    }
+
+    /**
+     * 4.7.0 (items 15 and 38): copy every finished output into the folder
+     * the user picked (ACTION_OPEN_DOCUMENT_TREE), never over a file that is
+     * already there: a taken name gets " (1)", " (2)" and so on.
+     */
+    fun saveFileBatchToFolder(treeUri: android.net.Uri, decrypt: Boolean) {
+        val batch = (if (decrypt) _decryptState.value.fileBatch else _encryptState.value.fileBatch) ?: return
+        if (batch.running || batch.saving) return
+        val update: ((FileBatchState) -> FileBatchState) -> Unit =
+            if (decrypt) this::updateDecryptBatch else this::updateEncryptBatch
+        val app = PGPonyApp.instance
+        update { it.copy(saving = true, saveSummary = null) }
+        viewModelScope.launch {
+            val saved: List<FileBatchItem>? = withContext(Dispatchers.IO) {
+                val dir = try {
+                    androidx.documentfile.provider.DocumentFile.fromTreeUri(app, treeUri)
+                } catch (_: Exception) { null }
+                if (dir == null || !dir.isDirectory) return@withContext null
+                val taken = HashSet<String>()
+                try { dir.listFiles().forEach { f -> f.name?.let { taken.add(it) } } } catch (_: Exception) {}
+                batch.items.map { item ->
+                    val file = item.output
+                    if (item.status !is FileBatchStatus.Done || file == null) return@map item
+                    try {
+                        val name = FileBatchNaming.uniqueName(item.outputName ?: file.name, taken)
+                        val doc = dir.createFile("application/octet-stream", name)
+                            ?: throw java.io.IOException(app.getString(R.string.batch_save_failed_item))
+                        app.contentResolver.openOutputStream(doc.uri)?.use { sink ->
+                            file.inputStream().buffered().use { it.copyTo(sink) }
+                            sink.flush()
+                        } ?: throw java.io.IOException(app.getString(R.string.batch_save_failed_item))
+                        val actual = doc.name ?: name
+                        taken.add(name)
+                        taken.add(actual)
+                        item.copy(savedAs = actual, saveError = null)
+                    } catch (e: Exception) {
+                        item.copy(
+                            saveError = ErrorText.localize(e.message)?.takeIf { it.isNotBlank() }
+                                ?: app.getString(R.string.batch_save_failed_item)
+                        )
+                    }
+                }
+            }
+            update { b ->
+                if (saved == null) {
+                    b.copy(saving = false, saveSummary = app.getString(R.string.batch_save_folder_unusable))
+                } else {
+                    val count = saved.count { it.savedAs != null }
+                    b.copy(
+                        saving = false,
+                        items = saved,
+                        saveSummary = app.getString(R.string.batch_saved_summary_format, count, b.doneCount)
+                    )
+                }
+            }
+        }
+    }
+
+    /** 4.7.0 (items 15 and 38): close the batch sheet and drop its outputs. */
+    fun dismissFileBatch(decrypt: Boolean) {
+        val batch = if (decrypt) _decryptState.value.fileBatch else _encryptState.value.fileBatch
+        if (batch?.running == true) {
+            fileOpJob?.cancel()
+            fileOpJob = null
+        }
+        ScratchFiles.clearScope(PGPonyApp.instance, ScratchFiles.SCOPE_BATCH)
+        batchPassphrase = null
+        batchPqcDecision = null
+        if (decrypt) {
+            decryptBatchInputs = emptyList()
+            _decryptState.value = _decryptState.value.copy(
+                fileBatch = null, isProcessing = false, processedBytes = 0L, totalBytes = 0L
+            )
+        } else {
+            _encryptState.value = _encryptState.value.copy(
+                fileBatch = null, isProcessing = false, processedBytes = 0L, totalBytes = 0L
+            )
+            // Same privacy wipe as closing the package result, once something
+            // was actually produced.
+            if ((batch?.doneCount ?: 0) > 0) clearEncryptInputsIfEnabled()
         }
     }
 
@@ -4453,56 +5092,22 @@ class EncryptDecryptViewModel(private val repo: KeyRepository) : ViewModel() {
                     ?: "decrypted_output"
 
                 val result = withContext(Dispatchers.IO) {
-                    val job = coroutineContext[kotlinx.coroutines.Job]
                     val out = ScratchFiles.allocate(
                         PGPonyApp.instance, provisionalName, ScratchFiles.SCOPE_DECRYPT
                     )
                     scratch = out
                     val resolver = PGPonyApp.instance.contentResolver
-                    // 4.2.0 RC6 (#32, tail-4): a large .eml never had its
-                    // RFC 3156 envelope unwrapped on this path — only the
-                    // buffered (≤4 MB) decrypt did that — so the armor
-                    // parser saw "MIME-Version: 1.0" and failed with
-                    // "invalid header encountered". Probe pass finds the
-                    // armored payload's offset (0 for a plain armored
-                    // file, -1 → no skip for binary), real pass skips to
-                    // it. See MimeEnvelope.armoredPayloadOffset.
-                    val envelopeOffset = resolver.openInputStream(uri)?.use {
-                        MimeEnvelope.armoredPayloadOffset(it)
-                    } ?: -1L
-                    val raw = resolver.openInputStream(uri)
-                        ?: throw java.io.IOException(PGPonyApp.instance.getString(R.string.encdec_error_cannot_open_selected_file))
-                    if (envelopeOffset > 0) {
-                        var remaining = envelopeOffset
-                        while (remaining > 0) {
-                            val skipped = raw.skip(remaining)
-                            if (skipped <= 0) {
-                                if (raw.read() < 0) break
-                                remaining--
-                            } else remaining -= skipped
-                        }
-                    }
-                    // 4.0.4 — counts ciphertext bytes consumed, which is
-                    // the only figure we can report: the plaintext size
-                    // is unknown until the literal packet ends.
-                    val input = ProgressInputStream(
-                        delegate = raw,
-                        isCancelled = { job?.isActive == false },
-                    ) { read ->
-                        _decryptState.value = _decryptState.value.copy(processedBytes = read)
-                    }
-                    input.use { source ->
-                        out.outputStream().buffered().use { sink ->
-                            crypto.decryptStream(
-                                input = source,
-                                output = sink,
-                                secretKeyRings = secretRings,
-                                passphrase = effPass,
-                                verificationKeys = verifyRings,
-                                compositePrimaryRings = compositeRings
-                            )
-                        }
-                    }
+                    // 4.7.0 (item 38, #72): the stream itself moved into
+                    // streamDecryptToFile so the multi-file decrypt runs
+                    // exactly this path for each of its files.
+                    streamDecryptToFile(
+                        open = { resolver.openInputStream(uri) },
+                        out = out,
+                        secretRings = secretRings,
+                        passphrase = effPass,
+                        verifyRings = verifyRings,
+                        compositeRings = compositeRings
+                    )
                 }
 
                 // The literal-data packet carries the original name; prefer
@@ -4643,6 +5248,71 @@ class EncryptDecryptViewModel(private val repo: KeyRepository) : ViewModel() {
                         else ->
                             PGPonyApp.instance.getString(R.string.encdec_error_decryption_failed_format, ErrorText.detail(e.message) ?: "")
                     }
+                )
+            }
+        }
+    }
+
+    /**
+     * 4.7.0 (item 38, #72): one streamed decrypt of [open]'s content into
+     * [out], factored out of decryptFileStreamingPath so the multi-file
+     * decrypt runs the same path per file (RFC 3156 envelope skip, progress,
+     * cancellation, composite rings). [open] is called twice: once to find
+     * the armored payload's offset, once for the real pass.
+     */
+    private suspend fun streamDecryptToFile(
+        open: () -> java.io.InputStream?,
+        out: java.io.File,
+        secretRings: List<org.bouncycastle.openpgp.PGPSecretKeyRing>,
+        passphrase: String?,
+        verifyRings: List<org.bouncycastle.openpgp.PGPPublicKeyRing>,
+        compositeRings: List<ByteArray>,
+        onProgress: (Long) -> Unit = { read ->
+            _decryptState.value = _decryptState.value.copy(processedBytes = read)
+        }
+    ): com.pgpony.android.crypto.DecryptStreamResult = withContext(Dispatchers.IO) {
+        val job = coroutineContext[kotlinx.coroutines.Job]
+        // 4.2.0 RC6 (#32, tail-4): a large .eml never had its
+        // RFC 3156 envelope unwrapped on this path (only the
+        // buffered, up to 4 MB, decrypt did that), so the armor
+        // parser saw "MIME-Version: 1.0" and failed with
+        // "invalid header encountered". Probe pass finds the
+        // armored payload's offset (0 for a plain armored
+        // file, -1 → no skip for binary), real pass skips to
+        // it. See MimeEnvelope.armoredPayloadOffset.
+        val envelopeOffset = open()?.use {
+            MimeEnvelope.armoredPayloadOffset(it)
+        } ?: -1L
+        val raw = open()
+            ?: throw java.io.IOException(PGPonyApp.instance.getString(R.string.encdec_error_cannot_open_selected_file))
+        if (envelopeOffset > 0) {
+            var remaining = envelopeOffset
+            while (remaining > 0) {
+                val skipped = raw.skip(remaining)
+                if (skipped <= 0) {
+                    if (raw.read() < 0) break
+                    remaining--
+                } else remaining -= skipped
+            }
+        }
+        // 4.0.4: counts ciphertext bytes consumed, which is
+        // the only figure we can report: the plaintext size
+        // is unknown until the literal packet ends.
+        val input = ProgressInputStream(
+            delegate = raw,
+            isCancelled = { job?.isActive == false },
+        ) { read ->
+            onProgress(read)
+        }
+        input.use { source ->
+            out.outputStream().buffered().use { sink ->
+                crypto.decryptStream(
+                    input = source,
+                    output = sink,
+                    secretKeyRings = secretRings,
+                    passphrase = passphrase,
+                    verificationKeys = verifyRings,
+                    compositePrimaryRings = compositeRings
                 )
             }
         }

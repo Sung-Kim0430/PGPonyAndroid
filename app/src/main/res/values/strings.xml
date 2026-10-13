@@ -2823,4 +2823,46 @@
         <item quantity="one">%1$d key added or updated</item>
         <item quantity="other">%1$d keys added or updated</item>
     </plurals>
+    <!-- 4.7.0 (items 15 and 38): several files at once. Bundle mode makes one package or handles each file on its own; several encrypted files decrypt one by one. -->
+    <string name="batch_output_title">Several files</string>
+    <string name="batch_output_package">One package</string>
+    <string name="batch_output_package_subtitle">All files and the message, encrypted together into one file</string>
+    <string name="batch_output_each">Each file on its own</string>
+    <string name="batch_output_each_subtitle">One output per file, saved to a folder or shared together</string>
+    <string name="batch_op_encrypt">Encrypt</string>
+    <string name="batch_op_encrypt_sign">Encrypt and sign</string>
+    <string name="batch_op_sign_only">Sign only</string>
+    <string name="batch_op_sign_only_subtitle">A detached .sig for each file. The files themselves stay as they are.</string>
+    <string name="batch_card_signing_unavailable">Signing each file with a hardware key would need a tap for every file. Choose a software key in Sign as, or use one package.</string>
+    <string name="batch_error_no_files">Add at least one file.</string>
+    <string name="batch_error_pick_signer">Choose a key in Sign as to sign the files.</string>
+    <string name="batch_error_no_matching_key">None of the keys stored in PGPony can decrypt this file. If it is encrypted to a hardware key, decrypt it on its own.</string>
+    <string name="batch_item_failed_unknown">This file could not be processed.</string>
+    <string name="batch_item_cancelled">Cancelled</string>
+    <string name="batch_item_skipped_passphrase">Skipped: no passphrase was entered</string>
+    <string name="batch_save_failed_item">Could not write this file to the folder.</string>
+    <string name="batch_save_folder_unusable">PGPony cannot write to that folder. Choose another one.</string>
+    <string name="batch_saved_summary_format">Saved %1$d of %2$d files to the folder.</string>
+    <string name="batch_title_encrypting">Encrypting files</string>
+    <string name="batch_title_signing">Signing files</string>
+    <string name="batch_title_decrypting">Decrypting files</string>
+    <string name="batch_title_done_format">%1$d of %2$d files done</string>
+    <string name="batch_progress_file_format">File %1$d of %2$d</string>
+    <string name="batch_passphrase_prompt">Enter the passphrase. It is used for every file in this batch.</string>
+    <string name="batch_passphrase_label">Passphrase</string>
+    <string name="batch_passphrase_continue">Continue</string>
+    <string name="batch_passphrase_skip">Skip the rest</string>
+    <string name="batch_item_output_format">Output: %1$s</string>
+    <string name="batch_item_saved_format">Saved as %1$s</string>
+    <string name="batch_save_to_folder">Save to a folder</string>
+    <string name="batch_share_all">Share all</string>
+    <string name="batch_share_chooser">Share files</string>
+    <string name="batch_share_failed">Could not share the files.</string>
+    <string name="batch_status_pending">Waiting</string>
+    <string name="batch_status_done">Done</string>
+    <string name="batch_status_failed">Failed</string>
+    <string name="share_files_choice_title">Some of these files are encrypted</string>
+    <string name="share_files_choice_message">%1$d of the %2$d files are encrypted messages. Decrypt those, or encrypt all of the files as one package?</string>
+    <string name="share_files_choice_decrypt_format">Decrypt %1$d</string>
+    <string name="share_files_choice_encrypt">Encrypt all</string>
 </resources>

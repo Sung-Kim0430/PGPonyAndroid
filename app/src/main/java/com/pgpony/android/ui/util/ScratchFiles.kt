@@ -66,6 +66,9 @@ object ScratchFiles {
     const val SCOPE_ENCRYPT = "encrypt"
     const val SCOPE_DECRYPT = "decrypt"
     const val SCOPE_QUICK = "quick"
+    // 4.7.0 (items 15 and 38, #72): a multi-file encrypt, sign or decrypt
+    // holds one output per file, so it allocates with allocateKeep below.
+    const val SCOPE_BATCH = "batch"
 
     /** cacheDir/scratch, created on demand. */
     fun dir(context: Context): File =
@@ -96,6 +99,25 @@ object ScratchFiles {
             .substringAfterLast('\\')
             .ifBlank { "output" }
         val slot = File(scopeDir(context, scope), System.nanoTime().toString()).apply { mkdirs() }
+        return File(slot, safeName)
+    }
+
+    /**
+     * 4.7.0 (items 15 and 38, #72): like [allocate], but keeps the scope's
+     * earlier outputs. A multi-file operation writes one output per file
+     * into [SCOPE_BATCH]; each still gets its own numbered slot, so two files
+     * with the same output name never collide on disk.
+     */
+    fun allocateKeep(context: Context, displayName: String, scope: String): File {
+        val safeName = displayName
+            .substringAfterLast('/')
+            .substringAfterLast('\\')
+            .ifBlank { "output" }
+        var slot: File
+        do {
+            slot = File(scopeDir(context, scope), System.nanoTime().toString())
+        } while (slot.exists())
+        slot.mkdirs()
         return File(slot, safeName)
     }
 
