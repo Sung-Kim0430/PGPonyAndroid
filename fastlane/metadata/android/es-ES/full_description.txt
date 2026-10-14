@@ -1,0 +1,65 @@
+PGPony trae cifrado OpenPGP real a Android, con criptografía poscuántica y soporte para llaves de seguridad físicas. Genera claves PGP y cifra, descifra, firma y verifica mensajes y archivos en tu dispositivo. Sin cuenta, sin servidor, sin rastreo. Totalmente compatible con GnuPG (GPG), OpenKeychain y otras herramientas OpenPGP.
+
+NOVEDAD: emparejamiento con PGPony Desktop, inicio de sesión SSH con tus claves PGP y firmas poscuánticas ML-DSA.
+
+▌CIFRADO POSCUÁNTICO
+- Claves de cifrado compuestas ML-KEM-768 y ML-KEM-1024 (Kyber), resistentes a la computación cuántica
+- Firmas poscuánticas ML-DSA-65 y ML-DSA-87 (Dilithium) en claves OpenPGP v6
+- Formato estándar del IETF y el formato LibrePGP que usa GnuPG 2.5
+- Protege tus mensajes de los ataques «guardar ahora, descifrar después»
+
+▌CORREO, CONTRASEÑAS Y SSH
+- Proveedor OpenPGP para Thunderbird para Android, K-9 Mail y FairEmail
+- Un sucesor moderno de OpenKeychain: misma API, mantenimiento activo
+- Tú apruebas cada app conectada y puedes revocarla en Ajustes
+- Lee tus entradas de pass (password-store), incluso las de una llave física
+- Inicio de sesión SSH con una clave de PGPony mediante un ssh-agent en Termux
+
+▌LLAVES DE SEGURIDAD FÍSICAS
+- Usa una YubiKey, Token2 u otra tarjeta inteligente OpenPGP por NFC o USB
+- Tu clave privada nunca sale del hardware; el PIN confirma cada operación
+- Genera claves en la tarjeta, firma, descifra y cifra y firma; caché de PIN opcional
+- Cambia los PIN y restablece la tarjeta; compatible con PIN protegido por KDF
+
+▌GESTIÓN DE CLAVES PGP
+- Genera pares de claves Ed25519, RSA, OpenPGP v6 o poscuánticos
+- OpenPGP v4 (RFC 4880) y v6 (RFC 9580), AEAD-OCB y Argon2id
+- Importa y exporta claves; añade subclaves e ID de usuario; fija caducidad; revoca
+- Copia de seguridad cifrada y restauración, también de copias de OpenKeychain
+
+▌CIFRAR, DESCIFRAR, FIRMAR
+- Cifra texto o archivos para uno o varios destinatarios
+- Verifica firmas con una indicación clara del firmante verificado
+- Correo PGP/MIME: descifra mensajes con adjuntos y redacta .eml
+
+▌INTERCAMBIO DE CLAVES FÁCIL
+- Comparte tu clave pública como código QR, archivo o texto; escanea para importar
+- Importa una clave desde un enlace y comprueba su huella antes de añadirla
+- Búsqueda en servidores de claves y Web Key Directory (WKD), incluido keys.openpgp.org
+- Empareja con PGPony Desktop (macOS, Windows, Linux) u otro teléfono
+- Autocrypt y lista de contactos integrada
+
+▌PRIVACIDAD DESDE EL DISEÑO
+- Cifrado 100 % en tu dispositivo: sin cuenta, sin telemetría
+- El modo sin conexión apaga todas las funciones de red
+- Tráfico a servidores de claves por Tor con Orbot
+- Claves privadas en almacenamiento cifrado respaldado por Android Keystore
+- Bloqueo biométrico opcional, huella para firmar y portapapeles que se borra solo
+
+▌PARA QUIÉN ES PGPONY
+- Periodistas, investigadores y activistas que manejan información sensible
+- Usuarios de GnuPG que buscan un compañero móvil o un sustituto de OpenKeychain
+- Desarrolladores y administradores que usan PGP para firmar código, versiones o SSH
+
+▌POR QUÉ PGPONY
+La mayoría de las apps de «mensajería segura» te piden confiar en sus servidores. PGPony no los necesita. Tus claves se generan y guardan en tu dispositivo y solo salen si tú las compartes. Si usas GnuPG en el ordenador, ya conoces PGPony. ¿Nuevo en PGP? Es el lugar más sencillo para empezar.
+
+▌CÓDIGO ABIERTO
+- Licencia Apache-2.0, con el núcleo OpenPGP publicado como biblioteca propia
+- Compilaciones reproducibles: cualquiera puede comparar los APK con el código fuente
+- Gratis, sin anuncios ni compras dentro de la app
+
+▌COMPROMISO DE PRIVACIDAD
+PGPony no recoge, guarda ni transmite datos personales. Política de privacidad: pgpony.app/privacy
+
+Hecho por un desarrollador independiente de Alabama. ¿Preguntas o sugerencias? Toca Enviar comentarios en la app o escribe a NorseHorse@norsehor.se.

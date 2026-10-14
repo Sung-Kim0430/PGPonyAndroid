@@ -1,30 +1,65 @@
-PGPony, Android için bir OpenPGP uygulamasıdır. Mesajları ve dosyaları şifreleyin, şifrelerini çözün, imzalayın ve doğrulayın, anahtarlığınızı yönetin ve NFC üzerinden donanım güvenlik anahtarı kullanın. Hepsi cihazın üzerinde gerçekleşir.
+PGPony, Android'e gerçek OpenPGP şifrelemesi getirir: kuantum sonrası kriptografi ve donanım güvenlik anahtarı desteğiyle. PGP anahtarları oluşturun, mesajları ve dosyaları cihazınızda şifreleyin, şifresini çözün, imzalayın ve doğrulayın. Hesap yok, sunucu yok, takip yok. GnuPG (GPG), OpenKeychain ve diğer OpenPGP araçlarıyla tam uyumlu.
 
-Özellikler:
+YENİ: PGPony Desktop ile eşleştirme, PGP anahtarlarınızla SSH girişi ve kuantum sonrası ML-DSA imzaları.
 
-- Metin ve dosyaları şifreleme, şifre çözme, imzalama ve doğrulama
-- Kuantum sonrası şifreleme: ML-KEM-768 + X25519 (Kyber) bileşik anahtarlar, hem IETF taslağı (v6) hem de LibrePGP / GnuPG 2.5 (v5) biçiminde
-- OpenPGP sağlayıcı hizmeti: PGPony'yi Thunderbird for Android, K-9 Mail ve Password Store için şifreleme motoru olarak kullanın (OpenKeychain uyumlu API)
-- RFC 9580 (OpenPGP v6) Ed25519 ve X25519 dahil modern anahtarlar oluşturma, Argon2id ile parola ifadesi koruması
-- NFC üzerinden donanım güvenlik anahtarları (YubiKey 5 NFC ve Token2 dahil): kart üzerinde anahtar oluşturma, şifre çözme, imzalama, PIN yönetimi ve fabrika ayarlarına sıfırlama
-- Donanım anahtarıyla korunanlar dahil pass parola deposu kayıtlarını okuma
-- Şifreli anahtarlık yedekleme ve geri yükleme, OpenKeychain yedeklerini içe aktarma
-- PGP/MIME e-posta: ekli mesajların şifresini çözme, şifreli .eml oluşturma
-- WKD ve doğrulamalı anahtar sunucusu keys.openpgp.org üzerinden anahtar bulma; isteğe bağlı olarak Orbot ile Tor yönlendirmesi
-- Alıcı seçimi için isteğe bağlı kişi entegrasyonu
-- Anahtarlar için QR ile içe aktarma ve tarama
-- Varsayılan imzalama anahtarı, biyometrik kilit ve güvenli ekran koruması
+▌KUANTUM SONRASI ŞİFRELEME
+- ML-KEM-768 ve ML-KEM-1024 (Kyber) bileşik şifreleme anahtarları
+- OpenPGP v6 anahtarlarında ML-DSA-65 ve ML-DSA-87 (Dilithium) kuantum sonrası imzalar
+- IETF standart biçimi ve GnuPG 2.5'in kullandığı LibrePGP biçimi
+- Mesajlarınızı "şimdi topla, sonra çöz" saldırılarına karşı korur
 
-Kuantum sonrası sınırlamalar:
+▌E-POSTA, PAROLALAR VE SSH
+- Android için Thunderbird, K-9 Mail ve FairEmail için OpenPGP sağlayıcısı
+- OpenKeychain'in modern halefi: aynı API, aktif olarak geliştiriliyor
+- Bağlanan her uygulamayı siz onaylarsınız ve Ayarlar'dan geri alabilirsiniz
+- pass (password-store) kayıtlarınızı okuyun, donanım anahtarına bağlı olanlar dahil
+- Termux'taki bir ssh-agent üzerinden PGPony anahtarıyla SSH girişi
 
-Kuantum sonrası OpenPGP hâlâ standartlaştırılma aşamasında olduğundan araçlar arası destek sınırlıdır:
+▌DONANIM GÜVENLİK ANAHTARLARI
+- YubiKey, Token2 veya başka bir OpenPGP akıllı kartı NFC ya da USB ile kullanın
+- Özel anahtar donanımdan hiç çıkmaz; her işlemi PIN onaylar
+- Kartta anahtar oluşturma, kartla imzalama ve şifre çözme; isteğe bağlı PIN önbelleği
+- PIN değiştirme ve kart sıfırlama; KDF korumalı PIN desteği
 
-- LibrePGP biçimindeki (v5) anahtarlar bugün GnuPG 2.5+ ile birlikte çalışır: mesajlar iki yönde de şifrelenir ve çözülür, açık anahtarlar sorunsuz içe aktarılır. GnuPG henüz hiçbir uygulamadan kuantum sonrası GİZLİ anahtarları içe aktaramaz, çünkü bunları kendine özgü bir iç biçimde saklar.
-- IETF biçimindeki (v6) anahtarlar draft-ietf-openpgp-pqc taslağını uygular ve taslağın resmî test vektörleriyle doğrulanmıştır. Ancak güncel Sequoia (sq) ön sürümleri taslağın farklı bir revizyonunu uyguladığı için bunları henüz okuyamaz; GnuPG ise bu biçimi hiç desteklemez.
-- Klasik anahtarlar (RSA, Ed25519, v4 ve v6) bundan etkilenmez.
+▌PGP ANAHTAR YÖNETİMİ
+- Ed25519, RSA, OpenPGP v6 veya kuantum sonrası anahtar çiftleri oluşturun
+- OpenPGP v4 (RFC 4880) ve v6 (RFC 9580), AEAD-OCB ve Argon2id
+- Anahtar içe ve dışa aktarma; alt anahtar ve kullanıcı kimliği ekleme; süre; iptal
+- Şifreli yedekleme ve geri yükleme, OpenKeychain yedekleri dahil
 
-PGPony hesap, reklam, analiz veya izleme kullanmaz. F-Droid sürümü hiçbir Google hizmeti içermez ve Google'sız cihazlarda eksiksiz çalışır.
+▌ŞİFRELE, ŞİFRE ÇÖZ, İMZALA
+- Metin veya dosyaları bir ya da birden çok alıcı için şifreleyin
+- İmzaları doğrulayın, doğrulanmış imzacı açıkça gösterilir
+- PGP/MIME e-posta: ekli mesajların şifresini çözün, .eml oluşturun
 
-Şifreleme çekirdeği ayrı olarak açık kaynak yayımlanmıştır (PGPonyCore-Kotlin) ve uygulamanın tüm kaynak kodu Apache-2.0 lisansıyla sunulur.
+▌KOLAY ANAHTAR DEĞİŞİMİ
+- Açık anahtarınızı QR kod, dosya veya metin olarak paylaşın; içe aktarmak için tarayın
+- Bir bağlantıdan anahtar içe aktarın, eklemeden önce parmak izini kontrol edin
+- Anahtar sunucusu ve Web Key Directory (WKD) araması, keys.openpgp.org dahil
+- PGPony Desktop (macOS, Windows, Linux) veya başka bir telefonla eşleştirme
+- Autocrypt ve yerleşik kişi listesi
 
-Bu sayfanın ve uygulamanın Türkçe çevirisi büyük ölçüde makine çevirisidir. Düzeltmelerinizi memnuniyetle karşılarım.
+▌TASARIMDAN GİZLİLİK
+- Şifreleme %100 cihazınızda: hesap yok, telemetri yok
+- Çevrimdışı mod tüm ağ özelliklerini kapatır
+- Anahtar sunucusu trafiği Orbot ile Tor üzerinden
+- Özel anahtarlar Android Keystore destekli şifreli depolamada
+- Biyometrik kilit, imza için parmak izi ve kendiliğinden temizlenen pano
+
+▌PGPONY KİMLER İÇİN
+- Hassas bilgilerle çalışan gazeteciler, araştırmacılar ve aktivistler
+- Kod, sürüm imzalamak veya SSH için PGP kullanan geliştiriciler ve yöneticiler
+- Mobil bir yardımcı ya da OpenKeychain'in yerini arayan GnuPG kullanıcıları
+
+▌NEDEN PGPONY
+"Güvenli mesajlaşma" uygulamalarının çoğu sunucularına güvenmenizi ister. PGPony'nin sunucuya ihtiyacı yok. Anahtarlarınız cihazınızda oluşturulur ve saklanır, siz paylaşmadıkça cihazdan çıkmaz. Masaüstünde GnuPG kullanıyorsanız PGPony'yi zaten tanıyorsunuz. PGP'de yeni misiniz? Başlamanın en kolay yolu burası.
+
+▌AÇIK KAYNAK
+- Apache-2.0 lisanslı, OpenPGP çekirdeği ayrı bir kütüphane olarak yayımlanır
+- Yeniden üretilebilir derlemeler: herkes APK'ları kaynak koduyla karşılaştırabilir
+- Ücretsiz, reklamsız, uygulama içi satın alma yok
+
+▌GİZLİLİK TAAHHÜDÜ
+PGPony hiçbir kişisel veri toplamaz, saklamaz veya iletmez. Gizlilik politikası: pgpony.app/privacy
+
+Alabama'daki bağımsız bir geliştiricinin eseri. Soru veya istek mi var? Uygulamada Geri Bildirim Gönder'e dokunun ya da NorseHorse@norsehor.se adresine yazın.

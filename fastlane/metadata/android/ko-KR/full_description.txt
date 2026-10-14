@@ -1,0 +1,71 @@
+PGPony는 Android에서 진짜 OpenPGP 암호화를 쓸 수 있게 해 주는 앱입니다. 양자 내성 암호와 하드웨어 보안 키를 지원합니다. PGP 키를 만들고, 메시지와 파일을 기기 안에서 암호화, 복호화, 서명, 검증하세요. 계정도, 서버도, 추적도 없습니다. GnuPG(GPG), OpenKeychain 및 다른 OpenPGP 도구와 완전히 호환됩니다.
+
+새 기능: PGPony Desktop과 페어링, PGP 키로 SSH 로그인, 양자 내성 ML-DSA 서명.
+
+▌양자 내성 암호화
+- ML-KEM-768, ML-KEM-1024(Kyber) 복합 암호화 키
+- OpenPGP v6 키의 ML-DSA-65, ML-DSA-87(Dilithium) 양자 내성 서명
+- IETF 표준 형식과 GnuPG 2.5가 쓰는 LibrePGP 형식 모두 지원
+- "지금 수집하고 나중에 해독하는" 공격으로부터 메시지 보호
+
+▌이메일, 비밀번호, SSH
+- Thunderbird for Android, K-9 Mail, FairEmail용 OpenPGP 제공자
+- OpenKeychain의 현대적인 후계자: 같은 API, 꾸준한 유지 관리
+- 연결되는 모든 앱은 직접 승인하고, 설정에서 언제든 취소 가능
+- pass(password-store) 항목 읽기, 하드웨어 키에 묶인 항목 포함
+- Termux의 ssh-agent를 통해 PGPony 키로 SSH 로그인
+
+▌하드웨어 보안 키
+- YubiKey, Token2 등 OpenPGP 스마트카드를 NFC 또는 USB로 사용
+- 개인 키는 하드웨어 밖으로 나가지 않으며, 모든 작업을 PIN으로 확인
+- 카드에서 키 생성, 서명, 복호화, 암호화와 서명. PIN 캐시 선택 가능
+- PIN 변경과 카드 초기화, KDF로 보호된 PIN 지원
+
+▌PGP 키 관리
+- Ed25519, RSA, OpenPGP v6, 양자 내성 키 쌍 생성
+- 키 가져오기와 내보내기, 하위 키와 사용자 ID 추가, 만료일 설정, 폐기
+- 기본 서명 키 설정과 여러 신원 관리
+- 암호화된 키링 백업과 복원, OpenKeychain 백업 포함
+
+▌암호화, 복호화, 서명
+- 텍스트나 파일을 한 명 또는 여러 수신자에게 암호화
+- 확인된 서명자를 분명하게 보여 주는 서명 검증
+- PGP/MIME 이메일: 첨부 파일이 있는 메시지 복호화, .eml 작성
+
+▌OpenPGP v4 + v6 + 양자 내성 호환성
+- OpenPGP v4(RFC 4880)와 v6(RFC 9580) 완전 지원
+- AEAD-OCB 인증 암호화와 Argon2id 키 보호
+- 매 릴리스마다 GnuPG와 바이트 단위 상호 운용성 테스트
+
+▌쉬운 키 교환
+- 공개 키를 QR 코드, 파일, 텍스트로 공유하고 스캔해서 가져오기
+- 링크로 키를 가져오기 전에 지문 먼저 확인
+- 키 서버와 Web Key Directory(WKD) 검색, keys.openpgp.org 포함
+- PGPony Desktop(macOS, Windows, Linux)이나 다른 휴대폰과 페어링
+- Autocrypt와 내장 연락처 목록
+
+▌설계부터 프라이버시 중심
+- 암호화는 100% 기기 안에서: 계정 없음, 원격 측정 없음
+- 오프라인 모드로 모든 네트워크 기능 끄기
+- Orbot으로 키 서버 트래픽을 Tor 경유
+- 개인 키는 Android Keystore 기반 암호화 저장소에 보관
+- 생체 인증 잠금, 서명 시 지문 확인, 클립보드 자동 지우기
+
+▌이런 분께 추천합니다
+- 민감한 정보를 다루는 기자, 연구자, 활동가
+- 암호화 제공자가 필요한 Thunderbird, K-9 Mail, FairEmail 사용자
+- 코드 서명, 릴리스, SSH에 PGP를 쓰는 개발자와 시스템 관리자
+- 모바일 동반 앱이나 OpenKeychain 대체 앱을 찾는 GnuPG 사용자
+
+▌왜 PGPony인가
+대부분의 "보안 메신저"는 자기 서버를 믿으라고 합니다. PGPony에는 서버가 필요 없습니다. 키는 기기에서 만들어지고 저장되며, 직접 공유하지 않는 한 기기 밖으로 나가지 않습니다. 데스크톱에서 GnuPG를 쓰고 있다면 PGPony도 바로 익숙할 겁니다. PGP가 처음이라면 가장 쉽게 시작할 수 있는 곳입니다.
+
+▌오픈 소스
+- Apache-2.0 라이선스, OpenPGP 코어는 별도 라이브러리로 공개
+- 재현 가능한 빌드: 누구나 릴리스 APK를 소스 코드와 대조 가능
+- 무료, 광고 없음, 인앱 결제 없음
+
+▌프라이버시 약속
+PGPony는 어떤 개인 데이터도 수집, 저장, 전송하지 않습니다. 개인정보 처리방침: pgpony.app/privacy
+
+앨라배마의 1인 개발자가 만듭니다. 질문이나 요청은 앱의 피드백 보내기 메뉴나 NorseHorse@norsehor.se로 보내 주세요. 한국어 번역은 진행 중입니다.

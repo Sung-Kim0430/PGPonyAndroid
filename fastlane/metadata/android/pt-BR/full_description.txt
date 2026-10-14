@@ -1,0 +1,65 @@
+O PGPony traz criptografia OpenPGP de verdade para o Android, com criptografia pós-quântica e suporte a chaves de segurança físicas. Gere chaves PGP e criptografe, descriptografe, assine e verifique mensagens e arquivos no seu aparelho. Sem conta, sem servidor, sem rastreamento. Totalmente compatível com GnuPG (GPG), OpenKeychain e outras ferramentas OpenPGP.
+
+NOVO: pareamento com o PGPony Desktop, login SSH com suas chaves PGP e assinaturas pós-quânticas ML-DSA.
+
+▌CRIPTOGRAFIA PÓS-QUÂNTICA
+- Chaves de criptografia compostas ML-KEM-768 e ML-KEM-1024 (Kyber), resistentes a computadores quânticos
+- Assinaturas pós-quânticas ML-DSA-65 e ML-DSA-87 (Dilithium) em chaves OpenPGP v6
+- Formato padrão do IETF e o formato LibrePGP usado pelo GnuPG 2.5
+- Protege suas mensagens de ataques do tipo "colha agora, decifre depois"
+
+▌E-MAIL, SENHAS E SSH
+- Provedor OpenPGP para Thunderbird para Android, K-9 Mail e FairEmail
+- Um sucessor moderno do OpenKeychain: mesma API, manutenção ativa
+- Você aprova cada app conectado e pode revogar o acesso nas Configurações
+- Leia suas entradas do pass (password-store), inclusive as de uma chave física
+- Login SSH com uma chave do PGPony por um ssh-agent no Termux
+
+▌CHAVES DE SEGURANÇA FÍSICAS
+- Use YubiKey, Token2 ou outro cartão inteligente OpenPGP por NFC ou USB
+- Sua chave privada nunca sai do hardware; o PIN confirma cada operação
+- Gere chaves no cartão, assine e descriptografe com ele; cache de PIN opcional
+- Troque os PINs e redefina o cartão; PIN protegido por KDF suportado
+
+▌GERENCIAMENTO DE CHAVES PGP
+- Gere pares de chaves Ed25519, RSA, OpenPGP v6 ou pós-quânticos
+- OpenPGP v4 (RFC 4880) e v6 (RFC 9580), AEAD-OCB e Argon2id
+- Importe e exporte chaves; adicione subchaves e IDs de usuário; validade; revogação
+- Backup criptografado e restauração, inclusive de backups do OpenKeychain
+
+▌CRIPTOGRAFAR, DESCRIPTOGRAFAR, ASSINAR
+- Criptografe textos ou arquivos para um ou vários destinatários
+- Verifique assinaturas com indicação clara do signatário verificado
+- E-mail PGP/MIME: descriptografe mensagens com anexos e escreva .eml
+
+▌TROCA DE CHAVES FÁCIL
+- Compartilhe sua chave pública como QR code, arquivo ou texto; escaneie para importar
+- Importe uma chave de um link conferindo antes a impressão digital
+- Busca em servidores de chaves e Web Key Directory (WKD), incluindo keys.openpgp.org
+- Pareamento com o PGPony Desktop (macOS, Windows, Linux) ou outro celular
+- Autocrypt e lista de contatos integrada
+
+▌PRIVACIDADE DESDE O PROJETO
+- Criptografia 100% no seu aparelho: sem conta, sem telemetria
+- O modo offline desliga todos os recursos de rede
+- Tráfego dos servidores de chaves pelo Tor com o Orbot
+- Chaves privadas criptografadas, protegidas pelo Android Keystore
+- Bloqueio biométrico opcional, digital para assinar e área de transferência que se limpa sozinha
+
+▌PARA QUEM É O PGPONY
+- Jornalistas, pesquisadores e ativistas que lidam com informações sensíveis
+- Desenvolvedores e administradores que usam PGP para assinar código, versões ou SSH
+- Usuários do GnuPG que querem um companheiro no celular ou substituir o OpenKeychain
+
+▌POR QUE O PGPONY
+A maioria dos apps de "mensagens seguras" pede que você confie nos servidores deles. O PGPony não precisa de nenhum. Suas chaves são geradas e guardadas no seu aparelho e só saem se você compartilhar. Se você usa GnuPG no computador, já conhece o PGPony. Novo no PGP? É o jeito mais fácil de começar.
+
+▌CÓDIGO ABERTO
+- Licença Apache-2.0, com o núcleo OpenPGP publicado como biblioteca própria
+- Compilações reproduzíveis: qualquer pessoa pode conferir os APKs com o código-fonte
+- Gratuito, sem anúncios e sem compras no app
+
+▌COMPROMISSO COM A PRIVACIDADE
+O PGPony não coleta, armazena nem transmite dados pessoais. Política de privacidade: pgpony.app/privacy
+
+Feito por um desenvolvedor independente do Alabama. Dúvidas ou sugestões? Toque em Enviar feedback no app ou escreva para NorseHorse@norsehor.se.

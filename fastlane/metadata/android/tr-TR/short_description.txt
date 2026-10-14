@@ -1,1 +1,1 @@
-Donanım güvenlik anahtarı ve pass desteğiyle OpenPGP şifreleme
+OpenPGP ile şifreleyin, çözün, imzalayın. Kuantum sonrası ve donanım anahtarı.

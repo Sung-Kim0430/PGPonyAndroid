@@ -1314,6 +1314,8 @@ translated a string, with five particle fixes. The English GitHub help now names
 
 ## RC breakdown (set Oct 9 2026)
 
+Release note (Oct 14): the new store listing (fastlane/metadata/android: localized descriptions in 11 locales, 7 screenshots per locale, feature graphics) is committed for 4.7.0. F-Droid reads the listing from the tagged commit it builds, so it appears with the v4.7.0 build; 4.6.4 was built from a tree with the old screenshots. The F-Droid changelog 470.txt is still to write before tagging.
+
 One RC at a time: the next RC's work starts only after the current one is built and tested. versionCode 470 /
 4.7.0 from RC1 on, unchanged across RCs. New strings go into all 10 locales (de, es, fr, ja, ko, pt-rBR, ru, tr,
 uk, b+zh+Hans).

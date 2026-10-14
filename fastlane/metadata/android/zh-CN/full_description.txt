@@ -1,30 +1,74 @@
-PGPony 是一款 Android 上的 OpenPGP 应用。加密、解密、签名和验证消息与文件，管理你的密钥环，并通过 NFC 使用硬件安全密钥，全部在设备本地完成。
+PGPony 把真正的 OpenPGP 加密带到 Android 上，支持抗量子密码和硬件安全密钥。生成 PGP 密钥，在设备上直接加密、解密、签名和验证消息与文件。无需账户，没有服务器，没有跟踪。与 GnuPG（GPG）、OpenKeychain 及其他 OpenPGP 工具完全兼容。
 
-功能：
+新功能：与 PGPony Desktop 配对，用 PGP 密钥登录 SSH，以及抗量子 ML-DSA 签名。
 
-- 加密、解密、签名和验证文本与文件
-- 后量子加密：ML-KEM-768 + X25519（Kyber）组合密钥，同时支持 IETF 草案（v6）和 LibrePGP / GnuPG 2.5（v5）两种格式
-- OpenPGP 提供程序服务：让 PGPony 作为 Thunderbird for Android、K-9 Mail 和 Password Store 的加密引擎（兼容 OpenKeychain 的 API）
-- 生成现代密钥，包括 RFC 9580（OpenPGP v6）Ed25519 和 X25519，并以 Argon2id 保护口令
-- 通过 NFC 使用硬件安全密钥，包括 YubiKey 5 NFC 和 Token2，支持卡上生成密钥、解密、签名、PIN 管理和恢复出厂设置
-- 读取你的 pass 密码库条目，包括受硬件密钥保护的条目
-- 加密的密钥环备份与恢复，并可导入 OpenKeychain 备份
-- PGP/MIME 电子邮件：解密带附件的邮件，撰写加密的 .eml
-- 通过 WKD 和 keys.openpgp.org 验证型密钥服务器发现密钥；可选经由 Orbot 走 Tor 网络
-- 可选的联系人集成，方便选择收件人
-- 二维码导入与扫描密钥
-- 默认签名密钥、生物识别锁和安全屏幕保护
+▌抗量子加密
+- ML-KEM-768 和 ML-KEM-1024（Kyber）复合加密密钥
+- OpenPGP v6 密钥上的 ML-DSA-65 和 ML-DSA-87（Dilithium）抗量子签名
+- 同时支持 IETF 标准格式和 GnuPG 2.5 使用的 LibrePGP 格式
+- 防范"先收集、后解密"攻击
 
-后量子加密的限制：
+▌邮件、密码与 SSH
+- 为 Thunderbird for Android、K-9 Mail 和 FairEmail 提供 OpenPGP 服务
+- OpenKeychain 的现代继任者：相同的 API，持续维护
+- 每个接入的应用都需要你批准，并可随时在设置中撤销
+- 读取 pass（password-store）条目，包括绑定在硬件密钥上的条目
+- 通过 Termux 中的 ssh-agent，用 PGPony 密钥登录 SSH
 
-后量子 OpenPGP 仍在标准化过程中，因此各工具之间的支持有限：
+▌硬件安全密钥
+- 通过 NFC 或 USB 使用 YubiKey、Token2 等 OpenPGP 智能卡
+- 私钥从不离开硬件，每次操作都需 PIN 确认
+- 在卡上生成密钥，签名、解密、加密并签名；可选 PIN 缓存
+- 修改 PIN、重置卡片；支持 KDF 保护的 PIN
 
-- LibrePGP 格式（v5）的密钥目前可与 GnuPG 2.5 及以上版本互通：消息可双向加密和解密，公钥也能正常导入。GnuPG 目前还无法从任何应用导入后量子私钥，因为它使用专有的内部格式存储私钥。
-- IETF 格式（v6）的密钥实现了 draft-ietf-openpgp-pqc，并已通过该草案官方测试向量的验证。但当前的 Sequoia（sq）预览版实现的是另一个草案修订版，暂时无法读取这些密钥；GnuPG 完全不支持这种格式。
-- 传统密钥（RSA、Ed25519、v4 和 v6）不受影响。
+▌PGP 密钥管理
+- 生成 Ed25519、RSA、OpenPGP v6 或抗量子密钥对
+- 导入和导出 ASCII 格式密钥；添加子密钥和用户 ID；设置有效期；吊销
+- 设置默认签名密钥，管理多个身份
+- 加密的密钥环备份与恢复，包括 OpenKeychain 备份
+- 为密钥添加备注；删除的密钥会在"最近删除"中保留 14 天
 
-PGPony 没有账户、广告、分析或跟踪。F-Droid 版本不含任何 Google 服务，可在去 Google 化的设备上完整运行。
+▌加密、解密、签名
+- 为一个或多个收件人加密文本或文件
+- 验证签名，清楚显示已验证的签名者
+- PGP/MIME 邮件：解密带附件的邮件，撰写 .eml
+- 从其他应用分享文本或文件，PGPony 会给出合适的操作
 
-加密核心作为开源项目单独发布（PGPonyCore-Kotlin），完整的应用源代码以 Apache-2.0 许可证提供。
+▌OpenPGP v4 + v6 + 抗量子兼容
+- 完整支持 OpenPGP v4（RFC 4880）和 v6（RFC 9580）：生成、加密、解密、签名
+- AEAD-OCB 认证加密和 Argon2id 密钥保护
+- 每次发布都测试与 GnuPG 的逐字节互操作
 
-本页及应用的简体中文翻译大部分由机器生成，欢迎指正。
+▌轻松交换密钥
+- 以二维码、文件或文本分享公钥，扫码即可导入
+- 从链接导入密钥前先核对指纹
+- 通过密钥服务器和 Web Key Directory（WKD）查找，包括 keys.openpgp.org
+- 与 PGPony Desktop（macOS、Windows、Linux）或另一部手机配对
+- 支持 Autocrypt，内置联系人列表
+
+▌隐私优先的设计
+- 加密 100% 在设备上完成：无账户，无遥测
+- 离线模式可关闭所有网络功能
+- 通过 Orbot 让密钥服务器流量走 Tor
+- 私钥存放在由 Android Keystore 保护的加密存储中
+- 可选生物识别锁、签名需指纹确认、剪贴板自动清除
+
+▌适合谁
+- 处理敏感信息的记者、研究人员和活动人士
+- 需要加密服务的 Thunderbird、K-9 Mail 和 FairEmail 用户
+- 用 PGP 签署代码、发布版本或登录 SSH 的开发者和系统管理员
+- 想要移动端伙伴或 OpenKeychain 替代品的 GnuPG 用户
+- 希望在量子时代依然保护隐私的每个人
+
+▌为什么选择 PGPony
+大多数"安全通讯"应用都要你信任它们的服务器。PGPony 不需要服务器。你的密钥在设备上生成和保存，除非你主动分享，否则不会离开设备。如果你在电脑上用 GnuPG，PGPony 会很顺手。刚接触 PGP？这里是最容易上手的地方。
+
+▌开源
+- 采用 Apache-2.0 许可证，OpenPGP 核心作为独立库发布
+- 可复现构建：任何人都能把发布的 APK 与源代码进行比对
+- 免费，无广告，无应用内购买
+
+▌隐私承诺
+PGPony 不收集、不存储、不传输任何个人数据。没有账户系统，没有跟踪 SDK。隐私政策：pgpony.app/privacy
+
+由阿拉巴马州的一位独立开发者打造。有问题或建议？在应用中点按"发送反馈"，或写信至 NorseHorse@norsehor.se。

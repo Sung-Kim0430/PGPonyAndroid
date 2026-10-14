@@ -1,0 +1,65 @@
+PGPony bringt echte OpenPGP-Verschlüsselung auf Android, mit Post-Quanten-Kryptografie und Unterstützung für Hardware-Sicherheitsschlüssel. PGP-Schlüssel erzeugen, Nachrichten und Dateien verschlüsseln, entschlüsseln, signieren und prüfen, alles auf dem Gerät. Kein Konto, kein Server, kein Tracking. Voll kompatibel mit GnuPG (GPG), OpenKeychain und anderen OpenPGP-Tools.
+
+NEU: Kopplung mit PGPony Desktop, SSH-Anmeldung mit Ihren PGP-Schlüsseln und Post-Quanten-Signaturen mit ML-DSA.
+
+▌POST-QUANTEN-VERSCHLÜSSELUNG
+- Quantenresistente Kompositschlüssel mit ML-KEM-768 und ML-KEM-1024 (Kyber)
+- Post-Quanten-Signaturen mit ML-DSA-65 und ML-DSA-87 (Dilithium) auf OpenPGP-v6-Schlüsseln
+- IETF-Standardformat und das LibrePGP-Format von GnuPG 2.5
+- Schützt vor „Harvest now, decrypt later“-Angriffen
+
+▌E-MAIL, PASSWÖRTER UND SSH
+- OpenPGP-Anbieter für Thunderbird für Android, K-9 Mail und FairEmail
+- Moderner Nachfolger von OpenKeychain: gleiche API, aktiv gepflegt
+- Jede verbundene App braucht Ihre Freigabe, widerrufbar in den Einstellungen
+- pass-Einträge (password-store) lesen, auch solche auf einem Hardware-Schlüssel
+- SSH-Anmeldung mit einem PGPony-Schlüssel über einen ssh-agent in Termux
+
+▌HARDWARE-SICHERHEITSSCHLÜSSEL
+- YubiKey, Token2 oder andere OpenPGP-Smartcards per NFC oder USB
+- Der private Schlüssel verlässt nie die Hardware; die PIN bestätigt jeden Vorgang
+- Schlüssel auf der Karte erzeugen, damit signieren und entschlüsseln; optionaler PIN-Cache
+- PINs ändern, Karte zurücksetzen; KDF-geschützte PINs werden unterstützt
+
+▌PGP-SCHLÜSSELVERWALTUNG
+- Ed25519-, RSA-, OpenPGP-v6- oder Post-Quanten-Schlüsselpaare erzeugen
+- OpenPGP v4 (RFC 4880) und v6 (RFC 9580), AEAD-OCB und Argon2id
+- Schlüssel importieren und exportieren; Unterschlüssel und User-IDs hinzufügen; Ablauf setzen; widerrufen
+- Verschlüsselte Sicherung und Wiederherstellung, auch von OpenKeychain-Sicherungen
+
+▌VERSCHLÜSSELN, ENTSCHLÜSSELN, SIGNIEREN
+- Texte oder Dateien für einen oder mehrere Empfänger verschlüsseln
+- Signaturen prüfen, mit klarer Anzeige des verifizierten Absenders
+- PGP/MIME-E-Mail: Nachrichten mit Anhängen entschlüsseln, .eml verfassen
+
+▌EINFACHER SCHLÜSSELTAUSCH
+- Öffentlichen Schlüssel als QR-Code, Datei oder Text teilen; zum Import scannen
+- Schlüssel über einen Link importieren und vorher den Fingerabdruck prüfen
+- Suche über Schlüsselserver und Web Key Directory (WKD), auch keys.openpgp.org
+- Kopplung mit PGPony Desktop (macOS, Windows, Linux) oder einem anderen Handy
+- Autocrypt und Kontaktliste
+
+▌DATENSCHUTZ VON GRUND AUF
+- Verschlüsselung zu 100 % auf dem Gerät: kein Konto, keine Telemetrie
+- Offline-Modus schaltet alle Netzwerkfunktionen ab
+- Schlüsselserver-Verkehr über Tor mit Orbot
+- Private Schlüssel verschlüsselt, gesichert durch den Android Keystore
+- Optionale biometrische Sperre, Fingerabdruck zum Signieren, automatisch geleerte Zwischenablage
+
+▌FÜR WEN IST PGPONY?
+- Journalisten, Forschende und Aktivisten mit sensiblen Informationen
+- GnuPG-Nutzer, die einen mobilen Begleiter oder Ersatz für OpenKeychain suchen
+- Entwickler und Admins, die PGP für Code-Signaturen, Releases oder SSH nutzen
+
+▌WARUM PGPONY
+Die meisten „sicheren Messenger“ verlangen, dass Sie ihren Servern vertrauen. PGPony braucht keine. Ihre Schlüssel werden auf Ihrem Gerät erzeugt und gespeichert und verlassen es nur, wenn Sie sie teilen. Wer GnuPG am Desktop nutzt, findet sich sofort zurecht. Neu bei PGP? PGPony ist der einfachste Einstieg.
+
+▌OPEN SOURCE
+- Apache-2.0-Lizenz, der OpenPGP-Kern ist als eigene Bibliothek veröffentlicht
+- Reproduzierbare Builds: Jeder kann die Release-APKs mit dem Quellcode abgleichen
+- Kostenlos, ohne Werbung und ohne In-App-Käufe
+
+▌DATENSCHUTZVERSPRECHEN
+PGPony erhebt, speichert und überträgt keine personenbezogenen Daten. Datenschutzerklärung: pgpony.app/privacy
+
+Von einem unabhängigen Entwickler aus Alabama. Fragen oder Wünsche? In der App auf „Feedback senden“ tippen oder an NorseHorse@norsehor.se schreiben.

@@ -1,0 +1,1 @@
+Mit OpenPGP verschlüsseln, entschlüsseln und signieren. GPG-kompatibel.

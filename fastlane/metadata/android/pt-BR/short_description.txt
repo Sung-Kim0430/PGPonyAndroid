@@ -1,0 +1,1 @@
+Criptografe e assine com OpenPGP. Chaves pós-quânticas e chaves de segurança.
