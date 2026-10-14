@@ -272,6 +272,73 @@ object SubkeyAdmission {
         return Pair(ring, added)
     }
 
+    // ── 4.7.0 (item 47, #78): replacing held secrets ────────────────────
+
+    /**
+     * The secret key packet bodies in [secretRaw] (binary) that carry real
+     * material (not a stub), by key fingerprint (hex, uppercase), primary and
+     * subkeys both.
+     */
+    internal fun materialBodies(secretRaw: ByteArray): Map<String, ByteArray> {
+        val out = HashMap<String, ByteArray>()
+        for (p in CertificateBindings.packets(secretRaw)) {
+            if (p.tag != TAG_SECRET_KEY && p.tag != TAG_SECRET_SUBKEY) continue
+            if (packetLocation(p.tag, p.body) != SecretLocation.ON_DEVICE) continue
+            val pub = CertificateBindings.publicPart(p.tag, p.body) ?: continue
+            val fp = runCatching { CertificateBindings.KeyBody(pub).fingerprintHex.uppercase() }.getOrNull() ?: continue
+            out[fp] = p.body
+        }
+        return out
+    }
+
+    /**
+     * Fingerprints of the keys whose secret both [storedRaw] and [incomingRaw]
+     * (binary secret key blocks) carry, with material, but protected
+     * differently: another passphrase, or the same one under a new salt (gpg
+     * re-protects on every export, so this cannot tell the two apart). These
+     * are the secrets a re-import can replace. A stub on either side, or a
+     * key only one side holds, is not counted.
+     */
+    fun replaceableSecrets(storedRaw: ByteArray, incomingRaw: ByteArray): Set<String> {
+        val stored = materialBodies(storedRaw)
+        val incoming = materialBodies(incomingRaw)
+        return incoming.filter { (fp, body) ->
+            val held = stored[fp]
+            held != null && !held.contentEquals(body)
+        }.keys
+    }
+
+    /**
+     * [stored] with each key in [fingerprints] replaced by its secret from
+     * [incoming], under the public part [certificate] binds (the primary's for
+     * the primary). Keys [certificate] does not carry are skipped. Returns the
+     * new ring and how many keys were replaced. The caller proves first that
+     * [incoming] unlocks and holds this key's material (SecretKeyCheck).
+     */
+    fun replaceSecrets(
+        stored: PGPSecretKeyRing,
+        incoming: PGPSecretKeyRing,
+        certificate: PGPPublicKeyRing,
+        fingerprints: Set<String>
+    ): Pair<PGPSecretKeyRing, Int> {
+        val wanted = fingerprints.map { normalizeFingerprint(it) }.toSet()
+        var ring = stored
+        var replaced = 0
+        for (sk in incoming.secretKeys.asSequence().toList()) {
+            val fp = org.bouncycastle.util.encoders.Hex.toHexString(sk.publicKey.fingerprint).uppercase()
+            if (fp !in wanted) continue
+            if (OfflineStub.isStub(sk) || sk.isPrivateKeyEmpty) continue
+            val held = ring.getSecretKey(sk.keyID) ?: continue
+            if (!held.publicKey.fingerprint.contentEquals(sk.publicKey.fingerprint)) continue
+            val bound = (if (sk.publicKey.isMasterKey) certificate.publicKey else certificate.getPublicKey(sk.keyID))
+                ?: continue
+            if (!bound.fingerprint.contentEquals(sk.publicKey.fingerprint)) continue
+            ring = PGPSecretKeyRing.insertSecretKey(ring, PGPSecretKey.replacePublicKey(sk, bound))
+            replaced++
+        }
+        return Pair(ring, replaced)
+    }
+
     // ── Where the secret is ───────────────────────────────────────────
 
     /**

@@ -2941,4 +2941,41 @@
     <string name="applock_wipe_after_off">Kapalı</string>
     <string name="applock_wipe_after_format">%1$d yanlış PIN\'den sonra</string>
     <string name="applock_wipe_after_message">Arka arkaya bu sayıda yanlış PIN girildiğinde PGPony, zorlama PIN\'inin yaptığı gibi her şeyi siler. Doğru bir PIN sayacı sıfırlar. Bu işlem geri alınamaz.</string>
+
+    <!-- 4.7.0 RC4, translated Oct 2026 -->
+    <!-- 4.7.0 RC4 (item 45, #85): a User ID with many certifications shows the first three, then this row. -->
+    <plurals name="key_detail_cert_show_all">
+        <item quantity="one">%1$d onayın tümünü göster</item>
+        <item quantity="other">%1$d onayın tümünü göster</item>
+    </plurals>
+    <string name="key_detail_cert_show_fewer">Daha az göster</string>
+
+    <!-- 4.7.0 RC4 (item 48, #79): which key made a signature and which key decrypted, by 16-digit key ID. -->
+    <string name="verify_signing_key_format">İmzalama anahtarı %1$s</string>
+    <string name="verify_signing_subkey_format">%2$s anahtarının imzalama alt anahtarı %1$s</string>
+    <string name="encdec_decrypted_with_subkey_format">Şifresi şu anahtarla çözüldü: %1$s, alt anahtar %2$s</string>
+
+    <!-- 4.7.0 RC4 (item 46, #82): Key Details, choose which signing subkey a key pair signs with. -->
+    <string name="key_detail_signing_subkey_title">İmzalamada kullanılacak anahtar</string>
+    <string name="key_detail_signing_subkey_help">Burada bir alt anahtar seçmediğiniz sürece PGPony en yeni geçerli imzalama alt anahtarıyla imzalar. Seçilen alt anahtar geçerli olduğu sürece kullanılır; süresi dolduğunda veya geçersiz kılındığında imzalama otomatik seçime geri döner.</string>
+    <string name="key_detail_signing_subkey_automatic">Otomatik</string>
+    <string name="key_detail_signing_subkey_automatic_format">Otomatik (şu anda %1$s)</string>
+    <string name="key_detail_signing_subkey_option_format">Alt anahtar %1$s, %2$s, oluşturulma: %3$s</string>
+    <string name="key_detail_signing_subkey_primary_format">Birincil anahtar %1$s, %2$s</string>
+    <string name="key_detail_signing_subkey_pin_unusable">Seçtiğiniz alt anahtar artık imzalayamıyor, bu yüzden PGPony otomatik seçimle imzalıyor.</string>
+
+    <!-- 4.7.0 RC4 (item 47, #78): re-importing your own key pair with secret keys under a new passphrase. -->
+    <string name="import_replace_secrets_title">Bu dosyadaki gizli anahtarları kullan</string>
+    <plurals name="import_replace_secrets_body">
+        <item quantity="one">Bu anahtar çifti PGPony\'de zaten var. Bu dosyadaki %1$d gizli anahtar, saklanandan farklı şekilde korunuyor, örneğin gpg\'de bir parola ifadesi değişikliğinden sonra. Onu bu dosyadakiyle değiştirin ve bundan sonra bu dosyanın parola ifadesini kullanın.</item>
+        <item quantity="other">Bu anahtar çifti PGPony\'de zaten var. Bu dosyadaki %1$d gizli anahtar, saklananlardan farklı şekilde korunuyor, örneğin gpg\'de bir parola ifadesi değişikliğinden sonra. Bunları bu dosyadakilerle değiştirin ve bundan sonra bu dosyanın parola ifadesini kullanın.</item>
+    </plurals>
+    <string name="import_replace_secrets_passphrase_label">Bu dosyanın parola ifadesi</string>
+    <string name="import_replace_secrets_passphrase_help">Dosyadaki her gizli anahtarın kilidi bununla açılabilmelidir. Dosyanın parola ifadesi yoksa boş bırakın.</string>
+    <plurals name="import_result_secrets_replaced">
+        <item quantity="one">%1$d gizli anahtar değiştirildi.</item>
+        <item quantity="other">%1$d gizli anahtar değiştirildi.</item>
+    </plurals>
+    <string name="err_replace_secrets_passphrase">Parola ifadesi, bu dosyada %1$s için bulunan gizli anahtarların hepsinin kilidini açmadı. Saklanan gizli anahtarlar korundu ve hiçbir şey içe aktarılmadı.</string>
+    <string name="err_replace_secrets_unproven">Bu dosyadaki gizli anahtarların %1$s anahtarına ait olduğu doğrulanamadı. Saklanan gizli anahtarlar korundu ve hiçbir şey içe aktarılmadı.</string>
 </resources>

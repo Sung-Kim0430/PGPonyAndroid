@@ -39,7 +39,6 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.DoNotDisturbOn
 import androidx.compose.material.icons.filled.PersonOff
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
@@ -69,7 +68,7 @@ import com.pgpony.android.PGPonyApp
 import com.pgpony.android.PGPonyTheme
 import com.pgpony.android.R
 import com.pgpony.android.data.PGPKeyEntity
-import com.pgpony.android.ui.components.TrustColors
+import com.pgpony.android.data.TrustLevel
 import com.pgpony.android.ui.components.TrustMark
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -272,12 +271,16 @@ private fun UnresolvedRow(text: String, dontUse: Boolean) {
             .padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(
-            if (dontUse) Icons.Filled.DoNotDisturbOn else Icons.Filled.PersonOff,
-            contentDescription = null,
-            tint = if (dontUse) TrustColors.DontUse else MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(20.dp)
-        )
+        if (dontUse) {
+            TrustMark(TrustLevel.DONT_USE, size = 20.dp, contentDescription = null)
+        } else {
+            Icon(
+                Icons.Filled.PersonOff,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(20.dp)
+            )
+        }
         Spacer(modifier = Modifier.width(12.dp))
         Text(text, style = MaterialTheme.typography.bodyMedium)
     }

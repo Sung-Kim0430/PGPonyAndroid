@@ -83,6 +83,7 @@ object AppReset {
             File(app.filesDir, "$policy.tmp").delete()
         }
         failures.attempt { com.pgpony.android.lock.AppLock.clear(app) }
+        failures.attempt { com.pgpony.android.crypto.SigningSubkeyPins.clearAll() } // 4.7.0 (item 46)
 
         // Held secrets in this process, then the provider process's.
         failures.attempt { com.pgpony.android.provider.ProviderPassphraseCache.clearAll() }

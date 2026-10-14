@@ -2973,4 +2973,47 @@
     <string name="applock_wipe_after_off">Вимк.</string>
     <string name="applock_wipe_after_format">Після неправильних PIN: %1$d</string>
     <string name="applock_wipe_after_message">Якщо стільки разів поспіль ввести неправильний PIN, PGPony стирає все так само, як PIN примусу. Правильний PIN скидає лічильник. Цю дію не можна скасувати.</string>
+
+    <!-- 4.7.0 RC4, translated Oct 2026 -->
+    <!-- 4.7.0 RC4 (item 45, #85): a User ID with many certifications shows the first three, then this row. -->
+    <plurals name="key_detail_cert_show_all">
+        <item quantity="one">Показати всі сертифікації (%1$d)</item>
+        <item quantity="few">Показати всі сертифікації (%1$d)</item>
+        <item quantity="many">Показати всі сертифікації (%1$d)</item>
+        <item quantity="other">Показати всі сертифікації (%1$d)</item>
+    </plurals>
+    <string name="key_detail_cert_show_fewer">Показати менше</string>
+
+    <!-- 4.7.0 RC4 (item 48, #79): which key made a signature and which key decrypted, by 16-digit key ID. -->
+    <string name="verify_signing_key_format">Ключ підпису %1$s</string>
+    <string name="verify_signing_subkey_format">Підключ підпису %1$s ключа %2$s</string>
+    <string name="encdec_decrypted_with_subkey_format">Розшифровано ключем %1$s, підключем %2$s</string>
+
+    <!-- 4.7.0 RC4 (item 46, #82): Key Details, choose which signing subkey a key pair signs with. -->
+    <string name="key_detail_signing_subkey_title">Ключ для підпису</string>
+    <string name="key_detail_signing_subkey_help">PGPony підписує найновішим дійсним підключем підпису, якщо ви не виберете підключ тут. Вибраний підключ використовується, доки він дійсний; щойно термін його дії закінчиться або його буде відкликано, підписування повернеться до автоматичного вибору.</string>
+    <string name="key_detail_signing_subkey_automatic">Автоматично</string>
+    <string name="key_detail_signing_subkey_automatic_format">Автоматично (зараз %1$s)</string>
+    <string name="key_detail_signing_subkey_option_format">Підключ %1$s, %2$s, створено %3$s</string>
+    <string name="key_detail_signing_subkey_primary_format">Основний ключ %1$s, %2$s</string>
+    <string name="key_detail_signing_subkey_pin_unusable">Вибраний вами підключ більше не може підписувати, тому PGPony підписує за автоматичним вибором.</string>
+
+    <!-- 4.7.0 RC4 (item 47, #78): re-importing your own key pair with secret keys under a new passphrase. -->
+    <string name="import_replace_secrets_title">Використати закриті ключі з цього файлу</string>
+    <plurals name="import_replace_secrets_body">
+        <item quantity="one">PGPony уже зберігає цю пару ключів. %1$d закритий ключ у цьому файлі захищено інакше, ніж збережений, наприклад після зміни парольної фрази в gpg. Замінити його ключем із цього файлу й надалі використовувати парольну фразу цього файлу.</item>
+        <item quantity="few">PGPony уже зберігає цю пару ключів. %1$d закриті ключі в цьому файлі захищено інакше, ніж збережені, наприклад після зміни парольної фрази в gpg. Замінити їх ключами з цього файлу й надалі використовувати парольну фразу цього файлу.</item>
+        <item quantity="many">PGPony уже зберігає цю пару ключів. %1$d закритих ключів у цьому файлі захищено інакше, ніж збережені, наприклад після зміни парольної фрази в gpg. Замінити їх ключами з цього файлу й надалі використовувати парольну фразу цього файлу.</item>
+        <item quantity="other">PGPony уже зберігає цю пару ключів. %1$d закритого ключа в цьому файлі захищено інакше, ніж збережені, наприклад після зміни парольної фрази в gpg. Замінити їх ключами з цього файлу й надалі використовувати парольну фразу цього файлу.</item>
+    </plurals>
+    <string name="import_replace_secrets_passphrase_label">Парольна фраза цього файлу</string>
+    <string name="import_replace_secrets_passphrase_help">Вона має розблоковувати кожен закритий ключ у файлі. Залиште поле порожнім, якщо файл не має парольної фрази.</string>
+    <plurals name="import_result_secrets_replaced">
+        <item quantity="one">Замінено %1$d закритий ключ.</item>
+        <item quantity="few">Замінено %1$d закриті ключі.</item>
+        <item quantity="many">Замінено %1$d закритих ключів.</item>
+        <item quantity="other">Замінено %1$d закритого ключа.</item>
+    </plurals>
+    <string name="err_replace_secrets_passphrase">Парольна фраза не розблокувала всі закриті ключі в цьому файлі для %1$s. Збережені закриті ключі залишено, нічого не імпортовано.</string>
+    <string name="err_replace_secrets_unproven">Не вдалося підтвердити, що закриті ключі в цьому файлі належать до %1$s. Збережені закриті ключі залишено, нічого не імпортовано.</string>
 </resources>

@@ -2960,4 +2960,40 @@
     <string name="applock_wipe_after_off">Off</string>
     <string name="applock_wipe_after_format">After %1$d wrong PINs</string>
     <string name="applock_wipe_after_message">After this many wrong PINs in a row, PGPony erases everything the way the duress PIN does. A correct PIN resets the count. This cannot be undone.</string>
+
+    <!-- 4.7.0 RC4 (item 45, #85): a User ID with many certifications shows the first three, then this row. -->
+    <plurals name="key_detail_cert_show_all">
+        <item quantity="one">Show all %1$d certification</item>
+        <item quantity="other">Show all %1$d certifications</item>
+    </plurals>
+    <string name="key_detail_cert_show_fewer">Show fewer</string>
+
+    <!-- 4.7.0 RC4 (item 48, #79): which key made a signature and which key decrypted, by 16-digit key ID. -->
+    <string name="verify_signing_key_format">Signing key %1$s</string>
+    <string name="verify_signing_subkey_format">Signing subkey %1$s of key %2$s</string>
+    <string name="encdec_decrypted_with_subkey_format">Decrypted with %1$s, subkey %2$s</string>
+
+    <!-- 4.7.0 RC4 (item 46, #82): Key Details, choose which signing subkey a key pair signs with. -->
+    <string name="key_detail_signing_subkey_title">Use for signing</string>
+    <string name="key_detail_signing_subkey_help">PGPony signs with the newest valid signing subkey unless you choose one here. A chosen subkey is used while it is valid; once it expires or is revoked, signing goes back to the automatic choice.</string>
+    <string name="key_detail_signing_subkey_automatic">Automatic</string>
+    <string name="key_detail_signing_subkey_automatic_format">Automatic (now %1$s)</string>
+    <string name="key_detail_signing_subkey_option_format">Subkey %1$s, %2$s, created %3$s</string>
+    <string name="key_detail_signing_subkey_primary_format">Primary key %1$s, %2$s</string>
+    <string name="key_detail_signing_subkey_pin_unusable">The subkey you chose can no longer sign, so PGPony signs with the automatic choice.</string>
+
+    <!-- 4.7.0 RC4 (item 47, #78): re-importing your own key pair with secret keys under a new passphrase. -->
+    <string name="import_replace_secrets_title">Use the secret keys from this file</string>
+    <plurals name="import_replace_secrets_body">
+        <item quantity="one">PGPony already holds this key pair. %1$d secret key in this file is protected differently than the stored one, for example after a passphrase change in gpg. Replace it with the one in this file, and use this file\'s passphrase from now on.</item>
+        <item quantity="other">PGPony already holds this key pair. %1$d secret keys in this file are protected differently than the stored ones, for example after a passphrase change in gpg. Replace them with the ones in this file, and use this file\'s passphrase from now on.</item>
+    </plurals>
+    <string name="import_replace_secrets_passphrase_label">Passphrase of this file</string>
+    <string name="import_replace_secrets_passphrase_help">Every secret key in the file has to unlock with it. Leave it empty if the file has no passphrase.</string>
+    <plurals name="import_result_secrets_replaced">
+        <item quantity="one">Replaced %1$d secret key.</item>
+        <item quantity="other">Replaced %1$d secret keys.</item>
+    </plurals>
+    <string name="err_replace_secrets_passphrase">The passphrase did not unlock every secret key in this file for %1$s. The stored secret keys were kept and nothing was imported.</string>
+    <string name="err_replace_secrets_unproven">The secret keys in this file could not be confirmed as the ones for %1$s. The stored secret keys were kept and nothing was imported.</string>
 </resources>

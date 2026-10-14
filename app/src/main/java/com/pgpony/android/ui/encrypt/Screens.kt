@@ -4324,7 +4324,7 @@ fun DecryptScreen(viewModel: EncryptDecryptViewModel) {
                 // key silently matching can't masquerade as the one in the picker.
                 state.decryptedByKeyLabel?.let { label ->
                     Text(
-                        text = stringResource(R.string.encdec_decrypted_with_format, label),
+                        text = com.pgpony.android.ui.decrypt.decryptedByText(label, state.decryptedByKeyLine),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

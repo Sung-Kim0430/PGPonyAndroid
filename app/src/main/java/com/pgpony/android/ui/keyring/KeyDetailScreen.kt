@@ -506,6 +506,7 @@ fun KeyDetailScreen(
                 onMoveFallback = { fp, delta -> viewModel.moveFallback(fp, delta) },
                 onPickSigningDefault = { slot, fp -> viewModel.setSigningDefault(slot, fp) },
                 onStrictFallbacksChange = { enabled -> viewModel.setStrictFallbacks(enabled) },
+                onPickSigningSubkey = { fp -> viewModel.setSigningSubkey(fp) },
                 onRevokeCertification = { row -> viewModel.requestRevokeCertification(row) }
             )
         }
@@ -1613,6 +1614,7 @@ private fun LoadedBody(
     onMoveFallback: (String, Int) -> Unit,
     onPickSigningDefault: (Int, String?) -> Unit,
     onStrictFallbacksChange: (Boolean) -> Unit,
+    onPickSigningSubkey: (String?) -> Unit,
     // 4.7.0 (item 31)
     onRevokeCertification: (com.pgpony.android.data.repository.KeyRepository.CertificationRow) -> Unit
 ) {
@@ -1719,6 +1721,19 @@ private fun LoadedBody(
                     canManageSubkeys = canAddSubkey,
                     onRevokeSubkey = onRevokeSubkey,
                     onRemoveSubkey = if (hideDestructiveActions) null else onRemoveSubkey
+                )
+            }
+        }
+        // 4.7.0 (item 46, #82): Use for signing, when there is a choice to make
+        // (two or more valid signing keys) or a pin that no longer applies.
+        if (key.isKeyPair && !key.isCardBacked &&
+            (state.signingSubkeyChoices.size >= 2 || state.signingSubkeyPin != null)
+        ) {
+            item {
+                SigningSubkeySection(
+                    choices = state.signingSubkeyChoices,
+                    pinnedFingerprint = state.signingSubkeyPin,
+                    onPick = onPickSigningSubkey
                 )
             }
         }

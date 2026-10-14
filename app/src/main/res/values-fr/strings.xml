@@ -2866,4 +2866,44 @@ Vous pouvez aussi verrouiller l\'application derrière votre empreinte digitale 
     <string name="applock_wipe_after_off">Désactivé</string>
     <string name="applock_wipe_after_format">Après %1$d PIN incorrects</string>
     <string name="applock_wipe_after_message">Après ce nombre de PIN incorrects consécutifs, PGPony efface tout, comme le fait le PIN de contrainte. Un PIN correct remet le compteur à zéro. Cette action est irréversible.</string>
+
+    <!-- 4.7.0 RC4, translated Oct 2026 -->
+    <!-- 4.7.0 RC4 (item 45, #85): a User ID with many certifications shows the first three, then this row. -->
+    <plurals name="key_detail_cert_show_all">
+        <item quantity="one">Tout afficher (%1$d certification)</item>
+        <item quantity="many">Tout afficher (%1$d certifications)</item>
+        <item quantity="other">Tout afficher (%1$d certifications)</item>
+    </plurals>
+    <string name="key_detail_cert_show_fewer">Afficher moins</string>
+
+    <!-- 4.7.0 RC4 (item 48, #79): which key made a signature and which key decrypted, by 16-digit key ID. -->
+    <string name="verify_signing_key_format">Clé de signature %1$s</string>
+    <string name="verify_signing_subkey_format">Sous-clé de signature %1$s de la clé %2$s</string>
+    <string name="encdec_decrypted_with_subkey_format">Déchiffré avec %1$s, sous-clé %2$s</string>
+
+    <!-- 4.7.0 RC4 (item 46, #82): Key Details, choose which signing subkey a key pair signs with. -->
+    <string name="key_detail_signing_subkey_title">Utilisation pour la signature</string>
+    <string name="key_detail_signing_subkey_help">PGPony signe avec la sous-clé de signature valide la plus récente, sauf si vous en choisissez une ici. Une sous-clé choisie est utilisée tant qu\'elle est valide ; une fois qu\'elle a expiré ou a été révoquée, PGPony revient au choix automatique pour signer.</string>
+    <string name="key_detail_signing_subkey_automatic">Automatique</string>
+    <string name="key_detail_signing_subkey_automatic_format">Automatique (actuellement %1$s)</string>
+    <string name="key_detail_signing_subkey_option_format">Sous-clé %1$s, %2$s, créée le %3$s</string>
+    <string name="key_detail_signing_subkey_primary_format">Clé principale %1$s, %2$s</string>
+    <string name="key_detail_signing_subkey_pin_unusable">La sous-clé que vous avez choisie ne peut plus signer : PGPony signe donc avec le choix automatique.</string>
+
+    <!-- 4.7.0 RC4 (item 47, #78): re-importing your own key pair with secret keys under a new passphrase. -->
+    <string name="import_replace_secrets_title">Utiliser les clés privées de ce fichier</string>
+    <plurals name="import_replace_secrets_body">
+        <item quantity="one">PGPony détient déjà cette paire de clés. %1$d clé privée de ce fichier est protégée différemment de celle qui est stockée, par exemple après un changement de phrase secrète dans gpg. La remplacer par celle de ce fichier et utiliser désormais la phrase secrète de ce fichier.</item>
+        <item quantity="many">PGPony détient déjà cette paire de clés. %1$d clés privées de ce fichier sont protégées différemment de celles qui sont stockées, par exemple après un changement de phrase secrète dans gpg. Les remplacer par celles de ce fichier et utiliser désormais la phrase secrète de ce fichier.</item>
+        <item quantity="other">PGPony détient déjà cette paire de clés. %1$d clés privées de ce fichier sont protégées différemment de celles qui sont stockées, par exemple après un changement de phrase secrète dans gpg. Les remplacer par celles de ce fichier et utiliser désormais la phrase secrète de ce fichier.</item>
+    </plurals>
+    <string name="import_replace_secrets_passphrase_label">Phrase secrète de ce fichier</string>
+    <string name="import_replace_secrets_passphrase_help">Chaque clé privée du fichier doit se déverrouiller avec elle. Laissez-la vide si le fichier n\'a pas de phrase secrète.</string>
+    <plurals name="import_result_secrets_replaced">
+        <item quantity="one">%1$d clé privée remplacée.</item>
+        <item quantity="many">%1$d clés privées remplacées.</item>
+        <item quantity="other">%1$d clés privées remplacées.</item>
+    </plurals>
+    <string name="err_replace_secrets_passphrase">La phrase secrète n\'a pas déverrouillé toutes les clés privées de ce fichier pour %1$s. Les clés privées stockées ont été conservées et rien n\'a été importé.</string>
+    <string name="err_replace_secrets_unproven">Impossible de confirmer que les clés privées de ce fichier sont celles de %1$s. Les clés privées stockées ont été conservées et rien n\'a été importé.</string>
 </resources>

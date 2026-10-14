@@ -2849,4 +2849,38 @@ PGPony は、古い OpenPGP 実装との相互運用性のために従来の RSA
     <string name="applock_wipe_after_off">オフ</string>
     <string name="applock_wipe_after_format">%1$d 回の誤入力後</string>
     <string name="applock_wipe_after_message">PIN を連続してこの回数だけ間違えると、PGPony は強要時 PIN と同じようにすべてを消去します。正しい PIN を入力すると回数はリセットされます。これは元に戻せません。</string>
+
+    <!-- 4.7.0 RC4, translated Oct 2026 -->
+    <!-- 4.7.0 RC4 (item 45, #85): a User ID with many certifications shows the first three, then this row. -->
+    <plurals name="key_detail_cert_show_all">
+        <item quantity="other">%1$d 件の認証をすべて表示</item>
+    </plurals>
+    <string name="key_detail_cert_show_fewer">表示を減らす</string>
+
+    <!-- 4.7.0 RC4 (item 48, #79): which key made a signature and which key decrypted, by 16-digit key ID. -->
+    <string name="verify_signing_key_format">署名鍵 %1$s</string>
+    <string name="verify_signing_subkey_format">鍵 %2$s の署名サブキー %1$s</string>
+    <string name="encdec_decrypted_with_subkey_format">%1$s のサブキー %2$s で復号しました</string>
+
+    <!-- 4.7.0 RC4 (item 46, #82): Key Details, choose which signing subkey a key pair signs with. -->
+    <string name="key_detail_signing_subkey_title">署名に使用</string>
+    <string name="key_detail_signing_subkey_help">ここで選択しない限り、PGPony は有効な署名サブキーのうち最も新しいもので署名します。選択したサブキーは有効な間使用されます。期限切れになるか失効すると、署名は自動選択に戻ります。</string>
+    <string name="key_detail_signing_subkey_automatic">自動</string>
+    <string name="key_detail_signing_subkey_automatic_format">自動 (現在は%1$s)</string>
+    <string name="key_detail_signing_subkey_option_format">サブキー %1$s、%2$s、作成日 %3$s</string>
+    <string name="key_detail_signing_subkey_primary_format">主鍵 %1$s、%2$s</string>
+    <string name="key_detail_signing_subkey_pin_unusable">選択したサブキーは署名に使えなくなったため、PGPony は自動選択で署名します。</string>
+
+    <!-- 4.7.0 RC4 (item 47, #78): re-importing your own key pair with secret keys under a new passphrase. -->
+    <string name="import_replace_secrets_title">このファイルの秘密鍵を使用</string>
+    <plurals name="import_replace_secrets_body">
+        <item quantity="other">PGPony にはこの鍵ペアがすでにあります。このファイル内の %1$d 個の秘密鍵は、保存されている秘密鍵とは保護方法が異なります。たとえば gpg でパスフレーズを変更した後などです。保存されている秘密鍵をこのファイルのものに置き換え、今後はこのファイルのパスフレーズを使用します。</item>
+    </plurals>
+    <string name="import_replace_secrets_passphrase_label">このファイルのパスフレーズ</string>
+    <string name="import_replace_secrets_passphrase_help">このパスフレーズで、ファイル内のすべての秘密鍵のロックを解除できる必要があります。ファイルにパスフレーズがない場合は空欄のままにしてください。</string>
+    <plurals name="import_result_secrets_replaced">
+        <item quantity="other">%1$d 個の秘密鍵を置き換えました。</item>
+    </plurals>
+    <string name="err_replace_secrets_passphrase">%1$s について、このパスフレーズでは、このファイル内の秘密鍵のロックをすべて解除することはできませんでした。保存されている秘密鍵はそのまま残り、何もインポートされませんでした。</string>
+    <string name="err_replace_secrets_unproven">このファイル内の秘密鍵が %1$s の秘密鍵であることを確認できませんでした。保存されている秘密鍵はそのまま残り、何もインポートされませんでした。</string>
 </resources>

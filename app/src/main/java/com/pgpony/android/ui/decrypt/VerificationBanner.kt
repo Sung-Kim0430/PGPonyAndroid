@@ -75,7 +75,12 @@ fun VerificationBanner(
     if (suppressUnsigned && result is VerificationResult.Unsigned) return
     when (result) {
         is VerificationResult.Verified -> {
-            val subtitle = formatVerifiedSubtitle(result)
+            // 4.7.0 (item 48, #79): which key made the signature, by key ID.
+            val keyLine = com.pgpony.android.crypto.KeyIdText.signingLine(
+                result.signingKeyFingerprint, result.signerKeyID, result.signerFingerprint
+            )
+            val subtitle = formatVerifiedSubtitle(result) +
+                (keyLine?.let { "\n" + signingKeyLineText(it) } ?: "")
             // #57: the signature is cryptographically valid,
             // but if the signer's key is not confirmed locally (UNKNOWN /
             // UNVERIFIED) say so instead of a flat green "Verified" — anyone
@@ -110,7 +115,12 @@ fun VerificationBanner(
                 bg = RedBg,
                 title = stringResource(R.string.verify_banner_invalid_title),
                 // 4.6.2: the reason comes from the crypto layer in English.
-                subtitle = ErrorText.localize(LocalContext.current, result.reason)
+                // 4.7.0 (item 48): when the signature itself verified (the
+                // signer is revoked or expired), say which key made it.
+                subtitle = ErrorText.localize(LocalContext.current, result.reason) +
+                    (result.signingKeyFingerprint?.let { fp ->
+                        com.pgpony.android.crypto.KeyIdText.signingLine(fp, null, result.signerFingerprint)
+                    }?.let { "\n" + signingKeyLineText(it) } ?: "")
             )
         }
         is VerificationResult.UnknownSigner -> {

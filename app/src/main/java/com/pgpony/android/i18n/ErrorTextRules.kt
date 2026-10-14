@@ -231,6 +231,9 @@ internal object ErrorTextRules {
             ErrorText.Rule("""\QThe key for \E(.*?)\Q carries no usable private key material (only placeholders for an offline or hardware key). The existing contact was left unchanged and nothing was imported.\E""", R.string.err_secret_no_material_contact),
             ErrorText.Rule("""\QPGPony could not test that the private key belongs to the contact \E(.*?)\Q you already have. The existing contact was left unchanged and nothing was imported.\E""", R.string.err_secret_unproven_contact),
             ErrorText.Rule("""\QThe private key for \E(.*?)\Q could not be read. The existing contact was left unchanged and nothing was imported.\E""", R.string.err_secret_unreadable_contact),
+            // 4.7.0 (item 47, #78): Use the secret keys from this file, refused.
+            ErrorText.Rule("""\QThe passphrase did not unlock every secret key in this file for \E(.*?)\Q. The stored secret keys were kept and nothing was imported.\E""", R.string.err_replace_secrets_passphrase),
+            ErrorText.Rule("""\QThe secret keys in this file could not be confirmed as the ones for \E(.*?)\Q. The stored secret keys were kept and nothing was imported.\E""", R.string.err_replace_secrets_unproven),
             ErrorText.Rule("""\Qunknown LibrePGP composite curve OID\E""", R.string.err_unknown_librepgp_composite_curve_oid),
             ErrorText.Rule("""\QLibrePGP composite subkey must be v5\E""", R.string.err_librepgp_composite_subkey_must_v5),
             ErrorText.Rule("""\QDecryption slot returned no EC point\E""", R.string.err_decryption_slot_returned_no_ec_point),

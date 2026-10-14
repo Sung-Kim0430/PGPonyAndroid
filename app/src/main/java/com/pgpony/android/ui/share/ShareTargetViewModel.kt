@@ -143,6 +143,10 @@ data class ShareTargetUiState(
     val decryptedFileName: String? = null,
     val signerName: String? = null,           // populated by decrypt signature info
     val signerKeyId: String? = null,
+    /** 4.7.0 (item 48, #79): the key that made the signature, and its primary. */
+    val signerKeyLine: com.pgpony.android.crypto.KeyIdText.Line? = null,
+    /** 4.7.0 (item 48, #79): the key pair and the (sub)key that decrypted. */
+    val decryptedBy: ShareTargetViewModel.DecryptedBy? = null,
     val signatureVerified: Boolean = false,
     /** 4.6.0 (item 15): signed, by a key that is not in the keyring. */
     val signatureFromUnknownKey: Boolean = false,
@@ -345,6 +349,8 @@ class ShareTargetViewModel(
                 signatureVerified = false,
                 signerKeyId = null,
                 signerName = null,
+                signerKeyLine = null,
+                decryptedBy = null,
                 errorMessage = null,
                 signatureFromUnknownKey = false,
             )
@@ -534,8 +540,10 @@ class ShareTargetViewModel(
                 val sig = summarizeSignature(
                     result.signatureVerified, result.signerKeyID, result.hasSignature,
                     result.compositeInline, result.compositeInlineBytes, result.compositeClaimedSignerFp,
-                    result.signerPrimaryFingerprint, result.compositeStreamed
+                    result.signerPrimaryFingerprint, result.compositeStreamed,
+                    signingKeyFingerprint = result.signingKeyFingerprint
                 )
+                val decryptedBy = decryptedByOf(result.decryptingKeyIdRaw, tryRings, current)
                 _state.update {
                     it.copy(
                         phase = ShareTargetPhase.DecryptFileResult,
@@ -545,6 +553,8 @@ class ShareTargetViewModel(
                         signatureVerified = sig.verified,
                         signerKeyId = sig.signerKeyId,
                         signerName = sig.signerName,
+                        signerKeyLine = sig.keyLine,
+                        decryptedBy = decryptedBy,
                         signatureFromUnknownKey = sig.unknownSigner,
                     )
                 }
@@ -792,6 +802,8 @@ class ShareTargetViewModel(
                 publishDecryptResult(
                     result,
                     sourceFilename = (current.content as? ShareIntentContent.PgpFile)?.filename,
+                    rings = tryRings,
+                    current = current,
                 )
             } catch (e: Throwable) {
                 _state.update {
@@ -849,7 +861,35 @@ class ShareTargetViewModel(
         val signerKeyId: String?,
         /** Signed, but by a key that is not in the keyring. */
         val unknownSigner: Boolean,
+        /** 4.7.0 (item 48, #79): the key that verified, and its primary. */
+        val keyLine: com.pgpony.android.crypto.KeyIdText.Line? = null,
     )
+
+    /** 4.7.0 (item 48, #79): which of your key pairs decrypted, and with which (sub)key. */
+    data class DecryptedBy(val label: String, val line: com.pgpony.android.crypto.KeyIdText.Line?)
+
+    /**
+     * 4.7.0 (item 48, #79): the key pair holding the secret (sub)key [raw] that
+     * unwrapped the session key, among the [rings] tried. A fallback key can
+     * differ from the one picked, so this names the one that actually worked.
+     */
+    private fun decryptedByOf(
+        raw: Long?,
+        rings: List<org.bouncycastle.openpgp.PGPSecretKeyRing>,
+        current: ShareTargetUiState,
+    ): DecryptedBy? {
+        if (raw == null || raw == 0L) return null
+        val ring = rings.firstOrNull { it.getSecretKey(raw) != null } ?: return null
+        val primaryFp = org.bouncycastle.util.encoders.Hex.toHexString(ring.publicKey.fingerprint).uppercase()
+        val entity = current.availableKeyPairs.firstOrNull {
+            KeyDeduplicationService.normalize(it.fingerprint) == KeyDeduplicationService.normalize(primaryFp)
+        }
+        val label = entity?.let { e ->
+            val name = e.userName.ifBlank { e.userEmail }
+            if (name.isBlank()) e.shortFingerprint else "$name \u00B7 ${e.shortFingerprint}"
+        } ?: com.pgpony.android.crypto.KeyIdText.keyIdOf(primaryFp) ?: return null
+        return DecryptedBy(label, com.pgpony.android.crypto.KeyIdText.decryptingLine(raw, primaryFp))
+    }
 
     /**
      * 4.6.0 (item 15): the signature state of a Quick Action decrypt. An inline
@@ -873,6 +913,7 @@ class ShareTargetViewModel(
         compositeClaimedSignerFp: String?,
         signerPrimaryFingerprint: String?,
         compositeStreamed: com.pgpony.android.crypto.pqc.CompositeInlineStreamReader.Result? = null,
+        signingKeyFingerprint: String? = null,
     ): SignatureSummary {
         if (compositeInline && (compositeInlineBytes != null || compositeStreamed != null)) {
             val certs = withContext(Dispatchers.IO) { repository.loadCompositeSignerCerts() }
@@ -888,7 +929,12 @@ class ShareTargetViewModel(
                 return SignatureSummary(false, null, keyId, unknownSigner = true)
             }
             val entity = certs.getOrNull(graded.certIndex)?.first
-            return SignatureSummary(graded.verified, entity?.userID, keyId, unknownSigner = false)
+            return SignatureSummary(
+                graded.verified, entity?.userID, keyId, unknownSigner = false,
+                keyLine = if (graded.verified) {
+                    com.pgpony.android.crypto.KeyIdText.signingLine(null, keyId, entity?.fingerprint)
+                } else null
+            )
         }
         val recipients = _state.value.availableRecipients
         val byFingerprint = signerPrimaryFingerprint?.let { fp ->
@@ -908,6 +954,10 @@ class ShareTargetViewModel(
             signerName = name,
             signerKeyId = signerKeyID,
             unknownSigner = hasSignature && signerKeyID == null,
+            // Named only for a signature that verified, like the signer's name.
+            keyLine = if (signatureVerified) {
+                com.pgpony.android.crypto.KeyIdText.signingLine(signingKeyFingerprint, signerKeyID, signerPrimaryFingerprint)
+            } else null,
         )
     }
 
@@ -947,7 +997,7 @@ class ShareTargetViewModel(
                         compositePrimaryRings = compositeRings,
                     )
                 }
-                publishDecryptResult(result, sourceFilename = sourceFilename)
+                publishDecryptResult(result, sourceFilename = sourceFilename, rings = tryRings, current = current)
             } catch (e: Throwable) {
                 _state.update {
                     it.copy(
@@ -976,6 +1026,8 @@ class ShareTargetViewModel(
     private suspend fun publishDecryptResult(
         result: com.pgpony.android.crypto.DecryptResult,
         sourceFilename: String?,
+        rings: List<org.bouncycastle.openpgp.PGPSecretKeyRing> = emptyList(),
+        current: ShareTargetUiState = _state.value,
     ) {
         // 3.1.0 Phase 6 (J6): PGP/MIME content routes to a readable TEXT
         // result — the body, plus an attachment-count note when the
@@ -992,8 +1044,10 @@ class ShareTargetViewModel(
         val sig = summarizeSignature(
             result.signatureVerified, result.signerKeyID, result.hasSignature,
             result.compositeInline, result.compositeInlineBytes, result.compositeClaimedSignerFp,
-            result.signerPrimaryFingerprint
+            result.signerPrimaryFingerprint,
+            signingKeyFingerprint = result.signingKeyFingerprint
         )
+        val decryptedBy = decryptedByOf(result.decryptingKeyIdRaw, rings, current)
         if (mime != null) {
             _state.update {
                 it.copy(
@@ -1008,6 +1062,8 @@ class ShareTargetViewModel(
                     signatureVerified = sig.verified,
                     signerKeyId = sig.signerKeyId,
                     signerName = sig.signerName,
+                    signerKeyLine = sig.keyLine,
+                    decryptedBy = decryptedBy,
                     signatureFromUnknownKey = sig.unknownSigner,
                 )
             }
@@ -1033,6 +1089,8 @@ class ShareTargetViewModel(
                     signatureVerified = sig.verified,
                     signerKeyId = sig.signerKeyId,
                     signerName = sig.signerName,
+                    signerKeyLine = sig.keyLine,
+                    decryptedBy = decryptedBy,
                     signatureFromUnknownKey = sig.unknownSigner,
                 )
             }
@@ -1044,6 +1102,8 @@ class ShareTargetViewModel(
                     signatureVerified = sig.verified,
                     signerKeyId = sig.signerKeyId,
                     signerName = sig.signerName,
+                    signerKeyLine = sig.keyLine,
+                    decryptedBy = decryptedBy,
                     signatureFromUnknownKey = sig.unknownSigner,
                 )
             }
@@ -1073,6 +1133,8 @@ class ShareTargetViewModel(
                 outputText = "",
                 signerName = null,
                 signerKeyId = null,
+                signerKeyLine = null,
+                decryptedBy = null,
                 signatureVerified = false,
                 signatureFromUnknownKey = false,
                 encryptedFileBytes = null,

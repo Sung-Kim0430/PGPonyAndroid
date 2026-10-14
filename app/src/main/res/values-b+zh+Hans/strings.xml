@@ -2925,4 +2925,38 @@
     <string name="applock_wipe_after_off">关闭</string>
     <string name="applock_wipe_after_format">输错 %1$d 次 PIN 后</string>
     <string name="applock_wipe_after_message">连续输错这么多次 PIN 后，PGPony 会像输入胁迫 PIN 时一样抹除所有内容。输入正确的 PIN 会重置计数。此操作无法撤销。</string>
+
+    <!-- 4.7.0 RC4, translated Oct 2026 -->
+    <!-- 4.7.0 RC4 (item 45, #85): a User ID with many certifications shows the first three, then this row. -->
+    <plurals name="key_detail_cert_show_all">
+        <item quantity="other">显示全部 %1$d 条认证</item>
+    </plurals>
+    <string name="key_detail_cert_show_fewer">收起</string>
+
+    <!-- 4.7.0 RC4 (item 48, #79): which key made a signature and which key decrypted, by 16-digit key ID. -->
+    <string name="verify_signing_key_format">签名密钥 %1$s</string>
+    <string name="verify_signing_subkey_format">密钥 %2$s 的签名子钥 %1$s</string>
+    <string name="encdec_decrypted_with_subkey_format">已使用 %1$s（子钥 %2$s）解密</string>
+
+    <!-- 4.7.0 RC4 (item 46, #82): Key Details, choose which signing subkey a key pair signs with. -->
+    <string name="key_detail_signing_subkey_title">用于签名</string>
+    <string name="key_detail_signing_subkey_help">除非你在此选择一个子钥，否则 PGPony 会使用最新的有效签名子钥进行签名。只要所选子钥仍然有效，就会使用它；一旦它过期或被吊销，签名将恢复为自动选择。</string>
+    <string name="key_detail_signing_subkey_automatic">自动</string>
+    <string name="key_detail_signing_subkey_automatic_format">自动（当前为 %1$s）</string>
+    <string name="key_detail_signing_subkey_option_format">子钥 %1$s，%2$s，创建于 %3$s</string>
+    <string name="key_detail_signing_subkey_primary_format">主钥 %1$s，%2$s</string>
+    <string name="key_detail_signing_subkey_pin_unusable">你选择的子钥已无法再签名，因此 PGPony 会按自动选择进行签名。</string>
+
+    <!-- 4.7.0 RC4 (item 47, #78): re-importing your own key pair with secret keys under a new passphrase. -->
+    <string name="import_replace_secrets_title">使用此文件中的私钥</string>
+    <plurals name="import_replace_secrets_body">
+        <item quantity="other">PGPony 已持有此密钥对。此文件中有 %1$d 个私钥的保护方式与已存储的不同，例如在 gpg 中更改口令之后。用此文件中的私钥替换已存储的私钥，并从此改用此文件的口令。</item>
+    </plurals>
+    <string name="import_replace_secrets_passphrase_label">此文件的口令</string>
+    <string name="import_replace_secrets_passphrase_help">文件中的每个私钥都必须能用它解锁。如果文件没有口令，请留空。</string>
+    <plurals name="import_result_secrets_replaced">
+        <item quantity="other">已替换 %1$d 个私钥。</item>
+    </plurals>
+    <string name="err_replace_secrets_passphrase">该口令未能解锁此文件中 %1$s 的所有私钥。已存储的私钥已保留，未导入任何内容。</string>
+    <string name="err_replace_secrets_unproven">无法确认此文件中的私钥就是 %1$s 的私钥。已存储的私钥已保留，未导入任何内容。</string>
 </resources>

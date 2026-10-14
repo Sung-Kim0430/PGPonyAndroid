@@ -185,6 +185,8 @@ class ErrorTextTest {
         "The primary key's secret is not on this device (offline primary). Sign with a signing subkey." to R.string.err_offline_primary_sign,
         "The primary key's secret is not on this device (offline primary). Make this change where the primary key is kept, then import the key here again." to R.string.err_offline_primary_edit,
         "Every signing key in this key pair has expired or been revoked" to R.string.err_signing_keys_expired,
+        "The passphrase did not unlock every secret key in this file for 1DB1A626. The stored secret keys were kept and nothing was imported." to R.string.err_replace_secrets_passphrase,
+        "The secret keys in this file could not be confirmed as the ones for 1DB1A626. The stored secret keys were kept and nothing was imported." to R.string.err_replace_secrets_unproven,
         "Recipient key is marked Don't use in PGPony: bob@example.org. Change its trust level in PGPony to encrypt to it." to R.string.err_provider_recipient_dont_use,
         "Signing key is marked Don't use in PGPony. Pick another signing key in your mail app, or change its trust level in PGPony." to R.string.err_provider_signer_dont_use,
         "A key chosen for this message cannot be used: 0x1234567890ABCDEF. Send the message again and choose the recipients in PGPony." to R.string.err_provider_review_key_unusable,

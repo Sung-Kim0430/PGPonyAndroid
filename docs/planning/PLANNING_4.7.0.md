@@ -1173,6 +1173,8 @@ Test: tap the label and the empty part of each row; TalkBack announces one switc
 
 ## 44. Signed-only mail with an attachment: GpgOL says the attachment is not signed (#84)
 
+**Status:** RC4, micalg part built; the GpgOL warning waits for the raw messages asked for on #84. New provider/Micalg.kt reads the hash algorithm octet of the detached signature PGPony just made (v4, v5 or v6 signature packet, armored or binary, old or new packet header) and maps it to the RFC 3156 token (pgp-sha256, pgp-sha384, pgp-sha512, pgp-sha224, pgp-sha3-256, pgp-sha3-512, and the legacy ones), falling back to pgp-sha256 when it cannot read one. Used for RESULT_SIGNATURE_MICALG on the software and composite paths in PGPonyOpenPgpService.detachedSign and on the card path in ProviderCardOpActivity. Tests: MicalgTest (also run on the JVM against Bouncy Castle 1.85 with Ed25519 signatures over SHA-256, 384, 512 and SHA3-512). On device (Oct 14): green.
+
 Priority: medium (bug, needs information). Origin: #84 (Oct 14, RC3): a signed-only message with an attached
 image, sent from FairEmail through PGPony, makes GpgOL in Outlook warn that not all attachments were signed. The
 same send through OpenKeychain on the same phone gets no warning.
@@ -1189,6 +1191,8 @@ used in RESULT_SIGNATURE_MICALG (software, composite and card paths), from the s
 
 ## 45. Long certification lists push Key Details down (#85)
 
+**Status:** RC4. KeyDetailSections: each User ID's certifications go through CertificationList, which orders them (your own first, then the ones that verify and are current, each group in stored order; orderCertifications) and shows the first three (CERTIFICATIONS_SHOWN), then a "Show all N certifications" row (plurals key_detail_cert_show_all) that expands in place and turns into Show fewer; the state survives rotation. Keys with three or fewer are unchanged. Tests: CertificationOrderTest. Strings in all 10 locales. On device (Oct 14): green.
+
 Priority: low (UI). Origin: #85 (Oct 14, RC2): a widely certified public key (the F-Droid one) lists every
 certification (item 31) before the rest of Key Details.
 
@@ -1196,6 +1200,10 @@ Work: show the first three certifications per User ID, then a "Show all N" row t
 collapses again). Keys with three or fewer are unchanged. New strings in all 10 locales.
 
 ## 46. Choose which signing subkey a key pair signs with (#82)
+
+**Status:** RC4. New crypto/SigningSubkeyPins.kt stores the choice in files/signing_pins (one primary and subkey fingerprint pair per line, written atomically, read on every pick, so the main process and :remote_api agree, the SessionPolicy reasoning). PGPCryptoService.signingSecretKeys moves the pinned subkey to the front while it is in item 39's valid list (automatic order otherwise, and always when only one key can sign); pickSigningSecretKey, signingKeyOptions and so every signer (app, Quick Actions, provider) follow it, and a key chosen for one send (Ask which key to sign with) still wins. Key Details shows Use for signing on a software key pair with two or more valid signing keys, or a pin that no longer applies: Automatic (now naming the key it picks) or each valid key (key ID, algorithm, created), and a note when the chosen subkey can no longer sign. Refreshed after the key loads and after Add Subkey, revoke, remove and expiry changes (KeyDetailViewModel.refreshSigningSubkeys). The pin goes with the key on purge (KeyRepository.purgeKey) and with Clear All Data (AppReset). Tests: SigningSubkeyPinsTest (two-current and expired-first fixtures). Strings in all 10 locales. On device (Oct 14): green.
+
+Oct 14 (#82): the requester's old signature came from OpenKeychain (primary [C] only, two current [S] subkeys, no pin), which picked the older subkey; agreed with newest by default plus the pin, and asked that the difference from OpenKeychain be documented. Work: the 4.7.0 release notes and the README's coming-from-OpenKeychain notes say that PGPony signs with the newest valid signing subkey where OpenKeychain used the older one, and point to Use for signing on Key Details.
 
 Priority: medium (feature). Origin: #82 (Oct 14, RC3): item 39 signs with the newest valid signing subkey; the
 requester prefers keeping the older one until it expires, so signatures stay the same after a new subkey is added.
@@ -1207,6 +1215,8 @@ uses the pinned subkey while it is valid and falls back to the automatic pick, w
 expires or is revoked. Ask which key to sign with still lists every valid one. New strings in all 10 locales.
 
 ## 47. A passphrase changed in gpg does not carry over on re-import (#78)
+
+**Status:** RC4. SubkeyAdmission.replaceableSecrets compares the secret key packets of the stored key pair and the file per key (primary and subkeys, real material on both sides, same fingerprint, different bytes). gpg re-protects on every export, so this cannot tell a new passphrase from the same one under a new salt; the preview therefore offers it as an opt-in: ImportPreview.replaceableSecrets drives a Use the secret keys from this file checkbox (off by default, single-key imports only) with a passphrase field for the file. Confirming calls KeyRepository.importReplacingSecrets: before anything changes, SecretKeyCheck.checkSecretForPublic must return OK for the file with that passphrase (every secret in it unlocks and proves it is this key's), else KeyRepoError.SecretsNotReplaced (two new err_ strings and ErrorText rules) and nothing is imported. Then the normal duplicate path runs, and SubkeyAdmission.replaceSecrets puts the file's secrets in place under the stored certificate's public parts, the passphrase recovery wrap moves to the new passphrase (as Change Passphrase does) and the in-app passphrase cache for the key is cleared; the result says how many were replaced. Tests: SecretReplaceTest (keys made with Bouncy Castle, run on the JVM: every secret replaceable after a passphrase change, the replaced ring unlocks only with the new passphrase, only the keys asked for are replaced, another key's secrets never are). Checked in code, a key whose subkeys carry different passphrases: signing and decrypting work when the passphrase of the subkey in use is entered (only that key is unlocked); Change Passphrase uses one passphrase for every key and reports a wrong passphrase otherwise; Use the secret keys from this file needs one passphrase that unlocks every secret in the file. Strings in all 10 locales (Korean without the err_ strings). On device (Oct 14): green.
 
 Priority: medium (bug). Origin: #78 (Oct 14): after changing passphrases in gpg (several subkeys had different
 ones, consolidated to one), re-importing did not change the passphrase PGPony asks for until the key was deleted
@@ -1221,6 +1231,8 @@ export) and fix or document it.
 
 ## 48. Decrypt results say which key signed and which key decrypted (#79)
 
+**Status:** RC4. New crypto/KeyIdText.kt gives the 16-hex key ID of the key that signed or decrypted (version-aware) and its primary when that is another key. The verify banner adds "Signing key X" or "Signing subkey X of key Y" under the signer (from signingKeyFingerprint, else the signer key ID), also on a red banner whose signature verified but whose signer is revoked or expired. Decrypted with now names the key pair with its short fingerprint and, when a subkey decrypted, its key ID ("Decrypted with Alice · 1DB1A626, subkey F0F9AB15B82320BB"); DecryptStreamResult gained decryptingKeyIdRaw, so the large-file path shows it too. Quick Actions show both lines (ShareTargetViewModel.decryptedByOf, SignatureSummary.keyLine). Key IDs (16 hex) rather than short fingerprints, so they match gpg's "using RSA key ...". Left out: the multi-file decrypt shows the signing line per file but not the decrypting key. Tests: KeyIdTextTest (also run on the JVM). Strings in all 10 locales. On device (Oct 14): green.
+
 Priority: medium (feature). Origin: #79 (Oct 14, RC3): the decrypt result names the signer but not the key that
 made the signature, and "Decrypted with" names the key chosen, not the subkey that actually decrypted (a fallback
 can differ).
@@ -1230,6 +1242,8 @@ its primary when they differ); the result shows the key ID of the subkey that de
 succeeded. Same in Quick Actions and the in-app decrypt and verify screens. New strings in all 10 locales.
 
 ## 49. Trust level polish (#75)
+
+**Status:** RC4. TrustMark draws Don't use itself: a red disc with a white bar on Material's 24-unit grid (the DoNotDisturbOn glyph's bar is a cut-out, which showed the background, black in the dark theme); the recipient review's Don't use row uses TrustMark too. Key pairs generated in PGPony start at Ultimate (generateKey, the composite and algo-35 paths, the granular path, and keys generated on a card, where only an Unknown or Unverified level is raised); imported key pairs and public keys keep Unknown. Existing keys are unchanged. No new strings. On device (Oct 14): green.
 
 Priority: low (UI). Origin: #75 (Oct 14, closed by the requester after RC2): the bar in the red Don't use shield
 is black and would read better white, like a traffic sign; key pairs generated in PGPony start at Unverified.

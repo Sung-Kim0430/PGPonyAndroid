@@ -1024,8 +1024,9 @@ class PGPonyOpenPgpService : Service() {
      * RESULT_DETACHED_SIGNATURE byte-array extra (NOT the output pipe —
      * that's the API contract; K-9/Thunderbird build multipart/signed
      * from the extra). RESULT_SIGNATURE_MICALG carries the OpenPGP
-     * micalg token for the multipart/signed content-type header; all
-     * PGPony signatures are SHA-256, hence "pgp-sha256".
+     * micalg token for the multipart/signed content-type header, read
+     * from the hash the signature used (4.7.0, item 44, #84; it was a
+     * fixed "pgp-sha256").
      */
     private fun detachedSign(data: Intent, input: ParcelFileDescriptor?): Intent {
         if (input == null) {
@@ -1100,7 +1101,7 @@ class PGPonyOpenPgpService : Service() {
                 }
                 successResult().apply {
                     putExtra(OpenPgpApi.RESULT_DETACHED_SIGNATURE, signature)
-                    putExtra(OpenPgpApi.RESULT_SIGNATURE_MICALG, "pgp-sha256")
+                    putExtra(OpenPgpApi.RESULT_SIGNATURE_MICALG, Micalg.of(signature))
                 }
             } catch (e: Exception) {
                 errorResult(OpenPgpError.GENERIC_ERROR, e.message ?: "Signing failed")
@@ -1123,7 +1124,7 @@ class PGPonyOpenPgpService : Service() {
             rememberProviderUnlock(ok.entity.fingerprint, ok.passphrase)
             successResult().apply {
                 putExtra(OpenPgpApi.RESULT_DETACHED_SIGNATURE, signature)
-                putExtra(OpenPgpApi.RESULT_SIGNATURE_MICALG, "pgp-sha256")
+                putExtra(OpenPgpApi.RESULT_SIGNATURE_MICALG, Micalg.of(signature))
             }
         } catch (e: SigningError.PassphraseRequired) {
             passphraseRequiredResult(data, ok.keyId, ok.label, wasWrong = false)

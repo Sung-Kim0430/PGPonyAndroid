@@ -344,6 +344,8 @@ data class DecryptUiState(
     // shown by the result screens next to the signature banner. Null on the
     // symmetric path and until a decrypt succeeds.
     val decryptedByKeyLabel: String? = null,
+    /** 4.7.0 (item 48, #79): the (sub)key that decrypted, with its primary. */
+    val decryptedByKeyLine: com.pgpony.android.crypto.KeyIdText.Line? = null,
     // HW Phase 3 — set when the input message is encrypted to a card-backed
     // key (a recipient key ID matches a card key's encryption subkey). The
     // Decrypt tab then hides the passphrase field and offers PIN + tap
@@ -4046,8 +4048,21 @@ class EncryptDecryptViewModel(private val repo: KeyRepository) : ViewModel() {
         if (rawKeyId == null) return null
         val entity = loaded.firstOrNull { (_, ring) -> ring.getSecretKey(rawKeyId) != null }?.first
             ?: return null
-        return entity.userName.ifBlank { entity.userEmail }.takeIf { it.isNotBlank() }
-            ?: entity.shortFingerprint
+        // 4.7.0 (item 48, #79): the short fingerprint follows the name, so two
+        // key pairs with the same name read differently.
+        val name = entity.userName.ifBlank { entity.userEmail }
+        return if (name.isBlank()) entity.shortFingerprint else "$name \u00B7 ${entity.shortFingerprint}"
+    }
+
+    /** 4.7.0 (item 48, #79): the key ID of the (sub)key that decrypted, with its primary. */
+    private fun keyLineForKeyId(
+        rawKeyId: Long?,
+        loaded: List<Pair<PGPKeyEntity, org.bouncycastle.openpgp.PGPSecretKeyRing>>
+    ): com.pgpony.android.crypto.KeyIdText.Line? {
+        if (rawKeyId == null) return null
+        val entity = loaded.firstOrNull { (_, ring) -> ring.getSecretKey(rawKeyId) != null }?.first
+            ?: return null
+        return com.pgpony.android.crypto.KeyIdText.decryptingLine(rawKeyId, entity.fingerprint)
     }
 
     private enum class DecryptFailKind { PASSPHRASE, NO_KEY }
@@ -4118,7 +4133,7 @@ class EncryptDecryptViewModel(private val repo: KeyRepository) : ViewModel() {
 
     private fun decryptAndVerifyPath(s: DecryptUiState) {
         viewModelScope.launch {
-            _decryptState.value = _decryptState.value.copy(isProcessing = true, errorMessage = null, decryptedByKeyLabel = null)
+            _decryptState.value = _decryptState.value.copy(isProcessing = true, errorMessage = null, decryptedByKeyLabel = null, decryptedByKeyLine = null)
             // §3 (#15): reuse a cached in-app passphrase for a repeat decrypt
             // on the selected key; remember a freshly entered one on success.
             val cacheFp = s.selectedKeyFingerprint
@@ -4190,6 +4205,7 @@ class EncryptDecryptViewModel(private val repo: KeyRepository) : ViewModel() {
                     showPassphraseDialog = false,
                     verificationResult = verResult,
                     decryptedByKeyLabel = keyLabelForKeyId(result.decryptingKeyIdRaw, loaded),
+                    decryptedByKeyLine = keyLineForKeyId(result.decryptingKeyIdRaw, loaded),
                     mimeBody = mime?.body,
                     mimeAttachments = mime?.attachments ?: emptyList(),
                     showStructuredResultSheet = mime != null
@@ -5072,6 +5088,8 @@ class EncryptDecryptViewModel(private val repo: KeyRepository) : ViewModel() {
                 errorMessage = null,
                 processedBytes = 0L,
                 totalBytes = s.selectedFileSize ?: 0L,
+                decryptedByKeyLabel = null,
+                decryptedByKeyLine = null,
             )
             var scratch: java.io.File? = null
             // §3 (#15): reuse a cached in-app passphrase for a repeat decrypt
@@ -5084,9 +5102,11 @@ class EncryptDecryptViewModel(private val repo: KeyRepository) : ViewModel() {
                 // the user's order, then everything else (pre-#34 behavior as
                 // the safety net) — see fallbackOrderedKeys.
                 val orderedKeys = fallbackOrderedKeys(s)
-                val secretRings = withContext(Dispatchers.IO) {
-                    orderedKeys.mapNotNull { secretRingForDecrypt(it) }
+                // 4.7.0 (item 48): kept with their keys, to name the one that decrypted.
+                val keyedRings = withContext(Dispatchers.IO) {
+                    orderedKeys.mapNotNull { k -> secretRingForDecrypt(k)?.let { k to it } }
                 }
+                val secretRings = keyedRings.map { it.second }
                 // Umotas (RC8): composite-primary keys are raw (non-BC) rings;
                 // the streaming path must pass them too so a file encrypted to
                 // an imported composite key opens, matching the in-memory path.
@@ -5191,6 +5211,8 @@ class EncryptDecryptViewModel(private val repo: KeyRepository) : ViewModel() {
                     decryptedFilename = result.filename,
                     showPassphraseDialog = false,
                     verificationResult = verResult,
+                    decryptedByKeyLabel = keyLabelForKeyId(result.decryptingKeyIdRaw, keyedRings),
+                    decryptedByKeyLine = keyLineForKeyId(result.decryptingKeyIdRaw, keyedRings),
                     decryptedFileBytes = null,
                     decryptedFile = if (bundle != null) null else outFile,
                     decryptedOutputFilename = outFile.name,
@@ -5366,7 +5388,7 @@ class EncryptDecryptViewModel(private val repo: KeyRepository) : ViewModel() {
      */
     private fun decryptFileAndVerifyPath(s: DecryptUiState, bytes: ByteArray) {
         viewModelScope.launch {
-            _decryptState.value = _decryptState.value.copy(isProcessing = true, errorMessage = null, decryptedByKeyLabel = null)
+            _decryptState.value = _decryptState.value.copy(isProcessing = true, errorMessage = null, decryptedByKeyLabel = null, decryptedByKeyLine = null)
             // §3 (#15): reuse a cached in-app passphrase for a repeat decrypt
             // on the selected key; remember a freshly entered one on success.
             val cacheFp = s.selectedKeyFingerprint
@@ -5444,6 +5466,7 @@ class EncryptDecryptViewModel(private val repo: KeyRepository) : ViewModel() {
                     showPassphraseDialog = false,
                     verificationResult = verResult,
                     decryptedByKeyLabel = keyLabelForKeyId(result.decryptingKeyIdRaw, loaded),
+                    decryptedByKeyLine = keyLineForKeyId(result.decryptingKeyIdRaw, loaded),
                     decryptedFileBytes = result.data,
                     decryptedOutputFilename = outName,
                     // 3.1.0 Phase 4 (J1): a decrypted multipart/mixed with

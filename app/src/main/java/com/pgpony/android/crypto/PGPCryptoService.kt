@@ -268,7 +268,10 @@ data class DecryptStreamResult(
     /** See [DecryptResult.signingKeyFingerprint]. */
     val signingKeyFingerprint: String? = null,
     /** See [DecryptResult.signerPrimaryFingerprint]. */
-    val signerPrimaryFingerprint: String? = null
+    val signerPrimaryFingerprint: String? = null,
+    /** 4.7.0 (item 48, #79): see [DecryptResult.decryptingKeyIdRaw]; set on
+     *  the classical public-key path. */
+    val decryptingKeyIdRaw: Long? = null
 )
 
 
@@ -292,7 +295,11 @@ data class SigningKeyOption(
     val keyId: Long,
     val keyIdHex: String,
     val isPrimary: Boolean,
-    val algorithmLabel: String
+    val algorithmLabel: String,
+    /** 4.7.0 (item 46): hex uppercase, what a Use for signing pin stores. */
+    val fingerprint: String = "",
+    /** 4.7.0 (item 46): creation time, epoch ms, shown in the chooser. */
+    val createdAt: Long = 0L
 )
 
 /** item 13 (#36): one encryption-key choice for a recipient's subkey picker;
@@ -2279,6 +2286,7 @@ class PGPCryptoService private constructor() {
             var decryptedStream: java.io.InputStream? = null
             var pbeData: PGPPBEEncryptedData? = null
             var sawWildcardPkesk = false
+            var decryptingKeyId: Long? = null
 
             // 4.1.2 (issue #33): the composite (PQC) trial was only ever
             // wired into [decrypt], so a file encrypted to an ML-KEM key
@@ -2379,6 +2387,7 @@ class PGPCryptoService private constructor() {
                 resolvePkesk(pkesks, secretKeyRings, passphrase)?.let { match ->
                     decryptedStream = match.stream
                     integrityObj = match.data
+                    decryptingKeyId = match.decryptingKeyID
                 }
                 if (decryptedStream == null && pbeData != null) {
                     if (passphrase.isNullOrEmpty()) throw PGPCryptoError.PassphraseRequired()
@@ -2449,7 +2458,7 @@ class PGPCryptoService private constructor() {
             }
             // Only now may held plaintext reach the consumer.
             hold?.releaseTo(output)
-            return result
+            return if (decryptingKeyId != null) result.copy(decryptingKeyIdRaw = decryptingKeyId) else result
             } finally {
                 hold?.discard()
             }
@@ -3290,7 +3299,20 @@ class PGPCryptoService private constructor() {
      * still valid with every signing subkey expired or revoked yields none. A
      * certificate the analyser cannot read keeps the plain capability pick.
      */
-    internal fun signingSecretKeys(ring: PGPSecretKeyRing): List<PGPSecretKey> {
+    internal fun signingSecretKeys(ring: PGPSecretKeyRing, applyPin: Boolean = true): List<PGPSecretKey> {
+        val automatic = automaticSigningSecretKeys(ring)
+        if (!applyPin || automatic.size < 2) return automatic
+        // 4.7.0 (item 46, #82): a subkey the owner chose on Key Details goes
+        // first while it is still in this list (a valid signer).
+        val primaryFp = org.bouncycastle.util.encoders.Hex.toHexString(ring.publicKey.fingerprint)
+        val pin = runCatching { SigningSubkeyPins.pinnedFor(primaryFp) }.getOrNull()
+        return SigningSubkeyPins.applyPin(automatic, pin) {
+            org.bouncycastle.util.encoders.Hex.toHexString(it.publicKey.fingerprint)
+        }
+    }
+
+    /** Item 39's pick order without the owner's pin (item 46). */
+    private fun automaticSigningSecretKeys(ring: PGPSecretKeyRing): List<PGPSecretKey> {
         val subs = mutableListOf<PGPSecretKey>()
         var primary: PGPSecretKey? = null
         val it = ring.secretKeys
@@ -3340,14 +3362,16 @@ class PGPCryptoService private constructor() {
     /** §4.5 (#22): display-ready signing-key choices for [ring]; first entry
      *  is the automatic pick. Size < 2 for the common single-signing-key
      *  case, where the UI shows no picker. */
-    internal fun signingKeyOptions(ring: PGPSecretKeyRing): List<SigningKeyOption> =
-        signingSecretKeys(ring).map { sk ->
+    internal fun signingKeyOptions(ring: PGPSecretKeyRing, applyPin: Boolean = true): List<SigningKeyOption> =
+        signingSecretKeys(ring, applyPin).map { sk ->
             val pub = sk.publicKey
             SigningKeyOption(
                 keyId = pub.keyID,
                 keyIdHex = String.format("%016X", pub.keyID),
                 isPrimary = pub.isMasterKey,
-                algorithmLabel = detectAlgorithm(pub).displayName
+                algorithmLabel = detectAlgorithm(pub).displayName,
+                fingerprint = org.bouncycastle.util.encoders.Hex.toHexString(pub.fingerprint).uppercase(),
+                createdAt = pub.creationTime.time
             )
         }
 

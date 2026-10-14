@@ -895,6 +895,8 @@ private fun ShareDecryptFileResultContent(
         color = if (state.signatureVerified) MaterialTheme.colorScheme.primary
         else MaterialTheme.colorScheme.onSurfaceVariant,
     )
+    // 4.7.0 (item 48, #79): which key signed and which key decrypted.
+    ShareKeyLines(state)
     Surface(
         shape = RoundedCornerShape(12.dp),
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -987,6 +989,8 @@ private fun ShareDecryptResultContent(
         color = if (state.signatureVerified) MaterialTheme.colorScheme.primary
         else MaterialTheme.colorScheme.onSurfaceVariant,
     )
+    // 4.7.0 (item 48, #79): which key signed and which key decrypted.
+    ShareKeyLines(state)
     ShareCipherPreview(text = state.outputText, monospace = false)
     // 3.1.0 Phase 6 (J6): PGP/MIME bundle — attachment-count note; the
     // full attachment view (save/preview) lives in the main app.
@@ -1318,4 +1322,24 @@ private fun launchFullAppWithForward(context: Context, armoredKey: String) {
         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
     }
     context.startActivity(intent)
+}
+
+/** 4.7.0 (item 48, #79): the signing key and the decrypting key, by key ID. */
+@Composable
+private fun ShareKeyLines(state: ShareTargetUiState) {
+    val signing = state.signerKeyLine?.takeIf { state.signatureVerified }
+    if (signing != null) {
+        Text(
+            text = com.pgpony.android.ui.decrypt.signingKeyLineText(signing),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+    state.decryptedBy?.let { by ->
+        Text(
+            text = com.pgpony.android.ui.decrypt.decryptedByText(by.label, by.line),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
 }

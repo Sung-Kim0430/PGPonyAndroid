@@ -390,7 +390,7 @@ class ProviderCardOpActivity : ComponentActivity() {
                     op.input,
                     armor = op.armor
                 )
-                ProviderCardOpStore.CompletedOp.Detached(signature, "pgp-sha256")
+                ProviderCardOpStore.CompletedOp.Detached(signature, Micalg.of(signature))
             }
 
             OpenPgpApi.ACTION_DECRYPT_VERIFY, OpenPgpApi.ACTION_DECRYPT_METADATA -> {

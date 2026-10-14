@@ -2865,4 +2865,41 @@ Optional kannst du die App hinter deinem Fingerabdruck oder Gesicht sperren, um 
     <string name="applock_wipe_after_off">Aus</string>
     <string name="applock_wipe_after_format">Nach %1$d falschen PINs</string>
     <string name="applock_wipe_after_message">Nach so vielen falschen PINs in Folge löscht PGPony alles, so wie bei der Zwangs-PIN. Eine richtige PIN setzt den Zähler zurück. Das kann nicht rückgängig gemacht werden.</string>
+
+    <!-- 4.7.0 RC4, translated Oct 2026 -->
+    <!-- 4.7.0 RC4 (item 45, #85): a User ID with many certifications shows the first three, then this row. -->
+    <plurals name="key_detail_cert_show_all">
+        <item quantity="one">%1$d Beglaubigung anzeigen</item>
+        <item quantity="other">Alle %1$d Beglaubigungen anzeigen</item>
+    </plurals>
+    <string name="key_detail_cert_show_fewer">Weniger anzeigen</string>
+
+    <!-- 4.7.0 RC4 (item 48, #79): which key made a signature and which key decrypted, by 16-digit key ID. -->
+    <string name="verify_signing_key_format">Signaturschlüssel %1$s</string>
+    <string name="verify_signing_subkey_format">Signatur-Unterschlüssel %1$s des Schlüssels %2$s</string>
+    <string name="encdec_decrypted_with_subkey_format">Entschlüsselt mit %1$s, Unterschlüssel %2$s</string>
+
+    <!-- 4.7.0 RC4 (item 46, #82): Key Details, choose which signing subkey a key pair signs with. -->
+    <string name="key_detail_signing_subkey_title">Signieren mit</string>
+    <string name="key_detail_signing_subkey_help">PGPony signiert mit dem neuesten gültigen Signatur-Unterschlüssel, sofern du hier keinen auswählst. Ein ausgewählter Unterschlüssel wird verwendet, solange er gültig ist; sobald er abläuft oder widerrufen wird, gilt fürs Signieren wieder die automatische Auswahl.</string>
+    <string name="key_detail_signing_subkey_automatic">Automatisch</string>
+    <string name="key_detail_signing_subkey_automatic_format">Automatisch (derzeit %1$s)</string>
+    <string name="key_detail_signing_subkey_option_format">Unterschlüssel %1$s, %2$s, erstellt %3$s</string>
+    <string name="key_detail_signing_subkey_primary_format">Hauptschlüssel %1$s, %2$s</string>
+    <string name="key_detail_signing_subkey_pin_unusable">Der von dir ausgewählte Unterschlüssel kann nicht mehr signieren, daher signiert PGPony mit der automatischen Auswahl.</string>
+
+    <!-- 4.7.0 RC4 (item 47, #78): re-importing your own key pair with secret keys under a new passphrase. -->
+    <string name="import_replace_secrets_title">Die geheimen Schlüssel aus dieser Datei verwenden</string>
+    <plurals name="import_replace_secrets_body">
+        <item quantity="one">PGPony hat dieses Schlüsselpaar bereits gespeichert. %1$d geheimer Schlüssel in dieser Datei ist anders geschützt als der gespeicherte, zum Beispiel nach einer Passphrase-Änderung in gpg. Ersetze ihn durch den aus dieser Datei und verwende ab jetzt die Passphrase dieser Datei.</item>
+        <item quantity="other">PGPony hat dieses Schlüsselpaar bereits gespeichert. %1$d geheime Schlüssel in dieser Datei sind anders geschützt als die gespeicherten, zum Beispiel nach einer Passphrase-Änderung in gpg. Ersetze sie durch die aus dieser Datei und verwende ab jetzt die Passphrase dieser Datei.</item>
+    </plurals>
+    <string name="import_replace_secrets_passphrase_label">Passphrase dieser Datei</string>
+    <string name="import_replace_secrets_passphrase_help">Jeder geheime Schlüssel in der Datei muss sich damit entsperren lassen. Lass das Feld leer, wenn die Datei keine Passphrase hat.</string>
+    <plurals name="import_result_secrets_replaced">
+        <item quantity="one">%1$d geheimer Schlüssel ersetzt.</item>
+        <item quantity="other">%1$d geheime Schlüssel ersetzt.</item>
+    </plurals>
+    <string name="err_replace_secrets_passphrase">Die Passphrase hat nicht jeden geheimen Schlüssel in dieser Datei für %1$s entsperrt. Die gespeicherten geheimen Schlüssel wurden beibehalten und es wurde nichts importiert.</string>
+    <string name="err_replace_secrets_unproven">Die geheimen Schlüssel in dieser Datei konnten nicht als die zu %1$s gehörenden bestätigt werden. Die gespeicherten geheimen Schlüssel wurden beibehalten und es wurde nichts importiert.</string>
 </resources>

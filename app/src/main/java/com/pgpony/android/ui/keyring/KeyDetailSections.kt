@@ -79,8 +79,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -91,6 +93,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -982,8 +985,11 @@ fun UserIdsSection(
                         onCopy = onCopyEmail
                     )
                 }
-                certifications.filter { it.certification.userId == uid.raw }.forEach { row ->
-                    CertificationLine(row = row, onRevoke = onRevokeCertification)
+                key(uid.raw) {
+                    CertificationList(
+                        rows = certifications.filter { it.certification.userId == uid.raw },
+                        onRevoke = onRevokeCertification
+                    )
                 }
                 if (canEdit && !uid.isRevoked) {
                     // #76: Revoke and Remove come first so they sit in the same place on
@@ -1029,6 +1035,58 @@ fun UserIdsSection(
     }
 }
 
+/** How many certifications a User ID shows before "Show all" (4.7.0, item 45, #85). */
+internal const val CERTIFICATIONS_SHOWN = 3
+
+/**
+ * The order a User ID's certifications are listed in: your own first, then
+ * the ones that verify and are current, each group in stored order, so the
+ * first [CERTIFICATIONS_SHOWN] are the ones most worth seeing.
+ */
+internal fun <T> orderCertifications(rows: List<T>, isMine: (T) -> Boolean, isGood: (T) -> Boolean): List<T> =
+    rows.withIndex()
+        .sortedWith(compareBy({ if (isMine(it.value)) 0 else 1 }, { if (isGood(it.value)) 0 else 1 }, { it.index }))
+        .map { it.value }
+
+private fun certificationIsGood(row: com.pgpony.android.data.repository.KeyRepository.CertificationRow): Boolean {
+    val c = row.certification
+    return c.status == com.pgpony.android.crypto.CertificationService.Status.VERIFIED && !c.revoked &&
+        !c.expiredAt(System.currentTimeMillis())
+}
+
+/**
+ * 4.7.0 (item 45, #85): a widely certified key (the F-Droid one) listed every
+ * certification before the rest of Key Details. Each User ID now shows the
+ * first [CERTIFICATIONS_SHOWN], then a row that expands the rest in place and
+ * collapses them again.
+ */
+@Composable
+private fun CertificationList(
+    rows: List<com.pgpony.android.data.repository.KeyRepository.CertificationRow>,
+    onRevoke: ((com.pgpony.android.data.repository.KeyRepository.CertificationRow) -> Unit)?
+) {
+    if (rows.isEmpty()) return
+    var expanded by rememberSaveable { mutableStateOf(false) }
+    val ordered = orderCertifications(rows, { it.isMine }, ::certificationIsGood)
+    val shown = if (expanded || ordered.size <= CERTIFICATIONS_SHOWN) ordered else ordered.take(CERTIFICATIONS_SHOWN)
+    shown.forEach { row -> CertificationLine(row = row, onRevoke = onRevoke) }
+    if (ordered.size > CERTIFICATIONS_SHOWN) {
+        TextButton(
+            onClick = { expanded = !expanded },
+            contentPadding = PaddingValues(horizontal = 8.dp)
+        ) {
+            Text(
+                text = if (expanded) {
+                    stringResource(R.string.key_detail_cert_show_fewer)
+                } else {
+                    pluralStringResource(R.plurals.key_detail_cert_show_all, ordered.size, ordered.size)
+                },
+                style = MaterialTheme.typography.labelMedium
+            )
+        }
+    }
+}
+
 /**
  * 4.7.0 (item 31, #79): one certification of a User ID: who made it (their
  * name when the key is in the keyring), the level, and whether it is local,
@@ -1060,8 +1118,7 @@ private fun CertificationLine(
             add(stringResource(R.string.key_detail_cert_failed))
         }
     }
-    val good = c.status == com.pgpony.android.crypto.CertificationService.Status.VERIFIED && !c.revoked &&
-        !c.expiredAt(System.currentTimeMillis())
+    val good = certificationIsGood(row)
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 2.dp)) {
         Icon(
             imageVector = if (good) Icons.Filled.Verified else Icons.Filled.Info,
@@ -1461,6 +1518,86 @@ fun RevokedBanner(key: PGPKeyEntity) {
         }
     }
 }
+
+// ── 4.7.0 (item 46, #82): Use for signing ─────────────────────────────
+
+/**
+ * 4.7.0 (item 46, #82): Use for signing. A key pair with more than one valid
+ * signing key signs with the newest valid subkey (item 39); here its owner
+ * can choose one instead, so signatures stay the same after a new subkey is
+ * added. The choice holds while that subkey is a valid signer, and signing
+ * goes back to the automatic pick once it expires or is revoked.
+ */
+@Composable
+fun SigningSubkeySection(
+    choices: List<com.pgpony.android.crypto.SigningKeyOption>,
+    pinnedFingerprint: String?,
+    onPick: (String?) -> Unit
+) {
+    SectionGroup(title = stringResource(R.string.key_detail_signing_subkey_title)) {
+        Text(
+            text = stringResource(R.string.key_detail_signing_subkey_help),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+        val pinned = pinnedFingerprint?.let { fp -> choices.firstOrNull { it.fingerprint.equals(fp, ignoreCase = true) } }
+        if (pinnedFingerprint != null && pinned == null) {
+            Text(
+                text = stringResource(R.string.key_detail_signing_subkey_pin_unusable),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+        }
+        val automatic = choices.firstOrNull()
+        val automaticLabel = automatic?.let {
+            stringResource(R.string.key_detail_signing_subkey_automatic_format, signingOptionLabel(it))
+        } ?: stringResource(R.string.key_detail_signing_subkey_automatic)
+        var menuOpen by remember { mutableStateOf(false) }
+        Box {
+            OutlinedButton(
+                onClick = { menuOpen = true },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = pinned?.let { signingOptionLabel(it) } ?: automaticLabel,
+                    maxLines = 2,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
+                )
+                Icon(Icons.Filled.ArrowDropDown, contentDescription = null)
+            }
+            DropdownMenu(
+                expanded = menuOpen,
+                onDismissRequest = { menuOpen = false }
+            ) {
+                DropdownMenuItem(
+                    text = { Text(automaticLabel) },
+                    onClick = { onPick(null); menuOpen = false }
+                )
+                choices.forEach { option ->
+                    DropdownMenuItem(
+                        text = { Text(signingOptionLabel(option)) },
+                        onClick = { onPick(option.fingerprint); menuOpen = false }
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** "Subkey 9F1DAF9D9070430F, RSA 3072, created 5 Feb 2025", or the primary's line. */
+@Composable
+private fun signingOptionLabel(option: com.pgpony.android.crypto.SigningKeyOption): String =
+    if (option.isPrimary) {
+        stringResource(R.string.key_detail_signing_subkey_primary_format, option.keyIdHex, option.algorithmLabel)
+    } else {
+        stringResource(
+            R.string.key_detail_signing_subkey_option_format,
+            option.keyIdHex, option.algorithmLabel, formatDate(option.createdAt)
+        )
+    }
 
 // ── Date formatter ────────────────────────────────────────────────────
 

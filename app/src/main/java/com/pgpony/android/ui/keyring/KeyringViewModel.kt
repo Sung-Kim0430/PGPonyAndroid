@@ -1109,8 +1109,8 @@ class KeyringViewModel(private val repo: KeyRepository) : ViewModel() {
      *   • UPGRADED_TO_KEY_PAIR / PAIRED_WITH_CARD / INSERTED → same
      *     success messages as before.
      */
-    fun confirmImportPreview() {
-        val preview = _state.value.importPreview ?: return
+    fun confirmImportPreview(replaceSecrets: Boolean = false, secretPassphrase: CharArray? = null) {
+        val preview = _state.value.importPreview ?: run { secretPassphrase?.fill('\u0000'); return }
         viewModelScope.launch {
             _state.value = _state.value.copy(isImporting = true, errorMessage = null)
             try {
@@ -1155,7 +1155,12 @@ class KeyringViewModel(private val repo: KeyRepository) : ViewModel() {
                     loadKeys()
                     return@launch
                 }
-                val outcome = repo.importArmoredKeyDetailed(preview.armoredText)
+                // 4.7.0 (item 47, #78): Use the secret keys from this file.
+                val outcome = if (replaceSecrets) {
+                    repo.importReplacingSecrets(preview.armoredText, secretPassphrase)
+                } else {
+                    repo.importArmoredKeyDetailed(preview.armoredText)
+                }
                 if (outcome.resolution == ImportResolution.ALREADY_IN_KEYRING) {
                     val name = outcome.entity.userName.ifBlank { outcome.entity.shortFingerprint }
                     _state.value = _state.value.copy(
@@ -1179,11 +1184,17 @@ class KeyringViewModel(private val repo: KeyRepository) : ViewModel() {
                         )
                         // 4.7.0 (item 40, #82): say how many subkeys your own
                         // secret export added, next to the self-signature note.
-                        if (outcome.subkeysAdded > 0) {
+                        val withSubkeys = if (outcome.subkeysAdded > 0) {
                             base + " " + PGPonyApp.instance.resources.getQuantityString(
                                 R.plurals.import_result_subkeys_added, outcome.subkeysAdded, outcome.subkeysAdded
                             )
                         } else base
+                        // 4.7.0 (item 47, #78): and how many secret keys the file replaced.
+                        if (outcome.secretsReplaced > 0) {
+                            withSubkeys + " " + PGPonyApp.instance.resources.getQuantityString(
+                                R.plurals.import_result_secrets_replaced, outcome.secretsReplaced, outcome.secretsReplaced
+                            )
+                        } else withSubkeys
                     }
                     ImportResolution.UPGRADED_TO_KEY_PAIR ->
                         PGPonyApp.instance.getString(R.string.keyring_status_key_upgraded)
@@ -1204,6 +1215,8 @@ class KeyringViewModel(private val repo: KeyRepository) : ViewModel() {
                     isImporting = false,
                     errorMessage = PGPonyApp.instance.getString(R.string.keyring_error_import_failed_format, ErrorText.detail(e.message) ?: "")
                 )
+            } finally {
+                secretPassphrase?.fill('\u0000') // 4.7.0 (item 47)
             }
         }
     }

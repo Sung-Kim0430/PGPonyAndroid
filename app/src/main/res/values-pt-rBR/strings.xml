@@ -2866,4 +2866,44 @@ Opcionalmente, bloqueie o app com sua impressão digital ou rosto para mais tran
     <string name="applock_wipe_after_off">Desativado</string>
     <string name="applock_wipe_after_format">Após %1$d PINs incorretos</string>
     <string name="applock_wipe_after_message">Após esse número de PINs incorretos seguidos, o PGPony apaga tudo, como faz o PIN de coação. Um PIN correto zera a contagem. Não pode ser desfeito.</string>
+
+    <!-- 4.7.0 RC4, translated Oct 2026 -->
+    <!-- 4.7.0 RC4 (item 45, #85): a User ID with many certifications shows the first three, then this row. -->
+    <plurals name="key_detail_cert_show_all">
+        <item quantity="one">Mostrar todas (%1$d certificação)</item>
+        <item quantity="many">Mostrar todas as %1$d certificações</item>
+        <item quantity="other">Mostrar todas as %1$d certificações</item>
+    </plurals>
+    <string name="key_detail_cert_show_fewer">Mostrar menos</string>
+
+    <!-- 4.7.0 RC4 (item 48, #79): which key made a signature and which key decrypted, by 16-digit key ID. -->
+    <string name="verify_signing_key_format">Chave de assinatura %1$s</string>
+    <string name="verify_signing_subkey_format">Subchave de assinatura %1$s da chave %2$s</string>
+    <string name="encdec_decrypted_with_subkey_format">Descriptografado com %1$s, subchave %2$s</string>
+
+    <!-- 4.7.0 RC4 (item 46, #82): Key Details, choose which signing subkey a key pair signs with. -->
+    <string name="key_detail_signing_subkey_title">Usar para assinar</string>
+    <string name="key_detail_signing_subkey_help">O PGPony assina com a subchave de assinatura válida mais recente, a menos que você escolha uma aqui. Uma subchave escolhida é usada enquanto for válida; quando ela expirar ou for revogada, a assinatura volta para a escolha automática.</string>
+    <string name="key_detail_signing_subkey_automatic">Automática</string>
+    <string name="key_detail_signing_subkey_automatic_format">Automática (agora %1$s)</string>
+    <string name="key_detail_signing_subkey_option_format">Subchave %1$s, %2$s, criada em %3$s</string>
+    <string name="key_detail_signing_subkey_primary_format">Chave principal %1$s, %2$s</string>
+    <string name="key_detail_signing_subkey_pin_unusable">A subchave que você escolheu não pode mais assinar, então o PGPony assina com a escolha automática.</string>
+
+    <!-- 4.7.0 RC4 (item 47, #78): re-importing your own key pair with secret keys under a new passphrase. -->
+    <string name="import_replace_secrets_title">Usar as chaves privadas deste arquivo</string>
+    <plurals name="import_replace_secrets_body">
+        <item quantity="one">O PGPony já tem este par de chaves. %1$d chave privada neste arquivo está protegida de forma diferente da armazenada, por exemplo após uma troca de frase-senha no gpg. Substitua-a pela deste arquivo e use a frase-senha deste arquivo daqui em diante.</item>
+        <item quantity="many">O PGPony já tem este par de chaves. %1$d chaves privadas neste arquivo estão protegidas de forma diferente das armazenadas, por exemplo após uma troca de frase-senha no gpg. Substitua-as pelas deste arquivo e use a frase-senha deste arquivo daqui em diante.</item>
+        <item quantity="other">O PGPony já tem este par de chaves. %1$d chaves privadas neste arquivo estão protegidas de forma diferente das armazenadas, por exemplo após uma troca de frase-senha no gpg. Substitua-as pelas deste arquivo e use a frase-senha deste arquivo daqui em diante.</item>
+    </plurals>
+    <string name="import_replace_secrets_passphrase_label">Frase-senha deste arquivo</string>
+    <string name="import_replace_secrets_passphrase_help">Todas as chaves privadas do arquivo precisam ser desbloqueadas com ela. Deixe em branco se o arquivo não tiver frase-senha.</string>
+    <plurals name="import_result_secrets_replaced">
+        <item quantity="one">%1$d chave privada substituída.</item>
+        <item quantity="many">%1$d chaves privadas substituídas.</item>
+        <item quantity="other">%1$d chaves privadas substituídas.</item>
+    </plurals>
+    <string name="err_replace_secrets_passphrase">A frase-senha não desbloqueou todas as chaves privadas deste arquivo para %1$s. As chaves privadas armazenadas foram mantidas e nada foi importado.</string>
+    <string name="err_replace_secrets_unproven">Não foi possível confirmar que as chaves privadas deste arquivo são as de %1$s. As chaves privadas armazenadas foram mantidas e nada foi importado.</string>
 </resources>

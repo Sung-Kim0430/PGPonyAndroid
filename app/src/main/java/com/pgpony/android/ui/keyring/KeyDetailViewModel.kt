@@ -278,6 +278,13 @@ data class KeyDetailUiState(
      *  load time alongside [userIds]. Empty for a key with no subkeys
      *  or before the ring can be read. */
     val subkeys: List<SubkeyDisplayInfo> = emptyList(),
+    /** 4.7.0 (item 46, #82): the signing keys that may sign now, automatic
+     *  order (newest valid subkey first). The chooser shows when there are two
+     *  or more, or when a pin is set. */
+    val signingSubkeyChoices: List<com.pgpony.android.crypto.SigningKeyOption> = emptyList(),
+    /** 4.7.0 (item 46): the subkey fingerprint chosen in Use for signing, or
+     *  null for automatic. */
+    val signingSubkeyPin: String? = null,
     /** 4.0.0 Phase 2 (F5) — true while "Refresh from key server" is in
      *  flight; drives that row's inline spinner. */
     val isRefreshingFromKeyServer: Boolean = false,
@@ -450,6 +457,7 @@ class KeyDetailViewModel(
                     withContext(Dispatchers.IO) { repo.needsPassphraseRecovery(it.fingerprint) }
                 } ?: false
             )
+            refreshSigningSubkeys()
         }
     }
 
@@ -529,6 +537,38 @@ class KeyDetailViewModel(
         val key = _state.value.key ?: return
         com.pgpony.android.crypto.FallbackPrefs.setStrict(key.fingerprint, enabled)
         _state.value = _state.value.copy(strictFallbacks = enabled)
+    }
+
+    /**
+     * 4.7.0 (item 46, #82): read the signing keys and the Use for signing pin
+     * again. Called after the key loads and after every subkey change, since
+     * a new, revoked, removed or re-dated subkey changes the choices.
+     */
+    private fun refreshSigningSubkeys() {
+        val key = _state.value.key ?: return
+        if (!key.isKeyPair || key.isCardBacked) {
+            _state.value = _state.value.copy(signingSubkeyChoices = emptyList(), signingSubkeyPin = null)
+            return
+        }
+        viewModelScope.launch {
+            val choices = repo.signingSubkeyChoices(key.fingerprint)
+            val pin = withContext(Dispatchers.IO) {
+                runCatching { com.pgpony.android.crypto.SigningSubkeyPins.pinnedFor(key.fingerprint) }.getOrNull()
+            }
+            if (_state.value.key?.fingerprint != key.fingerprint) return@launch
+            _state.value = _state.value.copy(signingSubkeyChoices = choices, signingSubkeyPin = pin)
+        }
+    }
+
+    /** 4.7.0 (item 46, #82): pin [subkeyFingerprint] for signing, or null for automatic. */
+    fun setSigningSubkey(subkeyFingerprint: String?) {
+        val key = _state.value.key ?: return
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                runCatching { com.pgpony.android.crypto.SigningSubkeyPins.set(key.fingerprint, subkeyFingerprint) }
+            }
+            refreshSigningSubkeys()
+        }
     }
 
     fun toggleFallback(fingerprint: String) {
@@ -1440,6 +1480,7 @@ PGPonyApp.instance.getString(R.string.kd_vm_upload_verify_skipped)
                     expiryInFlight = false,
                     showExpirySheet = false
                 )
+                refreshSigningSubkeys() // 4.7.0 (item 46): expiry decides which keys may sign
             } catch (e: KeyExpirationService.ExpirationError.PassphraseRequired) {
                 _state.value = _state.value.copy(
                     expiryInFlight = false,
@@ -1489,6 +1530,7 @@ PGPonyApp.instance.getString(R.string.kd_vm_upload_verify_skipped)
                     expiryInFlight = false,
                     showExpirySheet = false
                 )
+                refreshSigningSubkeys() // 4.7.0 (item 46): expiry decides which keys may sign
             } catch (e: Exception) {
                 _state.value = _state.value.copy(
                     expiryInFlight = false,
@@ -1545,6 +1587,7 @@ PGPonyApp.instance.getString(R.string.kd_vm_upload_verify_skipped)
                     addSubkeyInFlight = false,
                     showAddSubkeySheet = false
                 )
+                refreshSigningSubkeys()
             } catch (e: ClassicalSubkeyGen.SubkeyAddError) {
                 _state.value = _state.value.copy(
                     addSubkeyInFlight = false,
@@ -1599,6 +1642,7 @@ PGPonyApp.instance.getString(R.string.kd_vm_upload_verify_skipped)
                     showSubkeyRevokeSheet = false,
                     subkeyRevokeTarget = null
                 )
+                refreshSigningSubkeys()
             } catch (e: KeyRepoError.LastEncryptionSubkey) {
                 _state.value = _state.value.copy(
                     subkeyRevokeInFlight = false,
@@ -1662,6 +1706,7 @@ PGPonyApp.instance.getString(R.string.kd_vm_upload_verify_skipped)
                     subkeyRemoveTarget = null,
                     successMessage = PGPonyApp.instance.getString(R.string.kd_vm_status_subkey_removed)
                 )
+                refreshSigningSubkeys()
             } catch (e: KeyRepoError.LastEncryptionSubkey) {
                 _state.value = _state.value.copy(
                     subkeyRemoveInFlight = false,

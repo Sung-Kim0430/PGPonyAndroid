@@ -174,7 +174,7 @@ fun FileDecryptionResultScreen(state: DecryptUiState, onDismiss: () -> Unit) {
             // #46: which key decrypted this file.
             state.decryptedByKeyLabel?.let { label ->
                 Text(
-                    text = stringResource(R.string.encdec_decrypted_with_format, label),
+                    text = com.pgpony.android.ui.decrypt.decryptedByText(label, state.decryptedByKeyLine),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

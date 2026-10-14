@@ -52,6 +52,7 @@ import android.content.ContextWrapper
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -164,6 +165,20 @@ fun ImportKeyScreen(state: KeyringUiState, viewModel: KeyringViewModel) {
                     sourceFilename = state.importSourceFilename,
                     sourceUrl = state.importSourceUrl
                 )
+                // 4.7.0 (item 47, #78): your own key pair, whose secret keys
+                // this file protects differently (a passphrase changed in gpg).
+                var useFileSecrets by remember(preview.fingerprint) { mutableStateOf(false) }
+                var fileSecretsPassphrase by remember(preview.fingerprint) { mutableStateOf("") }
+                if (preview.replaceableSecrets > 0 && preview.additionalKeys.isEmpty()) {
+                    ReplaceSecretsOption(
+                        count = preview.replaceableSecrets,
+                        checked = useFileSecrets,
+                        onCheckedChange = { useFileSecrets = it },
+                        passphrase = fileSecretsPassphrase,
+                        onPassphraseChange = { fileSecretsPassphrase = it },
+                        enabled = !state.isImporting
+                    )
+                }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -176,7 +191,14 @@ fun ImportKeyScreen(state: KeyringUiState, viewModel: KeyringViewModel) {
                         Text(stringResource(R.string.common_button_cancel))
                     }
                     Button(
-                        onClick = { viewModel.confirmImportPreview() },
+                        onClick = {
+                            val replace = useFileSecrets && preview.replaceableSecrets > 0 &&
+                                preview.additionalKeys.isEmpty()
+                            viewModel.confirmImportPreview(
+                                replaceSecrets = replace,
+                                secretPassphrase = fileSecretsPassphrase.takeIf { replace && it.isNotEmpty() }?.toCharArray()
+                            )
+                        },
                         modifier = Modifier.weight(1f),
                         // Block re-commit during the in-flight import.
                         // 4.0.0 Phase 1 (iOS v7.1.1 F3) — a plain
@@ -643,6 +665,70 @@ private fun GitHubSection(state: KeyringUiState, viewModel: KeyringViewModel) {
 }
 
 // ── Preview card ───────────────────────────────────────────────────────
+
+/**
+ * 4.7.0 (item 47, #78): offer to replace the secret keys PGPony holds for
+ * this key pair with the ones in the file, so a passphrase changed in gpg
+ * carries over. Off by default; the file's passphrase is asked for, since
+ * every secret key in the file has to unlock with it first.
+ */
+@Composable
+private fun ReplaceSecretsOption(
+    count: Int,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    passphrase: String,
+    onPassphraseChange: (String) -> Unit,
+    enabled: Boolean
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .toggleable(
+                    value = checked,
+                    enabled = enabled,
+                    role = androidx.compose.ui.semantics.Role.Checkbox,
+                    onValueChange = onCheckedChange
+                ),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Checkbox(
+                checked = checked,
+                onCheckedChange = null,
+                enabled = enabled,
+                modifier = Modifier.minimumInteractiveComponentSize()
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    stringResource(R.string.import_replace_secrets_title),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    androidx.compose.ui.res.pluralStringResource(R.plurals.import_replace_secrets_body, count, count),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        if (checked) {
+            OutlinedTextField(
+                value = passphrase,
+                onValueChange = onPassphraseChange,
+                enabled = enabled,
+                label = { Text(stringResource(R.string.import_replace_secrets_passphrase_label)) },
+                supportingText = { Text(stringResource(R.string.import_replace_secrets_passphrase_help)) },
+                singleLine = true,
+                visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                    keyboardType = androidx.compose.ui.text.input.KeyboardType.Password
+                ),
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}
 
 @Composable
 private fun ImportPreviewCard(

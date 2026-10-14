@@ -53,6 +53,24 @@ sealed class KeyRepoError(message: String) : Exception(message) {
      */
     class SecretNotProven(val fingerprint: String, val match: SecretKeyCheck.SecretMatch) :
         KeyRepoError(secretNotProvenMessage(fingerprint, match))
+    /**
+     * 4.7.0 (item 47, #78): Use the secret keys from this file was chosen, and
+     * the file's secret keys did not all unlock with the passphrase given, or
+     * did not prove to be this key's. Nothing was imported.
+     */
+    class SecretsNotReplaced(val fingerprint: String, val match: SecretKeyCheck.SecretMatch) :
+        KeyRepoError(secretsNotReplacedMessage(fingerprint, match))
+}
+
+/** English text for [KeyRepoError.SecretsNotReplaced]. */
+private fun secretsNotReplacedMessage(fp: String, match: SecretKeyCheck.SecretMatch): String {
+    val short = fp.takeLast(8).uppercase()
+    return when (match) {
+        SecretKeyCheck.SecretMatch.NEEDS_PASSPHRASE, SecretKeyCheck.SecretMatch.WRONG_PASSPHRASE ->
+            "The passphrase did not unlock every secret key in this file for $short. The stored secret keys were kept and nothing was imported."
+        else ->
+            "The secret keys in this file could not be confirmed as the ones for $short. The stored secret keys were kept and nothing was imported."
+    }
 }
 
 /** English text for [KeyRepoError.SecretNotProven], one sentence per reason. */
@@ -136,7 +154,12 @@ data class ImportPreview(
     val additionalKeys: List<PreviewKey> = emptyList(),
     /** 4.7.0 (item 40, #82): subkeys of this key that the import leaves out
      *  or that cannot be used, each with why (SubkeyAdmission.Issue). */
-    val leftOutSubkeys: List<com.pgpony.android.crypto.SubkeyAdmission.LeftOut> = emptyList()
+    val leftOutSubkeys: List<com.pgpony.android.crypto.SubkeyAdmission.LeftOut> = emptyList(),
+    /** 4.7.0 (item 47, #78): how many secret keys of your key pair this file
+     *  holds under different protection than the stored ones (a changed
+     *  passphrase, or the same one re-protected by gpg's export). The preview
+     *  offers to use them; nothing changes unless that is chosen. */
+    val replaceableSecrets: Int = 0
 ) {
     /** Last 8 hex chars, uppercased — same convention as PGPKeyEntity.shortFingerprint. */
     val shortFingerprint: String get() = fingerprint.takeLast(8).uppercase()
@@ -171,7 +194,10 @@ data class ImportOutcome(
     val selfSignaturesApplied: Int = 0,
     /** 4.7.0 (item 40, #82): subkeys a re-import of your own key pair added
      *  (bound by the primary, missing from the stored key). */
-    val subkeysAdded: Int = 0
+    val subkeysAdded: Int = 0,
+    /** 4.7.0 (item 47, #78): held secret keys replaced by the file's, when
+     *  Use the secret keys from this file was chosen. */
+    val secretsReplaced: Int = 0
 )
 
 class KeyRepository(
@@ -301,6 +327,7 @@ class KeyRepository(
             userEmail = parsed.second,
             algorithm = algorithm,
             isKeyPair = true,
+            trustLevel = TrustLevel.ULTIMATE,
             createdAt = System.currentTimeMillis(),
             expiresAt = expiresAtMs,
             armoredPublicKey = result.armoredPublicKey,
@@ -362,6 +389,7 @@ class KeyRepository(
             userEmail = parsed.second,
             algorithm = algorithm,
             isKeyPair = true,
+            trustLevel = TrustLevel.ULTIMATE,
             createdAt = System.currentTimeMillis(),
             expiresAt = expiresAtMs,
             armoredPublicKey = armoredPublic,
@@ -419,6 +447,7 @@ class KeyRepository(
             userEmail = parsed.second,
             algorithm = KeyAlgorithm.MLKEM768_X25519_V4,
             isKeyPair = true,
+            trustLevel = TrustLevel.ULTIMATE,
             createdAt = System.currentTimeMillis(),
             expiresAt = expiresAtMs,
             armoredPublicKey = armoredPublic,
@@ -470,6 +499,7 @@ class KeyRepository(
             userEmail = parsed.second,
             algorithm = KeyAlgorithm.V6_ED25519,
             isKeyPair = true,
+            trustLevel = TrustLevel.ULTIMATE,
             createdAt = System.currentTimeMillis(),
             expiresAt = expiresAtMs,
             armoredPublicKey = crypto.exportArmoredPublicKey(publicRing),
@@ -522,7 +552,10 @@ class KeyRepository(
      */
     private class SecretUpgrade(
         val passphrase: CharArray? = null,
-        val sameImport: Set<String> = emptySet()
+        val sameImport: Set<String> = emptySet(),
+        /** 4.7.0 (item 47, #78): replace held secrets that the file protects
+         *  differently, proven with [passphrase] first. */
+        val replaceSecrets: Boolean = false
     )
 
     /**
@@ -776,7 +809,24 @@ class KeyRepository(
                     com.pgpony.android.crypto.SubkeyAdmission.leftOut(CompositeSigPacket.dearmor(armoredText))
                 }.getOrDefault(emptyList())
             }
-        return if (leftOut.isEmpty()) preview else preview.copy(leftOutSubkeys = leftOut)
+        val withLeftOut = if (leftOut.isEmpty()) preview else preview.copy(leftOutSubkeys = leftOut)
+        // 4.7.0 (item 47, #78): your own key pair's secrets under new protection.
+        val replaceable = if (preview.isDuplicate && preview.hasPrivateKey) {
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+                runCatching { replaceableSecretCount(preview.fingerprint, armoredText) }.getOrDefault(0)
+            }
+        } else 0
+        return if (replaceable > 0) withLeftOut.copy(replaceableSecrets = replaceable) else withLeftOut
+    }
+
+    /** 4.7.0 (item 47): see [ImportPreview.replaceableSecrets]. */
+    private suspend fun replaceableSecretCount(fingerprint: String, armoredText: String): Int {
+        val existing = dedup.findExisting(fingerprint) ?: return 0
+        if (!existing.isKeyPair || existing.isCardBacked || existing.algorithm.isCompositeSign) return 0
+        val stored = store.loadPrivateKey(existing.fingerprint) ?: return 0
+        if (CompositeKeyFacade.isCompositePrimary(stored) || CompositeKeyFacade.hasV4Algo35Subkey(stored)) return 0
+        val incoming = crypto.importArmoredKey(armoredText).secretKeyRing?.encoded ?: return 0
+        return com.pgpony.android.crypto.SubkeyAdmission.replaceableSecrets(stored, incoming).size
     }
 
     private suspend fun previewSingleBase(armoredText: String): ImportPreview? {
@@ -858,6 +908,17 @@ class KeyRepository(
         fromAutocrypt: Boolean,
         secretPassphrase: CharArray?
     ): ImportOutcome = importDetailedWith(armoredText, fromAutocrypt, SecretUpgrade(passphrase = secretPassphrase))
+
+    /**
+     * 4.7.0 (item 47, #78): import [armoredText] and, for your own key pair,
+     * replace the stored secret keys that the file protects differently with
+     * the file's, so the passphrase becomes the one the file was exported
+     * with. [secretPassphrase] must unlock every secret key in the file (null
+     * for a file without a passphrase); otherwise
+     * [KeyRepoError.SecretsNotReplaced] and nothing changes.
+     */
+    suspend fun importReplacingSecrets(armoredText: String, secretPassphrase: CharArray?): ImportOutcome =
+        importDetailedWith(armoredText, false, SecretUpgrade(passphrase = secretPassphrase, replaceSecrets = true))
 
     private suspend fun importDetailedWith(
         armoredText: String,
@@ -945,6 +1006,13 @@ class KeyRepository(
             // carries nothing to merge — the secret-upgrade path above
             // only fires for public-only rows, matching iOS
             // (resolveDuplicate never touches secret material).
+            // 4.7.0 (item 47, #78): prove the file's secrets before anything changes.
+            val replaceTargets: Set<String> =
+                if (upgrade.replaceSecrets && existing.isKeyPair && !existing.isCardBacked &&
+                    importResult.secretKeyRing != null
+                ) {
+                    replaceTargetsFor(existing, importResult.secretKeyRing, upgrade)
+                } else emptySet()
             val dupPub = importResult.publicKeyRing
                 ?: return ImportOutcome(existing, ImportResolution.ALREADY_IN_KEYRING)
             val dupExpiresAtMs = dupPub.publicKey?.let { key ->
@@ -976,16 +1044,20 @@ class KeyRepository(
             val grafted = if (existing.isKeyPair && !existing.isCardBacked) {
                 importResult.secretKeyRing?.let { graftNewSecretSubkeys(existing.fingerprint, it) } ?: 0
             } else 0
+            val replaced = if (replaceTargets.isNotEmpty()) {
+                replaceStoredSecrets(existing.fingerprint, importResult.secretKeyRing!!, replaceTargets, upgrade.passphrase)
+            } else 0
             return ImportOutcome(
                 resolved,
                 when {
-                    grafted > 0 || subkeysAdded > 0 -> ImportResolution.MERGED_NEW_MATERIAL
+                    grafted > 0 || subkeysAdded > 0 || replaced > 0 -> ImportResolution.MERGED_NEW_MATERIAL
                     resolution == KeyDeduplicationService.DuplicateResolution.ALREADY_IN_KEYRING ->
                         ImportResolution.ALREADY_IN_KEYRING
                     else -> ImportResolution.MERGED_NEW_MATERIAL
                 },
                 selfSignaturesApplied = detailed.selfSignaturesApplied,
-                subkeysAdded = subkeysAdded
+                subkeysAdded = subkeysAdded,
+                secretsReplaced = replaced
             )
         }
 
@@ -1155,7 +1227,14 @@ class KeyRepository(
             ?: throw KeyRepoError.StorageFailed("Generated key produced no public key ring")
         val armored = crypto.exportArmoredPublicKey(ring)
         importCardKeyInternal(cardInfo)
-        return importArmoredKey(armored)
+        val stored = importArmoredKey(armored)
+        // 4.7.0 (item 49, #75): a key pair made in PGPony is the owner's own, so it
+        // starts at Ultimate like the software keys generateKey stores. Only the
+        // first default is raised; a level the owner already set is kept.
+        if (stored.trustLevel != TrustLevel.UNKNOWN && stored.trustLevel != TrustLevel.UNVERIFIED) return stored
+        val raised = stored.copy(trustLevel = TrustLevel.ULTIMATE)
+        dao.update(raised)
+        return raised
     }
 
     /**
@@ -1655,6 +1734,56 @@ class KeyRepository(
         }.getOrDefault(0)
 
     /**
+     * 4.7.0 (item 47, #78): the keys of [existing] whose secret [incoming]
+     * protects differently, once [incoming] is proven to unlock with the
+     * passphrase given and to hold this key's material (SecretKeyCheck, every
+     * secret in the file). Throws [KeyRepoError.SecretsNotReplaced] when it is
+     * not; an empty set when there is nothing to replace.
+     */
+    private suspend fun replaceTargetsFor(
+        existing: PGPKeyEntity,
+        incoming: PGPSecretKeyRing,
+        upgrade: SecretUpgrade
+    ): Set<String> {
+        val stored = store.loadPrivateKey(existing.fingerprint) ?: return emptySet()
+        if (CompositeKeyFacade.isCompositePrimary(stored) || CompositeKeyFacade.hasV4Algo35Subkey(stored)) return emptySet()
+        val incomingBytes = incoming.encoded
+        val targets = com.pgpony.android.crypto.SubkeyAdmission.replaceableSecrets(stored, incomingBytes)
+        if (targets.isEmpty()) return emptySet()
+        val storedPublic = store.loadPublicKey(existing.fingerprint)
+            ?: throw KeyRepoError.SecretsNotReplaced(existing.fingerprint, SecretKeyCheck.SecretMatch.UNREADABLE)
+        val match = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+            runCatching { SecretKeyCheck.checkSecretForPublic(incomingBytes, storedPublic, upgrade.passphrase) }
+                .getOrDefault(SecretKeyCheck.SecretMatch.UNREADABLE)
+        }
+        if (match != SecretKeyCheck.SecretMatch.OK) throw KeyRepoError.SecretsNotReplaced(existing.fingerprint, match)
+        return targets
+    }
+
+    /**
+     * 4.7.0 (item 47, #78): put the file's secrets for [targets] in place of
+     * the stored ones, under the stored (already merged) certificate's public
+     * parts, and point the passphrase recovery wrap at the new passphrase, as
+     * Change Passphrase does. Returns how many were replaced.
+     */
+    private fun replaceStoredSecrets(
+        fingerprint: String,
+        incoming: PGPSecretKeyRing,
+        targets: Set<String>,
+        passphrase: CharArray?
+    ): Int {
+        val calc = org.bouncycastle.openpgp.operator.jcajce.JcaKeyFingerprintCalculator()
+        val stored = PGPSecretKeyRing(store.loadPrivateKey(fingerprint) ?: return 0, calc)
+        val certificate = PGPPublicKeyRing(store.loadPublicKey(fingerprint) ?: return 0, calc)
+        val (ring, replaced) = com.pgpony.android.crypto.SubkeyAdmission.replaceSecrets(stored, incoming, certificate, targets)
+        if (replaced == 0) return 0
+        store.storePrivateKey(fingerprint, ring.encoded)
+        refreshRecovery(fingerprint, passphrase?.let { String(it) })
+        runCatching { com.pgpony.android.session.InAppPassphraseCache.clear(fingerprint) }
+        return replaced
+    }
+
+    /**
      * 4.7.0 (item 40, #82): add to the stored certificate of [entity] every
      * subkey of [incomingPublic] it lacks and that the primary verifiably
      * binds (SubkeyAdmission.newBoundSubkeys), when the import carries secret
@@ -1947,8 +2076,22 @@ class KeyRepository(
         store.deleteKeys(entity.fingerprint)
         fallbackDao?.deleteAllReferencing(entity.fingerprint)
         signingDefaultsDao?.deleteFor(entity.fingerprint)
+        runCatching { com.pgpony.android.crypto.SigningSubkeyPins.clear(entity.fingerprint) } // 4.7.0 (item 46)
         dao.purgeById(entity.id)
     }
+
+    /**
+     * 4.7.0 (item 46, #82): the signing keys of the key pair [fingerprint] that
+     * may sign now, in the automatic order (newest valid subkey first), for the
+     * Use for signing chooser on Key Details. Empty for a key without a usable
+     * software secret.
+     */
+    suspend fun signingSubkeyChoices(fingerprint: String): List<com.pgpony.android.crypto.SigningKeyOption> =
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            runCatching {
+                loadSecretKeyRing(fingerprint)?.let { crypto.signingKeyOptions(it, applyPin = false) }
+            }.getOrNull().orEmpty()
+        }
 
     /**
      * 4.7.0 (item 33): Clear All Data. Before this, the reset deleted only live

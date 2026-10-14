@@ -42,9 +42,9 @@
 //     Revocation because a key either row considered revoked should
 //     stay flagged revoked; losing that flag is safety-negative.
 //   • Trust on public-only → pair upgrade stays untouched (iOS raises
-//     to ultimate). Android never auto-assigns ULTIMATE anywhere —
-//     generateKey and fresh pair imports both leave the UNKNOWN
-//     default — so raising it here would be internally inconsistent.
+//     to ultimate). Since 4.7.0 (item 49) Android starts only key pairs
+//     generated in PGPony at ULTIMATE; imported pairs keep the UNKNOWN
+//     default, so the owner decides, and a merge does not raise them.
 
 package com.pgpony.android.data
 
