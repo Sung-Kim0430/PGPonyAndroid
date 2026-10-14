@@ -2907,7 +2907,7 @@
     <string name="import_github_label">GitHub user</string>
     <string name="import_github_placeholder">username</string>
     <string name="import_github_fetch_button">Fetch keys</string>
-    <string name="import_github_help">PGPony fetches the OpenPGP keys this user added to their GitHub account (github.com/username.gpg) through your proxy setting. Nothing is added until you check each fingerprint and tap Import.</string>
+    <string name="import_github_help">PGPony fetches the OpenPGP keys this user added to their GitHub account (github.com/username.gpg) through your proxy setting. Nothing is added until you check each fingerprint and tap Import Key.</string>
     <string name="import_github_error_invalid">That is not a GitHub username. A username has 1 to 39 letters, digits or single hyphens, and does not start or end with a hyphen.</string>
     <string name="import_github_error_no_keys_format">%1$s has no OpenPGP keys on GitHub.</string>
     <string name="import_github_error_not_found_format">There is no GitHub user named %1$s.</string>

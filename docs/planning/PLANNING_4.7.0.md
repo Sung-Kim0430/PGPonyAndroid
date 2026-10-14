@@ -118,6 +118,13 @@ channel, with the same rule: a selected recipient that cannot be loaded stops th
 
 ## 6. SSH from Termux follow-ups (#68, #69)
 
+**Status (Oct 13):** the fork's release is out: OkcAgent 0.3.0 (PGPony fork), tag v0.3.0, published Sep 23 with
+the APK, its .asc and .sha256; PGPony's link (SshTermuxSheet, releases/latest) opens it. The upstream PR from
+provider-picker (one commit on upstream master: the provider setting plus the bundled API sources) was already
+opened in September. The on-device check against the release build is not repeated for 4.7.0 (decided Oct 13): the
+SSH path was checked in 4.6.0 and RC3 does not touch it. The YubiKey part waits
+for a working key.
+
 Priority: medium. Origin: FunctionalHacker (#68), joshcangit (#69).
 
 - Publish the OkcAgent fork's release (v0.3.0) so PGPony's "Set Up SSH in Termux" link has something to open.
@@ -1163,6 +1170,14 @@ encrypt and sign options, the import preview and the remaining sheets. No new st
 
 Test: tap the label and the empty part of each row; TalkBack announces one switch or checkbox with its label.
 
+
+RC3 translation pass (Oct 13): every string missing from a locale went into all 10 (about 125 each; Korean 322,
+including 184 strings and 10 plurals that had fallen behind since 4.6.3, still no err_ strings), and strings that
+were English copies (key_count_summary, clipboard_will_clear_in and a few per locale) were translated. One
+translator and one separate reviewer per locale; a script check confirms every key and plural is present once,
+the files parse, placeholders match English and apostrophes are escaped. The Korean community revisions from the
+translations repository (PR #6, 82 strings) were applied on top, the contributor's wording kept where both
+translated a string, with five particle fixes. The English GitHub help now names the Import Key button.
 
 ## RC breakdown (set Oct 9 2026)
 

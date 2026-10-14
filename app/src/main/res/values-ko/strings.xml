@@ -133,9 +133,9 @@
     <string name="settings_category_security_title">보안 및 개인 정보</string>
     <string name="settings_category_security_subtitle">생체 인증, 카드 PIN, 클립보드, 비밀번호 저장소</string>
     <string name="settings_category_encryption_title">암호화</string>
-    <string name="settings_category_encryption_subtitle">전자 우편 형식, 아머 주석, 기본 수신자</string>
+    <string name="settings_category_encryption_subtitle">전자 우편 형식, 아머 주석, 기본 받는 사람</string>
     <string name="settings_category_keys_title">키 및 서버</string>
-    <string name="settings_category_keys_subtitle">리마인더, 키 서버, 새로 고침, 프록시, 연결된 앱</string>
+    <string name="settings_category_keys_subtitle">리마인더, 키 서버, 새로 고침, 프락시, 연결된 앱</string>
     <string name="settings_category_appearance_title">외관 및 언어</string>
     <string name="settings_category_appearance_subtitle">테마 및 언어</string>
     <string name="settings_category_backup_title">백업 및 데이터</string>
@@ -147,8 +147,8 @@
     <string name="settings_section_security">보안</string>
     <string name="settings_section_clipboard">클립보드</string>
     <string name="settings_section_appearance">외관</string>
-    <string name="settings_section_default_recipient">기본 수신자</string>
-    <string name="settings_default_recipient_label">암호화할 때 수신자를 미리 선택합니다</string>
+    <string name="settings_section_default_recipient">기본 받는 사람</string>
+    <string name="settings_default_recipient_label">암호화할 때 받는 사람을 미리 선택합니다</string>
     <string name="settings_default_recipient_none">없음</string>
     <string name="settings_default_recipient_pinned">고정됨</string>
     <string name="settings_default_recipient_last">마지막으로 사용됨</string>
@@ -338,8 +338,8 @@
     <string name="encrypt_output_encrypted_message">암호화된 메시지</string>
 
     <!-- ── Recipients section ───────────────────────────────────────── -->
-    <string name="encrypt_recipients_label">수신자</string>
-    <string name="encrypt_recipients_choose">수신자를 선택하세요</string>
+    <string name="encrypt_recipients_label">받는 사람</string>
+    <string name="encrypt_recipients_choose">받는 사람을 선택하세요</string>
     <string name="encrypt_recipients_selected_count">%1$d\u00A0명 선택됨</string>
     <string name="encrypt_recipients_no_keys">사용 가능한 키가 없습니다. 먼저 키를 가져오거나 생성해 주세요.</string>
     <string name="encrypt_recipients_search_label">키 검색</string>
@@ -357,7 +357,7 @@
     <!-- ── Sign-this-too toggle ─────────────────────────────────────── -->
     <string name="encrypt_also_sign_message_title">이 메시지에 서명도 하기</string>
     <string name="encrypt_also_sign_file_title">이 파일에 서명도 하기</string>
-    <string name="encrypt_also_sign_subtitle_format">수신자들은 이것이 %1$s에게서 온 것인지를 검증할 수 있습니다</string>
+    <string name="encrypt_also_sign_subtitle_format">받는 사람들은 이것이 %1$s에게서 온 것인지를 검증할 수 있습니다</string>
 
     <!-- ── Sign-as picker ───────────────────────────────────────────── -->
     <string name="encrypt_sign_as_label">다음으로 서명</string>
@@ -392,7 +392,7 @@
     <string name="encrypt_passphrase_skip_signing">서명하지 않고 암호화</string>
 
     <!-- ── Inline tooltip ───────────────────────────────────────────── -->
-    <string name="encrypt_tooltip_input">위에 메시지를 입력하거나 붙여넣고, 아래에서 한 명 이상의 수신자를 고른 뒤 암호화를 누르면 어디로든 복사해 보낼 수 있는 암호문이 만들어집니다.</string>
+    <string name="encrypt_tooltip_input">위에 메시지를 입력하거나 붙여넣고, 아래에서 한 명 이상의 받는 사람을 고른 뒤 암호화를 누르면 어디로든 복사해 보낼 수 있는 암호문이 만들어집니다.</string>
 
     <!-- ════════════════════════════════════════════════════════════════
          Decrypt screen
@@ -482,9 +482,9 @@
     <string name="result_encrypt_header_signed">메시지 서명됨</string>
     <string name="result_encrypt_header_encrypted">메시지 암호화됨</string>
     <string name="result_encrypt_badge_signed">서명됨</string>
-    <string name="result_encrypt_unsigned_pqc_note">서명 없이 전송됨: 수신자가 이전 v4 키를 사용하므로 양자 내성 서명을 제외했습니다. 메시지는 모든 수신자에게 암호화되어 있습니다.</string>
-    <string name="pqc_v4_sign_title">일부 수신자는 이 서명을 읽지 못할 수 있습니다</string>
-    <string name="pqc_v4_sign_message">서명 키가 양자 내성(ML-DSA) 키이고 수신자 중 한 명 이상이 이전 v4 키를 사용합니다. PGPony는 서명을 읽지만, GnuPG는 오류와 함께 메시지를 표시하고 Thunderbird는 메시지를 전혀 열 수 없습니다.</string>
+    <string name="result_encrypt_unsigned_pqc_note">서명 없이 전송됨: 받는 사람이 이전 v4 키를 사용하므로 포스트 양자 서명을 제외했습니다. 메시지는 모든 받는 사람에게 암호화되어 있습니다.</string>
+    <string name="pqc_v4_sign_title">일부 받는 사람은 이 서명을 읽지 못할 수 있습니다</string>
+    <string name="pqc_v4_sign_message">서명 키가 포스트 양자(ML-DSA) 키이고 받는 사람 중 한 명 이상이 이전 v4 키를 사용합니다. PGPony는 서명을 읽지만, GnuPG는 오류와 함께 메시지를 표시하고 Thunderbird는 메시지를 전혀 열 수 없습니다.</string>
     <string name="pqc_v4_sign_anyway">그래도 서명</string>
     <string name="pqc_v4_send_unsigned">서명 없이 보내기</string>
     <string name="result_encrypt_output_signed">서명된 출력</string>
@@ -514,7 +514,7 @@
          ════════════════════════════════════════════════════════════════ -->
     <string name="encdec_error_sign_no_input">서명할 메시지를 입력하세요</string>
     <string name="encdec_error_encrypt_no_input">암호화할 메시지를 입력하세요</string>
-    <string name="encdec_error_no_recipients">적어도 수신자를 한\u00A0명 이상 선택하세요</string>
+    <string name="encdec_error_no_recipients">적어도 받는 사람을 한\u00A0명 이상 선택하세요</string>
     <string name="encdec_error_password_required">비밀구절을 입력하세요</string>
     <string name="encdec_error_password_mismatch">비밀구절이 일치하지 않습니다</string>
     <string name="encdec_error_no_file_to_encrypt">먼저 암호화할 파일을 선택하세요</string>
@@ -558,7 +558,7 @@
 
     <!-- ── Delete confirmation ──────────────────────────────────────── -->
     <string name="keyring_delete_dialog_title">키를 삭제할까요?</string>
-    <string name="keyring_delete_dialog_body_format">Delete %1$s (%2$s)? It moves to Recently Deleted for %3$d days, then is removed for good. You can restore it until then.</string>
+    <string name="keyring_delete_dialog_body_format">%1$s(%2$s)을(를) 삭제할까요? 최근 삭제됨으로 %3$d\u00A0일 동안 옮겨졌다가 그 후 영구히 제거됩니다. 그 전까지는 복원할 수 있습니다.</string>
     <string name="keyring_delete_dialog_confirm">삭제</string>
 
     <!-- ── First-visit tooltip ──────────────────────────────────────── -->
@@ -578,13 +578,13 @@
     <!-- ── Generate Key sheet ───────────────────────────────────────── -->
     <string name="keyring_generate_title">키쌍 생성</string>
     <string name="keyring_generate_name_label">이름</string>
-    <string name="keyring_generate_email_label">Email</string>
+    <string name="keyring_generate_email_label">전자 우편</string>
     <string name="keyring_generate_algorithm_label">알고리즘</string>
-    <string name="keyring_generate_algorithm_caption_v6">OpenPGP v6 (RFC 9580). 전용 서명 보조 키와 하드웨어 키 지원을 갖춘 현대적 형식입니다. 수신자가 오래된 소프트웨어를 쓴다면 v4 형식을 고르세요.</string>
+    <string name="keyring_generate_algorithm_caption_v6">OpenPGP v6 (RFC 9580). 전용 서명 보조 키와 하드웨어 키 지원을 갖춘 현대적 형식입니다. 받는 사람이 오래된 소프트웨어를 쓴다면 v4 형식을 고르세요.</string>
     <string name="keyring_generate_algorithm_caption_ed25519">빠르고 작은 타원 곡선 키 (OpenPGP v4). 널리 지원됩니다. 좋은 기본값입니다.</string>
     <string name="keyring_generate_algorithm_caption_rsa">고전적인 RSA 키 (OpenPGP v4). 최대 호환성. Ed25519보다 크고 느립니다.</string>
-    <string name="keyring_generate_algorithm_caption_pqc_ietf">Post-quantum hybrid: ML-KEM plus an elliptic curve on a modern v6 key, following RFC 9980, the OpenPGP post-quantum standard. Resists quantum attacks; readable only by up-to-date OpenPGP software. ML-KEM-1024 is the higher-strength option.</string>
-    <string name="keyring_generate_algorithm_caption_pqc_librepgp">Post-quantum hybrid: ML-KEM (the algorithm GnuPG still calls Kyber) plus an elliptic curve, in the LibrePGP format GnuPG 2.5.x uses. gpg shows these keys as ky768_cv25519 and ky1024_cv448. ML-KEM-1024 is the higher-strength option.</string>
+    <string name="keyring_generate_algorithm_caption_pqc_ietf">포스트 양자 하이브리드: 현대적인 v6 키에 ML-KEM과 타원 곡선을 결합하며, OpenPGP 포스트 양자 표준인 RFC 9980을 따릅니다. 양자 공격에 저항하고, 최신 OpenPGP 소프트웨어에서만 읽을 수 있습니다. ML-KEM-1024가 더 강한 선택지입니다.</string>
+    <string name="keyring_generate_algorithm_caption_pqc_librepgp">포스트 양자 하이브리드: ML-KEM(GnuPG가 아직 Kyber라고 부르는 알고리즘)과 타원 곡선을 GnuPG 2.5.x가 쓰는 LibrePGP 형식으로 결합합니다. gpg는 이런 키를 ky768_cv25519 및 ky1024_cv448로 표시합니다. ML-KEM-1024가 더 강한 선택지입니다.</string>
     <string name="keyring_generate_expiration_label">만료</string>
     <string name="keyring_generate_passphrase_label">비밀구절 (선택)</string>
     <string name="keyring_generate_passphrase_confirm_label">비밀구절 확인</string>
@@ -613,7 +613,7 @@
     <string name="import_method_paste">붙여넣기</string>
     <string name="import_method_file">파일</string>
     <string name="import_method_qr_code">QR</string>
-    <string name="import_method_key_server">Server</string>
+    <string name="import_method_key_server">서버</string>
 
     <!-- ── ExpirationOption enum (KeyringViewModel) ─────────────────── -->
     <string name="expiration_one_year">1\u00A0년</string>
@@ -648,7 +648,7 @@
     <string name="import_keyserver_query_placeholder">alice@example.com</string>
     <string name="import_keyserver_search_button">검색</string>
     <string name="import_keyserver_search_button_in_progress">검색 중…</string>
-    <string name="import_keyserver_help">전자 우편 주소의 경우 PGPony는 먼저 수신자 자신의 도메인에서 Web Key Directory를 시도한 뒤, 설정된 키 서버(keys.pgpony.app가 먼저)를, 그다음 keys.openpgp.org를 시도합니다. 지문은 WKD를 건너뛰고 같은 순서로 키 서버를 검색합니다.</string>
+    <string name="import_keyserver_help">전자 우편 주소의 경우 PGPony는 먼저 받는 사람 자신의 도메인에서 Web Key Directory를 시도한 뒤, 설정된 키 서버(keys.pgpony.app가 먼저)를, 그다음 keys.openpgp.org를 시도합니다. 지문은 WKD를 건너뛰고 같은 순서로 키 서버를 검색합니다.</string>
 
     <!-- ── Preview card ─────────────────────────────────────────────── -->
     <string name="import_preview_type_key_pair">키쌍 (공개 + 개인)</string>
@@ -866,7 +866,7 @@
     <!-- ── Delete dialog ───────────────────────────────────────────── -->
     <string name="key_detail_delete_dialog_title">키 삭제</string>
     <string name="key_detail_delete_dialog_body_key_pair">공개 키와 개인 키가 모두 영구히 삭제됩니다.</string>
-    <string name="key_detail_delete_dialog_body_public_only">This key moves to Recently Deleted for %1$d days, then is removed for good. You can restore it until then.</string>
+    <string name="key_detail_delete_dialog_body_public_only">이 키는 최근 삭제됨으로 %1$d\u00A0일 동안 옮겨졌다가 그 후 영구히 제거됩니다. 그 전까지는 복원할 수 있습니다.</string>
     <string name="key_detail_delete_dialog_confirm">삭제</string>
     <!-- RC3 §L (#21): key-pair delete safeguards sheet. -->
     <string name="key_delete_sheet_title">키쌍을 삭제할까요?</string>
@@ -914,8 +914,8 @@
     <string name="key_detail_fallbacks_move_down">아래로 이동</string>
     <string name="key_detail_section_signing_defaults">서명 기본값</string>
     <string name="key_detail_signing_defaults_explainer">이 키가 서명할 때는 각 상황에서 이 키들 대신 사용합니다. \"이 키\"는 일반 동작을 유지합니다.</string>
-    <string name="key_detail_signing_default_pqc">양자 내성 수신자에게 암호화할 때</string>
-    <string name="key_detail_signing_default_classical">고전 수신자에게 암호화할 때</string>
+    <string name="key_detail_signing_default_pqc">포스트 양자 받는 사람에게 암호화할 때</string>
+    <string name="key_detail_signing_default_classical">고전 받는 사람에게 암호화할 때</string>
     <string name="key_detail_signing_default_sign_only">암호화 없이 서명할 때</string>
     <string name="key_detail_signing_default_self">이 키</string>
 
@@ -944,7 +944,7 @@
     <string name="key_detail_revoked_on_format">%1$s에 철회됨</string>
     <string name="key_detail_revoked_label">철회됨</string>
     <string name="key_detail_revoked_no_reason">이유가 명시되지 않음</string>
-    <string name="key_detail_revoked_explainer">이 키는 새 메시지 서명이나 수신자 선택에 더 이상 쓸 수 없습니다. 과거 메시지는 여전히 복호화할 수 있습니다.</string>
+    <string name="key_detail_revoked_explainer">이 키는 새 메시지 서명이나 받는 사람 선택에 더 이상 쓸 수 없습니다. 과거 메시지는 여전히 복호화할 수 있습니다.</string>
 
     <!-- ════════════════════════════════════════════════════════════════
          KeyDetailViewModel — status + error messages
@@ -1021,7 +1021,7 @@
 
     <!-- ── RevokeKeySheet ───────────────────────────────────────────── -->
     <string name="revoke_sheet_title">키 철회</string>
-    <string name="revoke_sheet_explainer_format">%1$s의 RFC 4880 철회 인증서를 만들어 적용합니다. 키는 키링에 남지만 철회됨으로 표시됩니다. 과거 메시지는 여전히 복호화할 수 있지만, 새 서명이나 수신자 선택에는 쓸 수 없습니다. 한번 적용하면 되돌릴 수 없습니다.</string>
+    <string name="revoke_sheet_explainer_format">%1$s의 RFC 4880 철회 인증서를 만들어 적용합니다. 키는 키링에 남지만 철회됨으로 표시됩니다. 과거 메시지는 여전히 복호화할 수 있지만, 새 서명이나 받는 사람 선택에는 쓸 수 없습니다. 한번 적용하면 되돌릴 수 없습니다.</string>
     <string name="revoke_sheet_reason_label">이유</string>
     <string name="revoke_sheet_comment_label">주석 (선택)</string>
     <string name="revoke_sheet_comment_placeholder">예: 키 0xABCD1234로 대체됨</string>
@@ -1045,7 +1045,7 @@
 
     <!-- ── Getting Started Q&amp;A ─────────────────────────────────────── -->
     <string name="faq_q_what_is_pgp">PGP 암호화란 무엇인가요?</string>
-    <string name="faq_a_what_is_pgp">PGP(Pretty Good Privacy)는 메시지와 파일을 암호화해 의도된 수신자만 읽을 수 있게 하는 오래된 표준입니다.\n\n모든 사용자에게 키 한 쌍을 줍니다: 자유롭게 공유하는 공개 키와, 비밀로 유지하는 개인 키입니다. 공개 키를 가진 누구나 당신에게 메시지를 암호화할 수 있지만, 개인 키만이 복호화할 수 있습니다.\n\nPGPony는 현대 OpenPGP 표준(RFC 4880 + RFC 9580)을 구현하므로, 여기서 암호화한 메시지는 GnuPG, OpenKeychain 등 어떤 OpenPGP 도구 사용자든 읽을 수 있습니다.</string>
+    <string name="faq_a_what_is_pgp">PGP(Pretty Good Privacy)는 메시지와 파일을 암호화해 의도된 받는 사람만 읽을 수 있게 하는 오래된 표준입니다.\n\n모든 사용자에게 키 한 쌍을 줍니다: 자유롭게 공유하는 공개 키와, 비밀로 유지하는 개인 키입니다. 공개 키를 가진 누구나 당신에게 메시지를 암호화할 수 있지만, 개인 키만이 복호화할 수 있습니다.\n\nPGPony는 현대 OpenPGP 표준(RFC 4880 + RFC 9580)을 구현하므로, 여기서 암호화한 메시지는 GnuPG, OpenKeychain 등 어떤 OpenPGP 도구 사용자든 읽을 수 있습니다.</string>
 
     <string name="faq_q_need_key">이 앱을 쓰려면 키가 필요한가요?</string>
     <string name="faq_a_need_key">네. 무엇이든 암호화하거나 복호화하려면 키쌍이 최소 하나 필요합니다.\n\n키링 탭을 열고 + 버튼을 누르세요. 새 키쌍 생성(새 사용자에게 권장)을 하거나, GnuPG 같은 데스크탑 도구에서 이미 PGP를 쓰고 있다면 기존 키 가져오기를 할 수 있습니다.\n\n키를 생성할 때 이름과 전자 우편을 입력해 다른 사람들이 식별할 수 있게 하고, 선택적으로 비밀구절로 보호해 추가 보안을 얻으세요.</string>
@@ -1058,7 +1058,7 @@
 
     <!-- ── Encrypt & Decrypt Q&amp;A ────────────────────────────────────── -->
     <string name="faq_q_how_to_encrypt">메시지는 어떻게 암호화하나요?</string>
-    <string name="faq_a_how_to_encrypt">암호화 탭을 여세요. 입력 영역에 메시지를 입력하거나 붙여넣고, 연락처에서 한 명 이상의 수신자를 고르세요. (나중에 읽을 수 있게 자신도 포함하면 좋습니다.)\n\n암호화를 누르세요. PGPony는 어느 경로로든 복사해 보낼 수 있는 암호화된 텍스트 블록을 만들어 냅니다. 전자 우편, SMS, Slack, 어디든요.\n\n선택한 수신자만 복호화할 수 있습니다.</string>
+    <string name="faq_a_how_to_encrypt">암호화 탭을 여세요. 입력 영역에 메시지를 입력하거나 붙여넣고, 연락처에서 한 명 이상의 받는 사람을 고르세요. (나중에 읽을 수 있게 자신도 포함하면 좋습니다.)\n\n암호화를 누르세요. PGPony는 어느 경로로든 복사해 보낼 수 있는 암호화된 텍스트 블록을 만들어 냅니다. 전자 우편, SMS, Slack, 어디든요.\n\n선택한 받는 사람만 복호화할 수 있습니다.</string>
 
     <string name="faq_q_how_to_decrypt">받은 암호화 메시지는 어떻게 복호화하나요?</string>
     <string name="faq_a_how_to_decrypt">복호화 탭을 열고 암호화된 메시지를 붙여넣으세요. `-----BEGIN PGP MESSAGE-----`로 시작하고 `-----END PGP MESSAGE-----`로 끝나야 합니다.\n\n복호화를 누르세요. 메시지가 당신의 키 중 하나로 암호화되었다면 PGPony가 평문을 보여줍니다. 개인 키가 비밀구절로 보호되어 있다면 먼저 비밀구절을 물어봅니다.\n\n다른 앱에서 .asc/.pgp/.gpg 파일을 PGPony로 직접 공유할 수도 있습니다. Android가 PGPony를 공유 대상으로 제안합니다.</string>
@@ -1083,7 +1083,7 @@
     <string name="faq_a_biometric_lock">생체 인증 잠금은 잠금 해제된 폰을 집어 든 누구도 지문이나 얼굴로 인증하지 않고는 PGPony를 열지 못하게 합니다.\n\n키에 암호학적 보호를 추가하지는 않습니다. 개인 키는 이미 저장 시 암호화되어 있습니다. 생체 인증 잠금은 UI 관문입니다.\n\n복호화할 때 요구도 켤 수 있는데, 메시지를 복호화할 때마다 생체 인증을 요구합니다. 다른 사람 손에 넘어간 잠금 해제된 폰이 걱정이라면 켜세요.</string>
 
     <string name="faq_q_algorithms">PGPony는 어떤 암호 알고리즘을 쓰나요?</string>
-    <string name="faq_a_algorithms">새 키는 기본적으로 서명에 Ed25519, 암호화에 Curve25519를 씁니다. Signal, SSH, TLS 1.3이 쓰는 것과 같은 타원 곡선입니다.\n\n메시지는 AES-256, AEAD OCB 모드(RFC 9580)로 대칭 암호화되며, 세션 키는 각 수신자의 공개 키로 암호화됩니다.\n\nPGPony는 오래된 OpenPGP 설치와의 상호 운용을 위해 고전 RSA와 DSA 키도 읽고 가져올 수 있지만, 새 신원에는 현대적인 곡선 기반 키만 생성합니다.\n\n모든 암호는 Bouncy Castle 1.85가 수행합니다. 전 세계 기업과 정부 시스템에서 감사받고 쓰이는 표준 라이브러리입니다.</string>
+    <string name="faq_a_algorithms">새 키는 기본적으로 서명에 Ed25519, 암호화에 Curve25519를 씁니다. Signal, SSH, TLS 1.3이 쓰는 것과 같은 타원 곡선입니다.\n\n메시지는 AES-256, AEAD OCB 모드(RFC 9580)로 대칭 암호화되며, 세션 키는 각 받는 사람의 공개 키로 암호화됩니다.\n\nPGPony는 오래된 OpenPGP 설치와의 상호 운용을 위해 고전 RSA와 DSA 키도 읽고 가져올 수 있지만, 새 신원에는 현대적인 곡선 기반 키만 생성합니다.\n\n모든 암호는 Bouncy Castle 1.85가 수행합니다. 전 세계 기업과 정부 시스템에서 감사받고 쓰이는 표준 라이브러리입니다.</string>
 
     <!-- ════════════════════════════════════════════════════════════════
          MainActivity tabs — adds Contacts (was missing earlier)
@@ -1124,13 +1124,13 @@
     <string name="security_info_not_doing_bullet_4">Bouncy Castle 외 제3자 암호 라이브러리를 쓰지 않음</string>
     <string name="security_info_not_doing_bullet_5">비밀구절을 저장하지 않음. 메모리에서만 잠깐 사용됩니다</string>
 
-    <string name="security_info_footer">Full privacy policy and technical details: pgpony.app/privacy</string>
+    <string name="security_info_footer">전체 개인 정보 정책과 기술 세부 사항: pgpony.app/privacy</string>
 
     <!-- ════════════════════════════════════════════════════════════════
          Onboarding — slide carousel (OnboardingSlide.kt)
          ════════════════════════════════════════════════════════════════ -->
     <string name="onboarding_slide_welcome_title">PGPony에 오신 것을 환영합니다</string>
-    <string name="onboarding_slide_welcome_body">주머니 속의 진짜 PGP 암호화.\n\n의도된 수신자만 읽을 수 있는 메시지를 보내세요. 서버도, 계정도, 추적도 없습니다.</string>
+    <string name="onboarding_slide_welcome_body">주머니 속의 진짜 PGP 암호화.\n\n의도된 받는 사람만 읽을 수 있는 메시지를 보내세요. 서버도, 계정도, 추적도 없습니다.</string>
 
     <string name="onboarding_slide_key_title">키로 시작하세요</string>
     <string name="onboarding_slide_key_body">PGP는 두 개의 키로 작동합니다: 자유롭게 공유하는 공개 키와 비밀로 유지하는 개인 키입니다.\n\n공개 키를 가진 누구나 당신에게 암호화된 메시지를 보낼 수 있지만, 개인 키만 복호화할 수 있습니다.</string>
@@ -1402,14 +1402,14 @@
          SignAsSheet (encrypt-time signer picker)
          ════════════════════════════════════════════════════════════════ -->
     <string name="sign_as_sheet_title">다음으로 서명</string>
-    <string name="sign_as_sheet_explainer">수신자들이 메시지가 이 키에서 왔음을 검증할 수 있습니다. 그 신원의 공개 키를 가진 누구나 서명자로서 당신의 이름을 보게 됩니다.</string>
+    <string name="sign_as_sheet_explainer">받는 사람들이 메시지가 이 키에서 왔음을 검증할 수 있습니다. 그 신원의 공개 키를 가진 누구나 서명자로서 당신의 이름을 보게 됩니다.</string>
     <string name="sign_as_sheet_selected_cd">선택됨</string>
     <string name="sign_as_subkey_title">서명 키</string>
     <string name="sign_as_subkey_explainer">이 키에는 서명 키가 둘 이상 있습니다. 어느 것으로 서명할지 고르세요.</string>
     <string name="sign_as_subkey_automatic">자동</string>
     <string name="sign_as_subkey_automatic_detail">%1$s · %2$s</string>
     <string name="sign_as_subkey_primary_label">기본 키 (%1$s)</string>
-    <string name="sign_as_subkey_subkey_label">서브키 (%1$s)</string>
+    <string name="sign_as_subkey_subkey_label">보조 키 (%1$s)</string>
     <string name="sign_as_sheet_default_badge">기본</string>
     <string name="sign_as_sheet_empty">사용 가능한 키쌍이 없습니다.</string>
     <string name="sign_as_sheet_set_default">기본 서명자로 설정</string>
@@ -1459,7 +1459,7 @@
     <string name="share_target_root_subtitle_text">공유된 텍스트를 어떻게 처리할지 고르세요:</string>
     <string name="share_target_root_subtitle_file_format">%1$s을(를) 어떻게 처리할지 고르세요:</string>
     <string name="share_target_action_encrypt">암호화</string>
-    <string name="share_target_action_encrypt_subtitle">수신자를 골라 암호문을 만듭니다</string>
+    <string name="share_target_action_encrypt_subtitle">받는 사람을 골라 암호문을 만듭니다</string>
     <string name="share_target_action_decrypt">복호화</string>
     <string name="share_target_action_decrypt_subtitle">내 키 중 하나로 이 PGP 메시지를 읽습니다</string>
     <string name="share_target_open_full_app">PGPony에서 열기</string>
@@ -1474,14 +1474,14 @@
 
     <!-- Encrypt screen -->
     <string name="share_target_encrypt_title">다음으로 암호화…</string>
-    <string name="share_target_encrypt_recipient_unusable_format">Nothing was encrypted: PGPony could not load an encryption key for %1$s.</string>
-    <string name="share_target_encrypt_recipients_empty">키링에 수신자 키가 없습니다. 먼저 본 앱에서 공개 키를 추가하세요.</string>
-    <string name="share_target_encrypt_no_recipients_selected">수신자를 한 명 이상 선택하세요</string>
+    <string name="share_target_encrypt_recipient_unusable_format">아무것도 암호화되지 않았습니다. PGPony가 %1$s의 암호화 키를 불러올 수 없습니다.</string>
+    <string name="share_target_encrypt_recipients_empty">키링에 받는 사람 키가 없습니다. 먼저 본 앱에서 공개 키를 추가하세요.</string>
+    <string name="share_target_encrypt_no_recipients_selected">받는 사람을 한 명 이상 선택하세요</string>
     <string name="share_target_encrypt_button">암호화</string>
     <string name="share_target_encrypt_result_title">암호화됨</string>
     <string name="share_target_encrypt_file_result_title">암호화된 파일</string>
     <string name="share_target_encrypt_file_result_subtitle">파일이 암호화되었습니다. 암호화된 복사본을 공유하거나 저장하세요.</string>
-    <string name="share_target_encrypt_file_result_size_format">%1$d 바이트</string>
+    <string name="share_target_encrypt_file_result_size_format">%1$d\u00A0바이트</string>
     <string name="share_target_encrypt_file_result_share_button">암호화된 파일 공유</string>
     <string name="share_target_encrypt_result_subtitle_format">암호문, %1$d\u00A0자</string>
 
@@ -1666,8 +1666,8 @@
     <string name="pass_entry_card_nfc_off">이 항목에는 하드웨어 키가 필요하지만, 이 기기에서 NFC가 꺼져 있거나 없습니다. NFC를 켜고 다시 시도하세요.</string>
     <string name="pass_entry_card_failed">하드웨어 키 복호화에 실패했습니다.</string>
     <plurals name="pass_store_recipients">
-        <item quantity="one">수신자 %1$d\u00A0명</item>
-        <item quantity="other">수신자 %1$d\u00A0명</item>
+        <item quantity="one">받는 사람 %1$d\u00A0명</item>
+        <item quantity="other">받는 사람 %1$d\u00A0명</item>
     </plurals>
     <string name="card_pin_change_title">사용자 PIN 변경</string>
     <string name="card_pin_change_intro">하드웨어 키의 사용자 PIN(PW1)을 변경합니다. 서명과 복호화 때 입력하는 PIN입니다. 관리자 PIN이 아닙니다.</string>
@@ -1719,8 +1719,8 @@
     <string name="decrypt_card_message_fallback_name">보안 키</string>
     <!-- 4.1.0: hidden recipient (gpg -R). The message names nobody, so the
          card is offered only after every software key has failed. -->
-    <string name="decrypt_card_message_note_hidden">이 메시지는 수신자를 숨깁니다. PIN을 입력하고 \"%1$s\"을(를) 탭해 하드웨어 키를 시도하세요.</string>
-    <string name="decrypt_hidden_recipient_no_software_key">소프트웨어 키 어느 것도 이 메시지를 열지 못했습니다. 수신자를 숨기고 있어 일치시킬 키 ID가 없었습니다.</string>
+    <string name="decrypt_card_message_note_hidden">이 메시지는 받는 사람을 숨깁니다. PIN을 입력하고 \"%1$s\"을(를) 탭해 하드웨어 키를 시도하세요.</string>
+    <string name="decrypt_hidden_recipient_no_software_key">소프트웨어 키 어느 것도 이 메시지를 열지 못했습니다. 받는 사람을 숨기고 있어 일치시킬 키 ID가 없었습니다.</string>
 
     <!-- HW Phase 3 — share-target card decrypt -->
     <string name="share_target_card_label">하드웨어 키</string>
@@ -1755,7 +1755,7 @@
     <string name="key_detail_action_change_card_pin">카드 PIN 변경</string>
     <!-- 3.1.0 Phase 2 (C4) — file password encryption + import read error -->
     <string name="encrypt_file_method_label">다음으로 암호화</string>
-    <string name="encrypt_file_method_recipients">수신자</string>
+    <string name="encrypt_file_method_recipients">받는 사람</string>
     <string name="encrypt_file_method_password">비밀번호</string>
     <string name="encrypt_password_unrecoverable">비밀구절을 잊으면 파일을 복구할 수 없습니다. 백업도 초기화도 없습니다.</string>
     <string name="file_enc_result_badge_password">비밀번호로 보호됨</string>
@@ -1781,16 +1781,16 @@
          path could not unlock: refuse rather than silently produce an
          unsigned bundle. Card keys no longer reach it, they route to the
          PIN dialog instead. -->
-    <string name="encdec_error_bundle_signing_key">이 번들을 서명할 수 없었습니다: 선택한 서명 키의 잠금을 해제할 수 없었습니다. 다른 서명 키를 고르거나 서명을 끄세요.</string>
+    <string name="encdec_error_bundle_signing_key">이 묶음을 서명할 수 없었습니다: 선택한 서명 키의 잠금을 해제할 수 없었습니다. 다른 서명 키를 고르거나 서명을 끄세요.</string>
     <string name="bundle_result_title">묶음 암호화됨</string>
-    <string name="bundle_result_subtitle_format">첨부 %1$d\u00A0개 · 수신자 %2$d\u00A0명</string>
+    <string name="bundle_result_subtitle_format">첨부 %1$d\u00A0개 · 받는 사람 %2$d\u00A0명</string>
     <string name="bundle_result_section_email">전자 우편으로 보내기</string>
     <string name="bundle_result_section_file">파일로 보내기</string>
     <string name="bundle_result_share_eml">전자 우편으로 공유 (.eml)</string>
     <string name="bundle_result_share_asc">암호화된 .asc 공유</string>
     <string name="bundle_result_copy_inline">인라인 블록 복사</string>
     <string name="bundle_result_copy_too_large">복사하기에 너무 큽니다. 대신 파일로 공유하거나 저장하세요.</string>
-    <string name="bundle_result_export_writing">파일 쓰는 중… 큰 번들은 시간이 걸릴 수 있습니다.</string>
+    <string name="bundle_result_export_writing">파일 쓰는 중… 큰 묶음은 시간이 걸릴 수 있습니다.</string>
     <!-- 3.1.0 Phase 5 Fix1 — Bundle result Save-to-Files -->
     <string name="bundle_result_save_eml">.eml을 파일에 저장</string>
     <string name="bundle_result_save_asc">.asc를 파일에 저장</string>
@@ -1818,13 +1818,13 @@
     <string name="settings_passphrase_cache_title">키 비밀구절 기억</string>
     <string name="settings_passphrase_cache_subtitle">연결된 앱에서 입력한 비밀구절을 선택한 시간 동안 메모리에 유지합니다. 디스크에 저장되지 않고, 잘못된 비밀구절이나 앱 종료 시 지워집니다.</string>
     <string name="settings_passphrase_cache_countdown_format">비밀구절 기억 중. %1$s 후 지워집니다</string>
-    <string name="settings_passphrase_cache_none_held">None remembered by PGPony itself. Passphrases typed for mail and other connected apps are kept apart, and Clear now forgets those too.</string>
+    <string name="settings_passphrase_cache_none_held">PGPony 자체가 기억하는 비밀구절은 없습니다. 메일과 다른 연결된 앱에서 입력한 비밀구절은 따로 보관되며, 지금 비우기를 누르면 그것들도 잊습니다.</string>
     <string name="settings_passphrase_cache_held_until_cleared">내가 지울 때까지 비밀구절이 기억됩니다.</string>
     <!-- 4.0.0 Phase 9b: settings parity (clear inputs, pubkey comment, licenses) -->
     <string name="settings_clear_inputs_title">암호화 후 입력 지우기</string>
     <string name="settings_clear_inputs_subtitle">암호화 결과를 닫을 때 메시지, 파일, 비밀번호를 지웁니다</string>
     <string name="settings_argon2_title">더 강한 비밀구절 보호 (Argon2)</string>
-    <string name="settings_argon2_subtitle">비밀번호로 암호화된 파일과 메시지에 Argon2id를 씁니다. 무차별 대입에 더 강하지만, 수신자가 GnuPG 2.4 이상이어야 열 수 있습니다. 가장 넓은 호환성을 위해 기본적으로 꺼져 있습니다.</string>
+    <string name="settings_argon2_subtitle">비밀번호로 암호화된 파일과 메시지에 Argon2id를 씁니다. 무차별 대입에 더 강하지만, 받는 사람이 GnuPG 2.4 이상이어야 열 수 있습니다. 가장 넓은 호환성을 위해 기본적으로 꺼져 있습니다.</string>
     <string name="settings_armor_comment_pubkey_title">내보내는 공개 키에 주석 포함</string>
     <string name="settings_armor_comment_pubkey_subtitle">공개 키를 복사·공유·저장할 때 주석 헤더를 추가합니다. 키 서버 올리기와 QR 코드에는 주석이 없습니다.</string>
     <string name="settings_about_licenses_title">라이선스</string>
@@ -1922,7 +1922,7 @@
     <string name="settings_key_refresh_subtitle">키 서버에서 키를 자동으로 다시 확인해 철회와 만료를 알아차립니다</string>
     <string name="settings_key_refresh_wifi_title">Wi-Fi 전용</string>
     <string name="settings_key_refresh_wifi_subtitle">무제한 네트워크에서만 새로 고침</string>
-    <string name="settings_key_refresh_disclosure">켜면 PGPony는 주기적으로 보유 키의 지문을 활성화된 키 서버(keys.pgpony.app 포함)로 보내 갱신을 받아옵니다. 이를 Tor로 유지하려면 프록시의 onion 옵션을 쓰세요.</string>
+    <string name="settings_key_refresh_disclosure">켜면 PGPony는 주기적으로 보유 키의 지문을 활성화된 키 서버(keys.pgpony.app 포함)로 보내 갱신을 받아옵니다. 이를 Tor로 유지하려면 프락시의 onion 옵션을 쓰세요.</string>
     <string name="settings_key_refresh_foss_enable">F-Droid 빌드는 기본적으로 이것이 꺼져 있습니다. 켜면 PGPony가 철회를 자동으로 확인합니다.</string>
     <string name="key_refresh_notif_revoked_title">키가 철회되었습니다</string>
     <string name="key_refresh_notif_revoked_body">%1$s의 키가 이제 키 서버에서 철회되었습니다. 사용을 멈추는 것이 좋을 수 있습니다.</string>
@@ -2025,19 +2025,19 @@
     <string name="settings_security_confirm_enable_subtitle">인증하여 이 보안 설정을 켭니다</string>
     <string name="settings_security_confirm_disable_subtitle">인증하여 이 보안 설정을 끕니다</string>
     <string name="settings_protect_destructive_title">파괴적 작업 보호</string>
-    <string name="settings_protect_destructive_subtitle">키 삭제, 서브키 제거, 모든 데이터 지우기 전에 기기 인증을 요구합니다. 이 기능이 꺼져 있어도 확인 대화상자는 계속 표시됩니다.</string>
+    <string name="settings_protect_destructive_subtitle">키 삭제, 보조 키 제거, 모든 데이터 지우기 전에 기기 인증을 요구합니다. 이 기능이 꺼져 있어도 확인 대화상자는 계속 표시됩니다.</string>
     <string name="settings_disable_destructive_title">파괴적 작업 숨기기</string>
-    <string name="settings_disable_destructive_subtitle">키 삭제, 서브키 제거, 사용자 ID 제거, 모든 데이터 지우기를 전혀 사용하지 않는 사람을 위해 숨깁니다. 해지는 계속 사용할 수 있습니다. 기본값은 꺼짐입니다.</string>
+    <string name="settings_disable_destructive_subtitle">키 삭제, 보조 키 제거, 사용자 ID 제거, 모든 데이터 지우기를 전혀 사용하지 않는 사람을 위해 숨깁니다. 철회는 계속 사용할 수 있습니다. 기본값은 꺼짐입니다.</string>
     <string name="settings_security_confirm_destructive_title">파괴적 작업 잠금 변경 확인</string>
-    <string name="encrypt_pq_mixed_warning">양자 내성의 약한 고리: %1$s 님은 이 메시지를 기존 암호화로 받게 되므로 메시지 전체가 양자 내성 안전을 갖지 못합니다. 완전한 보호를 위해서는 모든 수신자에게 양자 내성 키가 필요합니다.</string>
-    <string name="encrypt_subkey_label">%1$s: 암호화 서브키</string>
-    <string name="encrypt_subkey_pq">양자 내성</string>
+    <string name="encrypt_pq_mixed_warning">포스트 양자의 약한 고리: %1$s 님은 이 메시지를 기존 암호화로 받게 되므로 메시지 전체가 포스트 양자 안전을 갖지 못합니다. 완전한 보호를 위해서는 모든 받는 사람에게 포스트 양자 키가 필요합니다.</string>
+    <string name="encrypt_subkey_label">%1$s: 암호화 보조 키</string>
+    <string name="encrypt_subkey_pq">포스트 양자</string>
     <string name="encrypt_subkey_classical">기존</string>
     <string name="encrypt_subkey_auto">자동</string>
     <string name="encrypt_sign_none_option">없음(서명 안 함)</string>
     <string name="result_encrypt_password_note">비밀번호를 아는 사람만 이 메시지를 복호화할 수 있습니다.</string>
     <string name="encdec_error_incorrect_passphrase_for_format">%1$s의 비밀구절이 올바르지 않습니다.</string>
-    <string name="encdec_error_selected_key_not_recipient_format">선택한 키(%1$s)는 이 메시지의 수신자가 아닙니다. 암호화된 대상 키를 선택하세요.</string>
+    <string name="encdec_error_selected_key_not_recipient_format">선택한 키(%1$s)는 이 메시지의 받는 사람이 아닙니다. 암호화된 대상 키를 선택하세요.</string>
     <string name="encdec_decrypted_with_format">%1$s(으)로 복호화함</string>
     <string name="keyring_search_placeholder">이름, 메모, 키 ID 또는 지문 검색</string>
     <string name="keyring_search_clear_cd">검색 지우기</string>
@@ -2045,35 +2045,35 @@
     <string name="settings_offer_publish_title">새 키 게시 제안</string>
     <string name="settings_offer_publish_subtitle">키를 생성한 후 키 서버에 게시하도록 제안합니다. 키 생성을 완전히 로컬로 유지하려면 끄세요.</string>
     <string name="keyring_generate_algorithm_group_classical">기존</string>
-    <string name="keyring_generate_algorithm_group_pqc">양자 내성</string>
+    <string name="keyring_generate_algorithm_group_pqc">포스트 양자</string>
     <string name="keyring_generate_algorithm_group_interop">상호 운용 / 호환성</string>
     <string name="keyring_generate_algorithm_group_advanced">고급 / 호환성</string>
-    <string name="keyring_generate_algorithm_caption_pqc_v4">가장 폭넓게 쓰이는 양자 내성 암호화입니다. 모든 OpenPGP 도구가 이미 처리하는 표준 v4 Ed25519 키에 기존 서브키와 함께 양자 내성 ML-KEM-768 암호화 서브키를 담아, 오래된 소프트웨어도 여전히 당신에게 암호화할 수 있고 최신 도구는 ML-KEM을 사용합니다. 실제 상대와 함께 쓰는 양자 내성 암호화로 권장되는 선택입니다. 이 형식의 개인 키 백업은 아직 지원되지 않습니다.</string>
-    <string name="keyring_generate_algorithm_caption_pqc_sign">기존 방식으로의 대체가 없는 완전한 양자 내성입니다. 최신 v6 키(RFC 9980)의 ML-DSA 서명 신원과 ML-KEM 암호화 서브키. 서명과 암호화 모두 양자 공격에 견디며, 키에 더 약한 기존 서브키가 없어 하향될 대상이 없습니다. 최신 OpenPGP 소프트웨어만 사용할 수 있습니다.</string>
-    <string name="keyring_generate_granular_toggle">고급: 서브키 구성</string>
-    <string name="keyring_generate_granular_include_default">기본 암호화 서브키 포함</string>
-    <string name="keyring_generate_granular_add_subkey">서브키 추가</string>
-    <string name="keyring_error_email_invalid">이메일 주소가 올바르지 않은 것 같습니다</string>
+    <string name="keyring_generate_algorithm_caption_pqc_v4">가장 폭넓게 쓰이는 포스트 양자 암호화입니다. 모든 OpenPGP 도구가 이미 처리하는 표준 v4 Ed25519 키에 기존 보조 키와 함께 포스트 양자 ML-KEM-768 암호화 보조 키를 담아, 오래된 소프트웨어도 여전히 당신에게 암호화할 수 있고 최신 도구는 ML-KEM을 사용합니다. 실제 상대와 함께 쓰는 포스트 양자 암호화로 권장되는 선택입니다. 이 형식의 개인 키 백업은 아직 지원되지 않습니다.</string>
+    <string name="keyring_generate_algorithm_caption_pqc_sign">기존 방식으로의 대체가 없는 완전한 포스트 양자입니다. 최신 v6 키(RFC 9980)의 ML-DSA 서명 신원과 ML-KEM 암호화 보조 키. 서명과 암호화 모두 양자 공격에 견디며, 키에 더 약한 기존 보조 키가 없어 하향될 대상이 없습니다. 최신 OpenPGP 소프트웨어만 사용할 수 있습니다.</string>
+    <string name="keyring_generate_granular_toggle">고급: 보조 키 구성</string>
+    <string name="keyring_generate_granular_include_default">기본 암호화 보조 키 포함</string>
+    <string name="keyring_generate_granular_add_subkey">보조 키 추가</string>
+    <string name="keyring_error_email_invalid">전자 우편 주소가 올바르지 않은 것 같습니다</string>
     <string name="import_button_encrypt_to_key">이 키로 암호화</string>
-    <string name="key_detail_copy_email_cd">이메일 주소 복사</string>
-    <string name="key_detail_email_copied">이메일이 복사됨</string>
+    <string name="key_detail_copy_email_cd">전자 우편 주소 복사</string>
+    <string name="key_detail_email_copied">전자 우편이 복사됨</string>
     <string name="key_detail_userids_remove">제거</string>
     <string name="key_detail_userid_action_sheet_title_remove">사용자 ID 제거</string>
-    <string name="key_detail_userid_action_sheet_subtitle_remove">%1$s을(를) 이 키의 내 사본에서 제거하고 여기서 제거된 상태로 유지합니다. 키 서버에는 남아 있으므로 다른 사람에게서 폐기하려면 대신 해지하세요.</string>
+    <string name="key_detail_userid_action_sheet_subtitle_remove">%1$s을(를) 이 키의 내 사본에서 제거하고 여기서 제거된 상태로 유지합니다. 키 서버에는 남아 있으므로 다른 사람에게서 폐기하려면 대신 철회하세요.</string>
     <string name="key_detail_userid_action_apply_remove">제거</string>
-    <string name="key_detail_subkey_revoke_action">서브키 해지…</string>
-    <string name="key_detail_subkey_remove_action">서브키 제거…</string>
-    <string name="key_detail_subkey_more_actions">서브키 작업</string>
-    <string name="key_detail_subkey_remove_confirm_title">이 서브키를 제거하시겠습니까?</string>
-    <string name="key_detail_subkey_remove_confirm_body">이렇게 하면 서브키가 내 키 사본에서만 제거됩니다. 이미 내 공개 키를 가진 사람은 그대로 보관하며 계속 암호화할 수 있습니다. 상대에게 알리려면 대신 해지하세요.</string>
+    <string name="key_detail_subkey_revoke_action">보조 키 철회…</string>
+    <string name="key_detail_subkey_remove_action">보조 키 제거…</string>
+    <string name="key_detail_subkey_more_actions">보조 키 작업</string>
+    <string name="key_detail_subkey_remove_confirm_title">이 보조 키를 제거할까요?</string>
+    <string name="key_detail_subkey_remove_confirm_body">이렇게 하면 보조 키가 내 키 사본에서만 제거됩니다. 이미 내 공개 키를 가진 사람은 그대로 보관하며 계속 암호화할 수 있습니다. 상대에게 알리려면 대신 철회하세요.</string>
     <string name="key_detail_subkey_remove_confirm_action">제거</string>
-    <string name="key_detail_subkey_revoke_instead_button">대신 이 서브키 해지</string>
-    <string name="key_detail_subkey_last_enc_title">마지막 암호화 서브키</string>
-    <string name="key_detail_subkey_last_enc_body">이 키의 유일한 암호화 서브키입니다. 제거하거나 해지하면 이 키로 암호화된 메시지를 받을 수 없게 됩니다. 그래도 계속하시겠습니까?</string>
+    <string name="key_detail_subkey_revoke_instead_button">대신 이 보조 키 철회</string>
+    <string name="key_detail_subkey_last_enc_title">마지막 암호화 보조 키</string>
+    <string name="key_detail_subkey_last_enc_body">이 키의 유일한 암호화 보조 키입니다. 제거하거나 철회하면 이 키로 암호화된 메시지를 받을 수 없게 됩니다. 그래도 계속할까요?</string>
     <string name="key_detail_subkey_last_enc_action">계속</string>
-    <string name="key_detail_subkey_action_failed">서브키 작업을 완료할 수 없습니다. 다시 시도하세요.</string>
+    <string name="key_detail_subkey_action_failed">보조 키 작업을 완료할 수 없습니다. 다시 시도하세요.</string>
     <string name="key_detail_add_subkey_group_classical">기존</string>
-    <string name="key_detail_add_subkey_group_pq">양자 내성</string>
+    <string name="key_detail_add_subkey_group_pq">포스트 양자</string>
     <string name="key_detail_add_subkey_type_mlkem768">ML-KEM-768 (암호화)</string>
     <string name="key_detail_add_subkey_type_mlkem1024">ML-KEM-1024 (암호화)</string>
     <string name="key_detail_add_subkey_type_mldsa65">ML-DSA-65 (서명)</string>
@@ -2081,11 +2081,11 @@
     <string name="key_detail_add_subkey_type_rsa_2048_auth">RSA 2048 (인증)</string>
     <string name="key_detail_add_subkey_type_rsa_4096_auth">RSA 4096 (인증)</string>
     <string name="key_detail_add_subkey_type_ed25519_auth">Ed25519 (인증)</string>
-    <string name="key_delete_revoke_instead_note">키를 삭제한 후에는 해지 인증서를 만들 수 없습니다. 다른 사람이 이 키를 가지고 있을 수 있다면 대신 해지하여 더 이상 신뢰하지 않게 하세요.</string>
-    <string name="key_delete_revoke_instead_button">대신 이 키 해지</string>
-    <string name="key_detail_subkey_remove_biometric_title">서브키 제거 확인</string>
-    <string name="key_detail_subkey_remove_biometric_subtitle">인증하여 이 서브키를 제거합니다</string>
-    <string name="kd_vm_status_subkey_removed">서브키가 제거됨</string>
+    <string name="key_delete_revoke_instead_note">키를 삭제한 후에는 철회 인증서를 만들 수 없습니다. 다른 사람이 이 키를 가지고 있을 수 있다면 대신 철회하여 더 이상 신뢰하지 않게 하세요.</string>
+    <string name="key_delete_revoke_instead_button">대신 이 키 철회</string>
+    <string name="key_detail_subkey_remove_biometric_title">보조 키 제거 확인</string>
+    <string name="key_detail_subkey_remove_biometric_subtitle">인증하여 이 보조 키를 제거합니다</string>
+    <string name="kd_vm_status_subkey_removed">보조 키가 제거됨</string>
     <string name="provider_sign_per_address_title">주소별 서명 키</string>
     <string name="provider_sign_per_address_subtitle">한 주소에 내 서명 키가 여러 개일 때 PGPony가 어느 키로 서명할지 선택합니다. 전송 시 묻지 않고 즉시 적용됩니다.</string>
     <string name="provider_ask_sign_key_title">서명할 키 묻기</string>
@@ -2093,7 +2093,7 @@
     <string name="provider_keypicker_in_use">사용 중</string>
     <string name="provider_passphrase_change_key">다른 키로 서명</string>
     <string name="keyservers_wkd_label">Web Key Directory</string>
-    <string name="keyservers_wkd_desc">이메일 조회 시 수신자 자신의 도메인에서 가장 먼저 시도합니다. 게시하지 않습니다.</string>
+    <string name="keyservers_wkd_desc">전자 우편 조회 시 받는 사람 자신의 도메인에서 가장 먼저 시도합니다. 게시하지 않습니다.</string>
     <string name="keyservers_add">키 서버 추가</string>
     <string name="keyservers_add_title">키 서버 추가</string>
     <string name="keyservers_add_label_hint">이름(선택 사항)</string>
@@ -2104,28 +2104,28 @@
     <string name="publish_not_now">나중에</string>
     <string name="settings_proxy_socks_user">SOCKS 사용자 이름(선택 사항)</string>
     <string name="settings_proxy_socks_pass">SOCKS 비밀번호(선택 사항)</string>
-    <string name="settings_proxy_socks_note">선택 사항. 사용자 이름과 비밀번호를 설정하면 프록시를 공유하는 다른 앱과 분리된 PGPony 전용 Tor 회로를 사용합니다.</string>
+    <string name="settings_proxy_socks_note">선택 사항. 사용자 이름과 비밀번호를 설정하면 프락시를 공유하는 다른 앱과 분리된 PGPony 전용 Tor 회로를 사용합니다.</string>
     <string name="change_passphrase_changed">비밀구절이 변경됨</string>
     <string name="change_passphrase_set">비밀구절이 설정됨</string>
     <string name="change_passphrase_removed">비밀구절이 제거됨</string>
     <string name="onboarding_page_comment_toggle_title">PGPony 주석</string>
     <string name="onboarding_page_comment_toggle_subtitle">암호화 및 서명된 출력에 PGPony - PGPony.app 주석을 추가합니다. 나중에 설정에서 변경할 수 있습니다.</string>
     <string name="onboarding_page_destructive_toggle_title">파괴적 작업 숨기기</string>
-    <string name="onboarding_page_destructive_toggle_subtitle">키 삭제, 서브키 제거, 사용자 ID 제거, 모든 데이터 지우기를 숨깁니다. 해지는 계속 사용할 수 있습니다. 나중에 설정에서 변경할 수 있습니다.</string>
+    <string name="onboarding_page_destructive_toggle_subtitle">키 삭제, 보조 키 제거, 사용자 ID 제거, 모든 데이터 지우기를 숨깁니다. 철회는 계속 사용할 수 있습니다. 나중에 설정에서 변경할 수 있습니다.</string>
     <string name="onboarding_scroll_more">더 많은 옵션이 아래에 있습니다</string>
     <string name="publish_title_update">키 서버에서 업데이트</string>
     <string name="publish_action_update">업데이트</string>
     <string name="publish_last_uploaded_format">마지막 업로드: %1$s</string>
     <string name="publish_address_confirmed_format">%1$s: 확인됨</string>
     <string name="publish_address_pending_format">%1$s: 이 서버에서 아직 확인되지 않음</string>
-    <string name="publish_primary_repair_format">이 키의 기본 사용자 ID가 모호합니다(기본으로 표시됨: %1$s, 여기 표시: %2$s). User IDs에서 원하는 항목의 Make Primary를 누른 뒤 게시하세요.</string>
+    <string name="publish_primary_repair_format">이 키의 기본 사용자 ID가 모호합니다(기본으로 표시됨: %1$s, 여기 표시: %2$s). 사용자 ID에서 원하는 항목의 기본으로 만들기를 누른 뒤 게시하세요.</string>
     <string name="key_detail_action_update_key_servers">키 서버에서 업데이트</string>
     <string name="key_detail_detail_key_server_behind">게시됨(로컬 변경 사항 미업로드)</string>
     <string name="key_detail_unpublished_changes_body">마지막 업로드 이후 이 키가 변경되었습니다. 키 서버에는 아직 이전 사본이 있습니다.</string>
     <string name="key_detail_unpublished_changes_action">업데이트</string>
     <string name="revocation_result_publish_button">키 서버에 폐기 게시</string>
     <string name="keyring_generate_algorithm_experimental">지원 앱 제한적</string>
-    <string name="keyring_generate_algorithm_experimental_note">이 키는 PGPony에서 완전히 작동합니다. 많은 다른 앱은 아직 양자 내성 키를 읽지 못하며, 서로 호환되지 않는 두 가지 양자 내성 형식이 쓰이고 있습니다.</string>
+    <string name="keyring_generate_algorithm_experimental_note">이 키는 PGPony에서 완전히 작동합니다. 많은 다른 앱은 아직 포스트 양자 키를 읽지 못하며, 서로 호환되지 않는 두 가지 포스트 양자 형식이 쓰이고 있습니다.</string>
     <string name="keyring_generate_algorithm_caption_pqc_sign_87">최고 보안 등급: v6 키(RFC 9980)의 ML-DSA-87 서명 ID와 ML-KEM-1024 암호화 하위 키입니다. 권장 선택인 ML-DSA-65 + ML-KEM-768보다 키가 크고 느립니다. 최신 OpenPGP 소프트웨어에서만 사용할 수 있습니다.</string>
     <string name="key_detail_label_add">라벨 추가</string>
     <string name="keyring_same_identity_body">이 중 하나로 암호화하거나 신뢰하기 전에 지문을 비교하세요.</string>
@@ -2142,7 +2142,7 @@
     <string name="import_method_url">링크</string>
     <string name="import_url_label">공개 키 링크</string>
     <string name="import_url_fetch_button">키 가져오기</string>
-    <string name="import_url_help">.asc 파일이나 키를 보여 주는 페이지 모두 됩니다. 키는 프록시 설정을 거쳐 가져오며, 지문을 확인하고 가져오기를 누르기 전에는 아무것도 추가되지 않습니다.</string>
+    <string name="import_url_help">.asc 파일이나 키를 보여 주는 페이지 모두 됩니다. 키는 프락시 설정을 거쳐 가져오며, 지문을 확인하고 가져오기를 누르기 전에는 아무것도 추가되지 않습니다.</string>
     <string name="import_url_error_https">https 링크만 가져올 수 있습니다(.onion 주소는 http도 가능).</string>
     <string name="import_url_error_offline">오프라인 모드가 켜져 있어 링크를 가져오지 않았습니다.</string>
     <string name="import_url_error_no_key">해당 링크에서 공개 키를 찾지 못했습니다.</string>
@@ -2197,4 +2197,343 @@
     <string name="provider_clients_scope_ssh_nokey">SSH 로그인 (아직 키를 선택하지 않음)</string>
     <string name="provider_clients_scope_remove">제거</string>
     <string name="verify_banner_verified_dont_use_title">서명됨, 키가 ‘사용 안 함’으로 표시됨</string>
+
+    <!-- 4.7.0 RC3 and earlier gaps, translated Oct 2026 -->
+    <string name="verify_error_signature_damaged">서명 블록이 손상되어 확인할 수 없습니다. 서명 파일을 새로 받으세요.</string>
+    <string name="encrypt_expired_signing_warning">이 서명 키는 만료되었습니다.</string>
+    <string name="encrypt_expired_recipient_warning">만료된 키로 암호화하고 있습니다: %1$s.</string>
+    <string name="encrypt_expired_signing_blocked">이 서명 키는 만료되었습니다. 이 키로 서명하려면 설정에서 ‘만료된 키 허용’을 켜세요.</string>
+    <string name="encrypt_expired_recipient_blocked">만료된 받는 사람 키가 선택되어 있습니다: %1$s. 이 키로 암호화하려면 설정에서 ‘만료된 키 허용’을 켜세요.</string>
+    <string name="settings_allow_expired_title">만료된 키 허용</string>
+    <string name="settings_allow_expired_subtitle">만료된 키를 서명과 암호화에 사용할 수 있게 합니다. 기본값은 꺼짐입니다.</string>
+    <plurals name="import_preview_more_keys">
+        <item quantity="other">키 %1$d 개가 더 들어 있습니다. 함께 가져옵니다:</item>
+    </plurals>
+    <string name="verify_banner_verified_unconfirmed_title">서명됨, 키 검증 안 됨</string>
+    <string name="keyring_error_file_too_large">키 파일이라기엔 너무 큰 파일입니다. .asc, .gpg 또는 .pgp 키 파일을 고르세요.</string>
+    <string name="provider_passphrase_title_decrypt">복호화 키 잠금 해제</string>
+    <string name="provider_passphrase_title_ssh">SSH 키 잠금 해제</string>
+    <string name="provider_passphrase_action_sign">이 메시지에 서명하려면 %1$s의 비밀구절을 입력하세요.</string>
+    <string name="provider_passphrase_action_decrypt">이 메시지를 복호화하려면 %1$s의 비밀구절을 입력하세요.</string>
+    <string name="provider_passphrase_action_ssh">SSH로 로그인하려면 %1$s의 비밀구절을 입력하세요.</string>
+    <plurals name="provider_passphrase_keep_minutes">
+        <item quantity="other">PGPony가 이 기기에서만 %1$d 분 동안 기억합니다.</item>
+    </plurals>
+    <plurals name="provider_passphrase_keep_hours">
+        <item quantity="other">PGPony가 이 기기에서만 %1$d 시간 동안 기억합니다.</item>
+    </plurals>
+    <string name="provider_passphrase_keep_until_cleared">PGPony가 설정에서 지울 때까지 이 기기에서만 기억합니다.</string>
+    <string name="provider_passphrase_keep_until_locked">PGPony가 폰이 잠길 때까지 이 기기에서만 기억합니다.</string>
+    <string name="restore_settings_ask">이 백업에는 프락시와 키 서버 설정도 들어 있습니다. 적용할까요? 복구해도 기존 프락시가 꺼지는 일은 없으며, 신뢰 수준은 복구되지 않습니다.</string>
+    <string name="restore_settings_apply">설정 적용</string>
+    <string name="restore_settings_skip">내 설정 유지</string>
+    <string name="signer_lookup_imported_user_format">%1$s의 키가 키링에 추가되었습니다.</string>
+    <string name="util_zip_error_entry_too_large">zip 항목이 %1$s보다 큽니다</string>
+    <string name="sign_as_sheet_no_name">(이름 없음)</string>
+    <string name="sign_as_sheet_empty_hint">먼저 키링 탭에서 개인 키를 생성하거나 가져오세요.</string>
+    <string name="decrypt_mode_verify">검증</string>
+    <string name="encdec_error_sign_no_signing_key">사용 가능한 서명 키가 없습니다. 먼저 키쌍을 생성하거나 가져오세요.</string>
+    <string name="encdec_error_signer_import_failed_format">키를 가져올 수 없습니다: %1$s</string>
+    <string name="encdec_error_cannot_open_attachment_format">첨부 파일을 열 수 없습니다: %1$s</string>
+    <string name="encdec_error_cannot_open_selected_file">선택한 파일을 열 수 없습니다</string>
+    <string name="encdec_verify_composite_invalid">복합 서명이 검증되지 않았습니다</string>
+    <string name="contact_link_sheet_no_name">(이름 없음)</string>
+    <string name="key_detail_qr_image_cd">%1$s의 QR 코드</string>
+    <string name="key_detail_recovery_snackbar">기기가 이 키의 보안 저장소를 초기화했습니다. 접근을 복원할까요?</string>
+    <string name="key_detail_recovery_restore">복원</string>
+    <string name="key_detail_recovery_title">키 접근 복원</string>
+    <string name="key_detail_recovery_body">기기가 이 키의 보안 저장소를 초기화해서 지금은 앱이 키를 읽을 수 없습니다. 접근을 복원하려면 키의 비밀구절을 입력하세요. 키 자체는 바뀌지 않습니다.</string>
+    <string name="key_detail_recovery_restoring">복원 중…</string>
+    <string name="key_detail_recovery_wrong_passphrase">그 비밀구절로는 저장된 키를 잠금 해제할 수 없습니다. 다시 시도하세요.</string>
+    <string name="key_detail_subkey_label_generic">보조 키</string>
+    <string name="share_intent_subject_public_key">%1$s: PGP 공개 키</string>
+    <string name="share_intent_subject_revocation_cert">%1$s: 키 철회 인증서</string>
+    <string name="share_intent_subject_private_key">%1$s: PGP 개인 키 (민감)</string>
+    <string name="keyring_fab_generate_key">키 생성</string>
+    <string name="keyring_empty_title">아직 키가 없습니다</string>
+    <string name="keyring_empty_subtitle">+를 눌러 키를 생성하거나 가져오세요</string>
+    <string name="keyring_status_key_pair_imported">키쌍을 가져왔습니다</string>
+    <string name="keyring_status_public_key_imported">공개 키를 가져왔습니다</string>
+    <string name="card_decrypt_no_keys">이 카드에는 키가 없습니다.</string>
+    <string name="card_decrypt_failed_generic">복호화 실패</string>
+    <string name="card_sign_pair_first_import">먼저 이 카드의 공개 키를 키링에 연결하세요(일치하는 공개 키를 가져오세요). 그런 다음 다시 시도하세요.</string>
+    <string name="card_pin_change_failed_generic">PIN 변경 실패</string>
+    <string name="card_scan_read_failed">카드를 읽을 수 없습니다</string>
+    <string name="card_scan_import_failed">가져오기 실패</string>
+    <string name="pass_entry_card_pair_first">먼저 이 카드의 공개 키를 키링에 연결하세요.</string>
+    <string name="tooltip_title">팁</string>
+    <string name="tooltip_button_got_it">알겠습니다</string>
+    <string name="contacts_vm_status_key_imported_format">%1$s의 키를 찾아 가져왔습니다</string>
+    <string name="exchange_vm_status_qr_imported">QR 코드에서 키를 가져왔습니다</string>
+    <string name="exchange_no_key_pairs_title">키쌍 없음</string>
+    <string name="exchange_select_key_label">키 선택</string>
+    <string name="exchange_scan_hint">PGP 공개 키 QR 코드를 스캔해 가져오세요</string>
+    <string name="exchange_keyserver_search_order">키 서버 검색 (WKD → keys.pgpony.app → keys.openpgp.org)</string>
+    <string name="backup_error_open_for_writing">파일을 쓰기용으로 열 수 없습니다</string>
+    <string name="backup_error_backup_failed">백업 실패</string>
+    <string name="backup_error_restore_failed">복구 실패</string>
+    <string name="share_target_error_open_shared_file">공유된 파일을 열 수 없습니다</string>
+    <string name="share_target_file_unnamed">(이름 없음)</string>
+    <string name="share_target_error_unknown_detail">알 수 없음</string>
+    <plurals name="util_zip_error_too_many_entries">
+        <item quantity="other">zip 항목이 %1$d 개를 넘습니다</item>
+    </plurals>
+    <plurals name="contact_link_sheet_email_summary">
+        <item quantity="other">%1$s (외 %2$d 개)</item>
+    </plurals>
+    <plurals name="onboarding_page_already_have_keys_count">
+        <item quantity="other">이미 키가 %1$d 개 있습니다</item>
+    </plurals>
+    <plurals name="contacts_scan_complete_count">
+        <item quantity="other">스캔 완료. 키 %1$d 개를 찾았습니다</item>
+    </plurals>
+    <plurals name="contacts_vm_status_linked_count">
+        <item quantity="other">키 %1$d 개를 연락처와 연결했습니다</item>
+    </plurals>
+    <string name="pair_menu">다른 기기와 페어링</string>
+    <string name="pair_settings_subtitle">같은 네트워크에 있는 데스크탑용 PGPony나 다른 폰으로 키 또는 전체 백업을 옮깁니다.</string>
+    <string name="pair_title">다른 기기와 페어링</string>
+    <string name="pair_back_cd">뒤로</string>
+    <string name="pair_intro">이 폰과 데스크탑용 PGPony 또는 같은 네트워크의 다른 폰 사이에서 키나 전체 백업을 옮깁니다. 한 기기는 기다리고 다른 기기는 연결하며, 두 화면에 표시된 코드를 비교합니다. 이 화면을 나가면 아무것도 남지 않습니다.</string>
+    <string name="pair_offline">페어링은 로컬 네트워크를 사용하는데 오프라인 모드가 켜져 있습니다. 페어링하려면 설정에서 오프라인 모드를 끄세요.</string>
+    <string name="pair_host">다른 기기 기다리기</string>
+    <string name="pair_join">다른 기기에 연결</string>
+    <string name="pair_host_waiting">다른 기기에서 연결을 선택하고 이 코드를 스캔하거나, 아래 주소를 입력하세요.</string>
+    <string name="pair_invite_cd">페어링 QR 코드</string>
+    <string name="pair_host_closes">이 창은 %1$s까지 열려 있습니다.</string>
+    <string name="pair_copy_invite">초대 복사</string>
+    <string name="pair_no_address">이 폰에는 다른 기기가 접속할 수 있는 Wi-Fi나 이더넷 주소가 없습니다. 다른 기기와 같은 네트워크에 연결한 뒤 다시 시도하세요.</string>
+    <string name="pair_join_intro">다른 기기에서 기다리기를 선택하세요. 그런 다음 그 기기에 표시된 QR 코드를 스캔하거나 주소를 입력하세요.</string>
+    <string name="pair_scan">QR 코드 스캔</string>
+    <string name="pair_join_label">다른 기기에 표시된 주소</string>
+    <string name="pair_bad_address">표시된 주소와 포트를 그대로 입력하세요. 예: 192.168.1.20:49152.</string>
+    <string name="pair_bad_invite">이 초대를 읽을 수 없습니다. 다시 스캔하거나 대신 주소를 입력하세요.</string>
+    <string name="pair_connect">연결</string>
+    <string name="pair_working">작업 중…</string>
+    <string name="pair_peer_address">다른 기기의 주소: %1$s</string>
+    <string name="pair_host_connected">%1$s에 있는 기기가 연결되었습니다. 페어링을 설정하는 중…</string>
+    <string name="pair_compare_body">다른 기기에 같은 코드가 표시되나요? 코드가 다르면 누군가 두 기기 사이에 끼어 있을 수 있습니다. 다름을 선택하고 다시 시작하세요.</string>
+    <string name="pair_codes_match">같은 코드</string>
+    <string name="pair_codes_differ">다름</string>
+    <string name="pair_waiting_other">다른 기기를 기다리는 중…</string>
+    <string name="pair_compare_host_body">다른 기기에 표시된 코드를 입력하세요. 코드가 표시되지 않거나 오류가 표시되면 취소를 선택하세요. 다른 기기가 대신 연결했을 수 있습니다.</string>
+    <string name="pair_typed_code_label">다른 기기에 표시된 코드</string>
+    <string name="pair_typed_code_confirm">페어링</string>
+    <string name="pair_typed_code_wrong">코드가 일치하지 않습니다. 다른 화면을 확인하고 다시 입력하세요.</string>
+    <string name="pair_compare_host_own">다른 기기가 자기 코드를 이 코드와 대조합니다:</string>
+    <string name="pair_cancel">취소</string>
+    <string name="pair_paired_with">페어링됨: %1$s</string>
+    <string name="pair_paired_unnamed">다른 기기와 페어링됨</string>
+    <string name="pair_send_heading">다른 기기로 보내기</string>
+    <string name="pair_group_keypairs">키쌍</string>
+    <string name="pair_group_public">공개 키</string>
+    <string name="pair_group_backup">모두</string>
+    <string name="pair_item_backup">전체 백업</string>
+    <string name="pair_transfer_pass_note">선택한 키쌍 중 일부에는 비밀구절이 없습니다. 이 키쌍은 이 전송 비밀구절로 보호된 채 전송되며, 다른 기기에서 사용하려면 이 비밀구절이 필요합니다.</string>
+    <string name="pair_transfer_pass">전송 비밀구절</string>
+    <string name="pair_transfer_pass_repeat">전송 비밀구절 다시 입력</string>
+    <string name="pair_send">보내기</string>
+    <string name="pair_biometric_title">개인 키 보내기</string>
+    <string name="pair_biometric_subtitle">키쌍이나 백업이 이 폰을 떠나기 전에 본인임을 확인하세요.</string>
+    <string name="pair_waiting_answer">다른 기기가 수락하기를 기다리는 중…</string>
+    <string name="pair_sending">%1$s 보내는 중…</string>
+    <string name="pair_receiving">%1$s 받는 중: %2$d%%</string>
+    <string name="pair_backup_code_tell">다른 기기의 사용자에게 이 복구 코드를 알려 주세요. 그 기기에서 백업을 열려면 이 코드가 필요합니다.</string>
+    <string name="pair_copy">복사</string>
+    <string name="pair_incoming_heading">%1$s에서 다음을 보내려고 합니다:</string>
+    <string name="pair_incoming_heading_unnamed">다른 기기에서 다음을 보내려고 합니다:</string>
+    <string name="pair_kind_keypair">%1$s (키쌍)</string>
+    <string name="pair_kind_public">%1$s (공개 키)</string>
+    <string name="pair_incoming_fingerprint">지문 %1$s</string>
+    <string name="pair_backup_code_label">다른 기기에 표시된 복구 코드</string>
+    <string name="pair_accept">선택 항목 수락</string>
+    <string name="pair_decline">거절</string>
+    <string name="pair_received_public">다른 기기에서 받은 이 공개 키를 추가할까요?</string>
+    <string name="pair_received_keypair">다른 기기에서 받은 이 키쌍을 추가할까요?</string>
+    <string name="pair_received_in_keyring">이 키는 이미 키링에 있습니다. 추가하면 새로운 내용이 병합됩니다.</string>
+    <string name="pair_received_backup">다른 기기에서 받은 백업을 복구할까요? 백업의 키가 키링에 추가됩니다. 신뢰 수준과 설정은 가져오지 않습니다.</string>
+    <string name="pair_received_add">추가</string>
+    <string name="pair_received_restore">복구</string>
+    <string name="pair_received_skip">건너뛰기</string>
+    <string name="pair_skipped_reason">상대 사용자가 건너뜀</string>
+    <string name="pair_import_added">키링에 추가됨</string>
+    <string name="pair_import_updated">키링에서 갱신됨</string>
+    <string name="pair_import_already">이미 키링에 있음</string>
+    <string name="pair_ended">세션이 끝났습니다. 세션의 키는 지워졌습니다.</string>
+    <string name="pair_again">다시 시작</string>
+    <string name="pair_fail_refused">다른 기기에서 코드가 다르다고 응답했습니다. 아무것도 페어링되지 않았습니다.</string>
+    <string name="pair_fail_you_refused">코드가 다르다고 선택했으므로 아무것도 페어링되지 않았습니다. 예상하지 못한 일이라면 네트워크에 다른 사람이 없는지 확인하고 다시 시작하세요.</string>
+    <string name="pair_fail_you_cancelled">페어링을 취소했으므로 아무것도 페어링되지 않았습니다.</string>
+    <string name="pair_fail_typed_wrong">입력한 코드가 일치하지 않아 아무것도 페어링되지 않았습니다. 올바르게 입력했다면 누군가 두 기기 사이에 끼어 있을 수 있습니다. 다시 시작하세요.</string>
+    <string name="pair_fail_handshake">페어링을 검증할 수 없습니다. 아무것도 페어링되지 않았습니다. 다시 시작하세요.</string>
+    <string name="pair_fail_timeout">다른 기기가 응답을 멈췄습니다.</string>
+    <string name="pair_fail_version">다른 기기의 PGPony는 페어링 방식이 다릅니다. 둘 다 업데이트한 뒤 다시 시작하세요.</string>
+    <string name="pair_fail_protocol">상대편이 PGPony 페어링 창이 아니거나, 예상하지 못한 데이터를 보냈습니다.</string>
+    <string name="pair_fail_closed">연결이 끊어졌습니다.</string>
+    <string name="pair_fail_window_taken">다른 기기가 연결을 거부하거나 끊었습니다. 또 다른 기기가 그 페어링 창을 먼저 차지했을 수 있습니다. 상대 기기에서 취소하고 새 창을 여세요.</string>
+    <string name="pair_err_window_expired">다른 기기가 연결되기 전에 페어링 창이 닫혔습니다.</string>
+    <string name="pair_err_export">%1$s을(를) 내보낼 수 없습니다.</string>
+    <string name="pair_err_needs_passphrase">%1$s에는 비밀구절이 없습니다. 보내려면 전송 비밀구절을 입력하세요.</string>
+    <string name="pair_err_too_large">%1$s은(는) 너무 커서 보낼 수 없습니다.</string>
+    <string name="pair_err_import">%1$s을(를) 가져올 수 없습니다.</string>
+    <string name="pair_err_backup_code">다른 기기에 표시된 복구 코드를 입력하세요.</string>
+    <string name="pair_err_no_fingerprint">%1$s이(가) 지문 없이 제공되었습니다.</string>
+    <string name="pair_err_not_one_key">%1$s에 키가 정확히 하나만 들어 있지 않습니다.</string>
+    <string name="pair_err_wrong_key">%1$s은(는) 제공된 키가 아닙니다.</string>
+    <string name="pair_err_secret_in_public">%1$s은(는) 공개 키로 제공되었지만 개인 키를 포함하고 있습니다.</string>
+    <string name="pair_err_no_secret">%1$s은(는) 키쌍으로 제공되었지만 개인 키가 없습니다.</string>
+    <string name="pair_err_unprotected">%1$s에 비밀구절이 없는 개인 키가 들어 있습니다.</string>
+    <string name="pair_err_not_backup">%1$s은(는) PGPony 백업 파일이 아닙니다.</string>
+    <string name="pair_rows_sent">보냄</string>
+    <string name="pair_rows_received">받음</string>
+    <string name="pair_row_waiting">다른 기기에서 추가하기를 기다리는 중…</string>
+    <string name="pair_row_added_on">%1$s에서 추가됨</string>
+    <string name="pair_row_added_on_unnamed">다른 기기에서 추가됨</string>
+    <string name="pair_row_skipped_on">%1$s에서 건너뜀</string>
+    <string name="pair_row_skipped_on_unnamed">다른 기기에서 건너뜀</string>
+    <string name="pair_row_declined">다른 기기에서 수락하지 않음</string>
+    <string name="pair_row_failed">가져오지 못함: %1$s</string>
+    <string name="pair_row_failed_plain">가져오지 못함</string>
+    <string name="pair_row_no_answer">세션이 끝나기 전에 응답 없음</string>
+    <string name="pair_row_skipped_here">건너뜀</string>
+    <string name="pair_done">완료</string>
+    <string name="pair_finished_title">페어링 완료</string>
+    <string name="pair_finished_by_peer">다른 기기에서 세션을 종료했습니다.</string>
+    <string name="pair_tally_sent">보냄</string>
+    <string name="pair_tally_received">받음</string>
+    <string name="pair_tally_skipped">건너뜀</string>
+    <string name="pair_tally_failed">실패</string>
+    <string name="pair_tally_unanswered">응답 없음</string>
+    <string name="pair_view_key">키 보기</string>
+    <string name="pair_view_keyring">키링 보기</string>
+    <string name="pair_close">닫기</string>
+    <plurals name="pair_restore_summary">
+        <item quantity="other">키 %1$d개 추가 또는 갱신됨</item>
+    </plurals>
+    <string name="batch_output_title">여러 파일</string>
+    <string name="batch_output_package">하나의 패키지</string>
+    <string name="batch_output_package_subtitle">모든 파일과 메시지를 하나의 파일로 함께 암호화합니다</string>
+    <string name="batch_output_each">파일마다 따로</string>
+    <string name="batch_output_each_subtitle">파일마다 결과물을 하나씩 만들어 폴더에 저장하거나 한꺼번에 공유합니다</string>
+    <string name="batch_op_encrypt">암호화</string>
+    <string name="batch_op_encrypt_sign">암호화 및 서명</string>
+    <string name="batch_op_sign_only">서명만</string>
+    <string name="batch_op_sign_only_subtitle">파일마다 분리된 .sig를 만듭니다. 파일 자체는 그대로 유지됩니다.</string>
+    <string name="batch_card_signing_unavailable">하드웨어 키로 파일마다 서명하려면 파일마다 한 번씩 탭해야 합니다. ‘다음으로 서명’에서 소프트웨어 키를 선택하거나 하나의 패키지를 사용하세요.</string>
+    <string name="batch_error_no_files">파일을 하나 이상 추가하세요.</string>
+    <string name="batch_error_pick_signer">파일에 서명하려면 ‘다음으로 서명’에서 키를 선택하세요.</string>
+    <string name="batch_error_no_matching_key">PGPony에 저장된 키 중 이 파일을 복호화할 수 있는 키가 없습니다. 하드웨어 키로 암호화된 파일이라면 따로 복호화하세요.</string>
+    <string name="batch_item_failed_unknown">이 파일을 처리할 수 없습니다.</string>
+    <string name="batch_item_cancelled">취소됨</string>
+    <string name="batch_item_skipped_passphrase">건너뜀: 비밀구절을 입력하지 않았습니다</string>
+    <string name="batch_save_failed_item">이 파일을 폴더에 쓸 수 없습니다.</string>
+    <string name="batch_save_folder_unusable">PGPony가 그 폴더에 쓸 수 없습니다. 다른 폴더를 선택하세요.</string>
+    <string name="batch_saved_summary_format">파일 %2$d개 중 %1$d개를 폴더에 저장했습니다.</string>
+    <string name="batch_title_encrypting">파일 암호화 중</string>
+    <string name="batch_title_signing">파일 서명 중</string>
+    <string name="batch_title_decrypting">파일 복호화 중</string>
+    <string name="batch_title_done_format">파일 %2$d개 중 %1$d개 완료</string>
+    <string name="batch_progress_file_format">파일 %2$d개 중 %1$d번째</string>
+    <string name="batch_passphrase_prompt">비밀구절을 입력하세요. 이 묶음의 모든 파일에 사용됩니다.</string>
+    <string name="batch_passphrase_label">비밀구절</string>
+    <string name="batch_passphrase_continue">계속</string>
+    <string name="batch_passphrase_skip">나머지 건너뛰기</string>
+    <string name="batch_item_output_format">출력: %1$s</string>
+    <string name="batch_item_saved_format">%1$s(으)로 저장됨</string>
+    <string name="batch_save_to_folder">폴더에 저장</string>
+    <string name="batch_share_all">모두 공유</string>
+    <string name="batch_share_chooser">파일 공유</string>
+    <string name="batch_share_failed">파일을 공유할 수 없습니다.</string>
+    <string name="batch_status_pending">대기 중</string>
+    <string name="batch_status_done">완료</string>
+    <string name="batch_status_failed">실패</string>
+    <string name="share_files_choice_title">이 파일 중 일부는 암호화되어 있습니다</string>
+    <string name="share_files_choice_message">파일 %2$d개 중 %1$d개가 암호화된 메시지입니다. 그 파일들을 복호화할까요, 아니면 모든 파일을 하나의 패키지로 암호화할까요?</string>
+    <string name="share_files_choice_decrypt_format">%1$d개 복호화</string>
+    <string name="share_files_choice_encrypt">모두 암호화</string>
+    <string name="save_progress_saving">저장 중…</string>
+    <string name="save_progress_bytes_format">%2$s 중 %1$s 저장 중</string>
+    <string name="save_cancelled">저장을 취소했습니다. 완성되지 않은 파일은 삭제되었습니다.</string>
+    <string name="save_failed_generic">파일을 저장할 수 없습니다. 다시 시도하거나 다른 위치를 선택하세요.</string>
+    <string name="save_failed_no_space">파일을 저장할 여유 공간이 부족합니다.</string>
+    <string name="save_toast_saved_format">%1$s 저장됨</string>
+    <string name="save_toast_failed_format">%1$s을(를) 저장할 수 없습니다</string>
+    <string name="save_batch_item_cancelled">저장되지 않음: 저장이 취소되었습니다.</string>
+    <plurals name="import_result_subkeys_added">
+        <item quantity="other">보조 키 %1$d개를 추가했습니다.</item>
+    </plurals>
+    <string name="import_preview_left_out_title">제외되었거나 사용할 수 없는 보조 키</string>
+    <string name="import_preview_left_out_row_format">%1$s %2$s: %3$s</string>
+    <string name="subkey_issue_weak_hash">2023년 2월 기한 이후 SHA-1로 바인딩됨</string>
+    <string name="subkey_issue_no_binding">유효한 바인딩 서명 없음</string>
+    <string name="subkey_issue_no_back_signature">유효한 역서명이 없는 서명용 보조 키</string>
+    <string name="subkey_issue_revoked">철회됨</string>
+    <string name="subkey_issue_expired">만료됨</string>
+    <string name="key_detail_subkey_secret_on_device">개인 키가 이 기기에 있음</string>
+    <string name="key_detail_subkey_secret_offline">개인 키가 오프라인에 있음 (gpg 스텁)</string>
+    <string name="key_detail_subkey_secret_on_card">개인 키가 카드에 있음</string>
+    <string name="key_detail_subkey_secret_not_present">이 기기에 개인 키 없음</string>
+    <string name="provider_review_title">받는 사람 검토</string>
+    <string name="provider_review_intro">이 메시지의 일부 받는 사람에게 쓸 수 있는 키가 PGPony에 없습니다. 암호화할 키를 선택하거나, 취소하여 초안으로 돌아가세요.</string>
+    <string name="provider_review_missing_format">%1$s: PGPony에 키 없음</string>
+    <string name="provider_review_dont_use_format">%1$s: ‘사용 안 함’으로 표시됨</string>
+    <string name="provider_review_dont_use_hint">‘사용 안 함’으로 표시된 키는 목록에 나오지 않습니다. 그런 키로 암호화하려면 PGPony에서 신뢰 수준을 변경하세요.</string>
+    <string name="provider_review_no_keys">선택할 키가 PGPony에 없습니다. 먼저 PGPony에서 받는 사람의 공개 키를 가져오세요.</string>
+    <string name="provider_review_confirm">선택한 키로 암호화</string>
+    <string name="import_method_github">GitHub</string>
+    <string name="import_github_label">GitHub 사용자</string>
+    <string name="import_github_placeholder">사용자 이름</string>
+    <string name="import_github_fetch_button">키 받아오기</string>
+    <string name="import_github_help">PGPony는 이 사용자가 GitHub 계정에 추가한 OpenPGP 키(github.com/username.gpg)를 프락시 설정을 거쳐 받아옵니다. 각 지문을 확인하고 ‘키 가져오기’를 누르기 전에는 아무것도 추가되지 않습니다.</string>
+    <string name="import_github_error_invalid">GitHub 사용자 이름이 아닙니다. 사용자 이름은 영문자, 숫자, 하이픈으로 된 1~39자이며, 하이픈은 연속으로 쓸 수 없고 이름의 처음이나 끝에 올 수 없습니다.</string>
+    <string name="import_github_error_no_keys_format">%1$s의 GitHub 계정에 OpenPGP 키가 없습니다.</string>
+    <string name="import_github_error_not_found_format">%1$s(이)라는 GitHub 사용자가 없습니다.</string>
+    <string name="import_github_error_unreadable_format">GitHub가 %1$s에 대해 응답했지만, PGPony가 읽을 수 있는 공개 키가 없습니다.</string>
+    <string name="applock_pin_field_label">PIN</string>
+    <string name="applock_pin_confirm_label">PIN 확인</string>
+    <string name="applock_new_pin_label">새 PIN</string>
+    <string name="applock_wrong_pin">PIN이 틀렸습니다.</string>
+    <string name="applock_wait_format">잘못된 PIN을 너무 많이 입력했습니다. %1$d초 후에 다시 시도하세요.</string>
+    <string name="applock_unavailable">PGPony가 PIN 설정을 읽을 수 없어 PIN을 확인할 수 없으므로 잠긴 상태로 유지됩니다.</string>
+    <string name="applock_check_failed">PIN을 확인할 수 없습니다. 다시 시도하세요.</string>
+    <string name="applock_reset_button">PGPony를 지우고 처음부터 시작</string>
+    <string name="applock_reset_confirm_title">PGPony의 모든 것을 지울까요?</string>
+    <string name="applock_reset_confirm_message">PGPony의 모든 키(최근 삭제됨 포함)와 모든 설정 및 앱 승인을 삭제합니다. ‘모든 데이터 지우기’와 같습니다. 하드웨어 보안 키에 있는 키와 PGPony 밖에 저장한 백업은 영향을 받지 않습니다. 되돌릴 수 없습니다.</string>
+    <string name="applock_reset_confirm_button">지우기</string>
+    <string name="applock_fingerprint_reset_notice">이 폰에 등록된 지문이 변경되어 지문 잠금 해제가 꺼졌습니다. PIN을 사용하세요. 설정에서 다시 켤 수 있습니다.</string>
+    <string name="applock_use_fingerprint">지문 사용</string>
+    <string name="applock_method_title">잠금 방식</string>
+    <string name="applock_method_device">기기 잠금 해제</string>
+    <string name="applock_method_pin">PGPony PIN</string>
+    <string name="applock_method_dialog_message">기기 잠금 해제는 폰의 지문이나 화면 잠금을 사용합니다. PGPony PIN은 PGPony만 요구하는 6~16자리의 별도 PIN이며, 강압 PIN을 둘 수 있습니다.</string>
+    <string name="applock_set_pin_title">PGPony PIN 설정</string>
+    <string name="applock_set_pin_message">6~16자리 숫자를 정하세요. PGPony는 PIN의 해시만 보관하므로 잊어버린 PIN을 복구할 수 없습니다.</string>
+    <string name="applock_change_pin_title">PIN 변경</string>
+    <string name="applock_change_pin_subtitle">새 PGPony PIN 정하기</string>
+    <string name="applock_verify_title">PGPony PIN 입력</string>
+    <string name="applock_verify_message">앱 잠금을 변경하려면 현재 PIN을 입력하세요.</string>
+    <string name="applock_pin_format_error">6~16자리 숫자를 사용하세요.</string>
+    <string name="applock_pin_mismatch">PIN이 일치하지 않습니다.</string>
+    <string name="applock_pin_same_as_duress">PIN은 강압 PIN과 달라야 합니다.</string>
+    <string name="applock_duress_same_as_pin">강압 PIN은 PIN과 달라야 합니다.</string>
+    <string name="applock_duress_title">강압 PIN</string>
+    <string name="applock_duress_off">꺼짐</string>
+    <string name="applock_duress_on">켜짐</string>
+    <string name="applock_duress_info_title">강압 PIN 설정</string>
+    <string name="applock_duress_info_message">강압 PIN은 누군가 PGPony를 열도록 강요할 때 쓰는 두 번째 PIN입니다. 잠금 화면에서 입력하면 PGPony의 모든 키(최근 삭제됨 포함)와 모든 설정, 앱 승인, 기억된 비밀구절이 지워지고, PGPony는 방금 설치한 것처럼 열립니다. 이 일이 일어났다는 표시는 화면에 전혀 나타나지 않습니다.\n\n되돌릴 수 없습니다. 강압 PIN을 입력해서 시험하지 마세요. 모든 것이 지워집니다.</string>
+    <string name="applock_not_touched">영향을 받지 않는 것: 하드웨어 보안 키에 있는 키(자체 PIN이 있음), PGPony 밖에 저장한 백업, PIN을 입력하기 전에 만들어진 폰 저장소의 사본.</string>
+    <string name="applock_duress_set_title">강압 PIN 정하기</string>
+    <string name="applock_duress_remove_title">강압 PIN을 제거할까요?</string>
+    <string name="applock_duress_remove_message">PGPony PIN은 그대로 유지됩니다. 이전 강압 PIN은 이후 잘못된 PIN으로 처리됩니다.</string>
+    <string name="applock_duress_remove_button">제거</string>
+    <string name="applock_fingerprint_title">지문으로 잠금 해제</string>
+    <string name="applock_fingerprint_subtitle">PIN 대신 지문 허용</string>
+    <string name="applock_fingerprint_advice_title">지문 잠금 해제를 끌까요?</string>
+    <string name="applock_fingerprint_advice_message">손가락은 강제로 댈 수 있으며, 강압 PIN은 PIN을 요구받을 때만 도움이 됩니다. 지문 잠금 해제를 끄면 PGPony는 PIN만 요구합니다. 권장합니다.</string>
+    <string name="applock_fingerprint_advice_turn_off">끄기</string>
+    <string name="applock_fingerprint_advice_keep">켜 두기</string>
+    <string name="applock_wipe_after_title">잘못된 PIN 입력 시 지우기</string>
+    <string name="applock_wipe_after_off">꺼짐</string>
+    <string name="applock_wipe_after_format">잘못된 PIN %1$d회 후</string>
+    <string name="applock_wipe_after_message">잘못된 PIN을 연속으로 이 횟수만큼 입력하면 PGPony는 강압 PIN과 같은 방식으로 모든 것을 지웁니다. 올바른 PIN을 입력하면 횟수가 초기화됩니다. 되돌릴 수 없습니다.</string>
 </resources>
