@@ -1194,6 +1194,8 @@ uk, b+zh+Hans).
   separately), 38 and 37 (multi-file Quick Actions and large-file saves, same area as 15), 41 (recipient review),
   42 (GitHub key lookup), 43 (tappable rows),
   32 (duress PIN, builds on 33), 6, 21 remainder (protocol change shared with desktop and iOS PGPonyPair), 8.
+  Oct 13: 21's remainder moves to the next release (it needs the desktop side too); 8 stays open until checked
+  against gpg 2.5 and does not hold the RC3 build.
 - RC4, card work: 13 (keytocard), card certification for 31, 34 (card-generated key display) and 28 (provider card
   prompt over USB), once a working card is on hand for testing.
 - Last RC: the 12a on-device checks (Tor with Orbot, custom proxy, OpenKeychain restore, protected key over a
