@@ -1171,6 +1171,72 @@ encrypt and sign options, the import preview and the remaining sheets. No new st
 Test: tap the label and the empty part of each row; TalkBack announces one switch or checkbox with its label.
 
 
+## 44. Signed-only mail with an attachment: GpgOL says the attachment is not signed (#84)
+
+Priority: medium (bug, needs information). Origin: #84 (Oct 14, RC3): a signed-only message with an attached
+image, sent from FairEmail through PGPony, makes GpgOL in Outlook warn that not all attachments were signed. The
+same send through OpenKeychain on the same phone gets no warning.
+
+FairEmail builds the multipart/signed structure and hands PGPony the bytes to sign; PGPony returns a binary
+(0x00) SHA-256 detached signature in RESULT_DETACHED_SIGNATURE. The one thing PGPony controls beyond the
+signature is RESULT_SIGNATURE_MICALG, hard-coded to "pgp-sha256" on the software and composite paths, where
+OpenKeychain reports the hash it used. A warning about attachments rather than a bad signature points at the
+structure GpgOL sees, so the cause is not known yet.
+
+Work: ask on #84 for the raw source of both sent messages (FairEmail can export a raw message) and the key's
+algorithm; compare the MIME trees, micalg and signed range. Either way, report the hash the signature actually
+used in RESULT_SIGNATURE_MICALG (software, composite and card paths), from the signature itself.
+
+## 45. Long certification lists push Key Details down (#85)
+
+Priority: low (UI). Origin: #85 (Oct 14, RC2): a widely certified public key (the F-Droid one) lists every
+certification (item 31) before the rest of Key Details.
+
+Work: show the first three certifications per User ID, then a "Show all N" row that expands in place (and
+collapses again). Keys with three or fewer are unchanged. New strings in all 10 locales.
+
+## 46. Choose which signing subkey a key pair signs with (#82)
+
+Priority: medium (feature). Origin: #82 (Oct 14, RC3): item 39 signs with the newest valid signing subkey; the
+requester prefers keeping the older one until it expires, so signatures stay the same after a new subkey is added.
+The newest valid subkey stays the default (GnuPG's rule as well, for a subkey whose secret it holds).
+
+Work: Key Details on a key pair with more than one valid signing subkey gets "Use for signing" on each one
+(Automatic, the default, or a pinned subkey), stored per key. Signing everywhere (app, Quick Actions, provider)
+uses the pinned subkey while it is valid and falls back to the automatic pick, with a note on Key Details, once it
+expires or is revoked. Ask which key to sign with still lists every valid one. New strings in all 10 locales.
+
+## 47. A passphrase changed in gpg does not carry over on re-import (#78)
+
+Priority: medium (bug). Origin: #78 (Oct 14): after changing passphrases in gpg (several subkeys had different
+ones, consolidated to one), re-importing did not change the passphrase PGPony asks for until the key was deleted
+and imported again. Item 40 never replaces a held secret, so a re-import with the same key material under new
+protection is ignored.
+
+Work: on a re-import of a key pair whose secret parts PGPony holds, compare the protection (S2K and encrypted
+material) per subkey; when it differs, the import preview offers to replace the stored secrets with the imported
+ones, saying the passphrase becomes the one set in the export, and the result says how many were replaced. Also
+check what PGPony does today with a key whose subkeys carry different passphrases (unlock, change passphrase,
+export) and fix or document it.
+
+## 48. Decrypt results say which key signed and which key decrypted (#79)
+
+Priority: medium (feature). Origin: #79 (Oct 14, RC3): the decrypt result names the signer but not the key that
+made the signature, and "Decrypted with" names the key chosen, not the subkey that actually decrypted (a fallback
+can differ).
+
+Work: the signature banner shows the signing key's short fingerprint after the name (the subkey that signed, with
+its primary when they differ); the result shows the key ID of the subkey that decrypted, taken from the PKESK that
+succeeded. Same in Quick Actions and the in-app decrypt and verify screens. New strings in all 10 locales.
+
+## 49. Trust level polish (#75)
+
+Priority: low (UI). Origin: #75 (Oct 14, closed by the requester after RC2): the bar in the red Don't use shield
+is black and would read better white, like a traffic sign; key pairs generated in PGPony start at Unverified.
+
+Work: draw the bar white. A key pair generated in PGPony (or on a card from PGPony) starts at Ultimate; imported
+key pairs and public keys keep Unverified, so the owner decides. No change to keys already in the keyring.
+
 RC3 translation pass (Oct 13): every string missing from a locale went into all 10 (about 125 each; Korean 322,
 including 184 strings and 10 plurals that had fallen behind since 4.6.3, still no err_ strings), and strings that
 were English copies (key_count_summary, clipboard_will_clear_in and a few per locale) were translated. One
@@ -1196,7 +1262,7 @@ uk, b+zh+Hans).
   32 (duress PIN, builds on 33), 6, 21 remainder (protocol change shared with desktop and iOS PGPonyPair), 8.
   Oct 13: 21's remainder moves to the next release (it needs the desktop side too); 8 stays open until checked
   against gpg 2.5 and does not hold the RC3 build.
-- RC4, card work: 13 (keytocard), card certification for 31, 34 (card-generated key display) and 28 (provider card
+- RC4: 44 to 49 first (RC3 tester reports, no card needed), then the card work: 13 (keytocard), card certification for 31, 34 (card-generated key display) and 28 (provider card
   prompt over USB), once a working card is on hand for testing.
 - Last RC: the 12a on-device checks (Tor with Orbot, custom proxy, OpenKeychain restore, protected key over a
   contact, the provider with Thunderbird including a card).
