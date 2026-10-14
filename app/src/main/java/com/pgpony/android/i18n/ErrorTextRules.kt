@@ -189,6 +189,8 @@ internal object ErrorTextRules {
             // 4.7.0 (item 10): keys marked Don't use, refused through the provider.
             ErrorText.Rule("""\QRecipient key is marked Don't use in PGPony: \E(.*?)\Q. Change its trust level in PGPony to encrypt to it.\E""", R.string.err_provider_recipient_dont_use),
             ErrorText.Rule("""\QSigning key is marked Don't use in PGPony. Pick another signing key in your mail app, or change its trust level in PGPony.\E""", R.string.err_provider_signer_dont_use),
+            // 4.7.0 (item 41, #25): a key picked in the recipient review that the re-run cannot use.
+            ErrorText.Rule("""\QA key chosen for this message cannot be used: \E(.*?)\Q. Send the message again and choose the recipients in PGPony.\E""", R.string.err_provider_review_key_unusable),
             // 4.7.0 (item 31): certifying other people's keys.
             ErrorText.Rule("""\QThis key cannot certify other keys\E""", R.string.err_certify_certifier),
             ErrorText.Rule("""\QThis key cannot be certified here\E""", R.string.err_certify_target),

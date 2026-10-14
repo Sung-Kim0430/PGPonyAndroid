@@ -187,6 +187,7 @@ class ErrorTextTest {
         "Every signing key in this key pair has expired or been revoked" to R.string.err_signing_keys_expired,
         "Recipient key is marked Don't use in PGPony: bob@example.org. Change its trust level in PGPony to encrypt to it." to R.string.err_provider_recipient_dont_use,
         "Signing key is marked Don't use in PGPony. Pick another signing key in your mail app, or change its trust level in PGPony." to R.string.err_provider_signer_dont_use,
+        "A key chosen for this message cannot be used: 0x1234567890ABCDEF. Send the message again and choose the recipients in PGPony." to R.string.err_provider_review_key_unusable,
         "This key cannot certify other keys" to R.string.err_certify_certifier,
         "This key cannot be certified here" to R.string.err_certify_target,
         "v4 algo-35 subkey secret is unavailable" to R.string.err_v4_algo_35_subkey_secret_unavailable,

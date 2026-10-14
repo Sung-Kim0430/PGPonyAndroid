@@ -87,7 +87,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -1034,7 +1037,13 @@ private fun CertificationLine(
     onRevoke: ((com.pgpony.android.data.repository.KeyRepository.CertificationRow) -> Unit)?
 ) {
     val c = row.certification
-    val who = row.issuer?.let { it.userName.ifBlank { it.userEmail.ifBlank { it.shortFingerprint } } }
+    // 4.7.0 (item 31, #79): a known certifier shows its short fingerprint
+    // after the name, so two certifications from keys with the same name
+    // (an old key and its successor) can be told apart.
+    val who = row.issuer?.let { issuer ->
+        val name = issuer.userName.ifBlank { issuer.userEmail }
+        if (name.isBlank()) issuer.shortFingerprint else "$name \u00B7 ${issuer.shortFingerprint}"
+    }
         ?: stringResource(
             R.string.key_detail_cert_unknown_issuer,
             (c.issuerFingerprint?.takeLast(16) ?: String.format("%016X", c.issuerKeyId)).takeLast(8)
@@ -1168,6 +1177,22 @@ fun SubkeysSection(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                // 4.7.0 (item 40, #82): where the secret is and, when the subkey
+                // is not usable, why, on one line. A public key shows only why.
+                val locationText = sub.secretLocation?.let { stringResource(SubkeyRows.secretLocationRes(it)) }
+                val issueText = sub.issue?.let { stringResource(SubkeyRows.issueRes(it)) }
+                if (locationText != null || issueText != null) {
+                    val errorColor = MaterialTheme.colorScheme.error
+                    Text(
+                        text = buildAnnotatedString {
+                            if (locationText != null) append(locationText)
+                            if (locationText != null && issueText != null) append(" · ")
+                            if (issueText != null) withStyle(SpanStyle(color = errorColor)) { append(issueText) }
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
                 if (sub.isCardBacked || sub.isRevoked) {
                     Spacer(modifier = Modifier.height(4.dp))
                     Row {

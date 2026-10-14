@@ -1112,11 +1112,19 @@ class KeyringViewModel(private val repo: KeyRepository) : ViewModel() {
                     return@launch
                 }
                 val message = when (outcome.resolution) {
-                    ImportResolution.MERGED_NEW_MATERIAL ->
-                        PGPonyApp.instance.getString(
+                    ImportResolution.MERGED_NEW_MATERIAL -> {
+                        val base = PGPonyApp.instance.getString(
                             if (outcome.selfSignaturesApplied > 0) R.string.import_result_own_key_updated
                             else R.string.import_result_merged
                         )
+                        // 4.7.0 (item 40, #82): say how many subkeys your own
+                        // secret export added, next to the self-signature note.
+                        if (outcome.subkeysAdded > 0) {
+                            base + " " + PGPonyApp.instance.resources.getQuantityString(
+                                R.plurals.import_result_subkeys_added, outcome.subkeysAdded, outcome.subkeysAdded
+                            )
+                        } else base
+                    }
                     ImportResolution.UPGRADED_TO_KEY_PAIR ->
                         PGPonyApp.instance.getString(R.string.keyring_status_key_upgraded)
                     else -> PGPonyApp.instance.getString(

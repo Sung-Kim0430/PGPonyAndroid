@@ -722,6 +722,8 @@ device: `gpg --check-sigs` on an exported certified key at each level, v4 and v6
 absent from Share, Export, QR and an upload.
 Oct 13 (#79, RC2): interop confirmed both ways by the requester: a PGPony certification read by other OpenPGP
 tools, and a key certified in Kleopatra shows its certifications in PGPony. Request: whole-row taps (item 43).
+Oct 13 (#79, RC2): two certifications from two keys with the same name looked identical; RC3 shows the
+certifier's short fingerprint after the name (CertificationLine), as unknown certifiers already did.
 
 Priority: medium-high (feature). Origin: #79: certify another person's User IDs with your own key to take part in
 the Web of Trust from the phone, including when the certifying primary lives on an OpenPGP card.
@@ -1003,6 +1005,24 @@ signed-only mail with the #83 key shape, and in-app Sign Text.
 
 ## 40. Subkeys missing after removing and re-importing a key (#82)
 
+**Status:** RC3. New crypto/SubkeyAdmission.kt holds the decisions. A duplicate import of a key pair that carries
+secret material proven by SecretKeyCheck (as the upgrade path; a protected secret without a passphrase passes on
+its structure) adds every subkey the stored certificate lacks and the primary binds (a verified 0x18, and for a
+signing-capable subkey a back-signature in its newest binding): newBoundSubkeys picks them, withSubkeys appends
+them in sanitized form, and graftNewSecretSubkeys (now SubkeyAdmission.graftSecrets) brings the secret, or the
+stub gpg exported for a subkey not held at all. A held secret is never replaced; a held stub still takes real
+material. A public-only re-import adds nothing (item 24). ImportOutcome.subkeysAdded drives "Added N subkeys."
+(plurals import_result_subkeys_added) after the merged or self-signature note. ImportPreview.leftOutSubkeys lists
+each subkey the import drops or cannot use (algorithm, short key ID, reason: SHA-1 after the cutoff, no valid
+binding, no back-signature, revoked, expired); the analyser reports a SHA-1 binding as unbound, so weakHashOnly
+re-checks the raw binding and back-signature against SignaturePolicy. Key Details rows get a status line
+(SubkeyDisplayInfo.secretLocation and issue, SubkeyRows.withStatus): secret on this device, offline (GNU 1001),
+on a card (1002, or the card-backed key's card fingerprints), or not present, read from the stored secret
+packets; public keys show only the reason. Tests: SubkeyAdmissionTest (fixtures in test/resources/subkeyadd, GnuPG
+2.2.27, faked times) on the pure functions, since KeyRepository needs Room. Left out: the preview does not yet say
+how many subkeys a re-import will add (only the result does), and a secret block in which only the new subkeys
+carry material (primary and older subkeys all stubs) proves nothing about the stored key, so it adds none. English strings only so far; translations are still to do. On device (Oct 13): green.
+
 Priority: high (bug, needs the key). Origin: #82 (Oct 13): after deleting a 2017 RSA-4096 key and importing it
 again, Key Details shows fewer subkeys than gpg lists (E and A from 2017, two S from 2025). The screenshot and
 the key come from the reporter's public copies.
@@ -1021,8 +1041,50 @@ binding check is not it. The loss is on the secret key path: an older secret bac
 subkeys (item 24 never adds subkeys from a public re-import), or the 2025 secrets exported as stubs before item 22.
 Asked on #82 for gpg -K, the PGPony version and where the secret key came from.
 
+Oct 13 (reporter): the PGPony backup made from that key already lacks the 2025 subkeys. Cause found in the code: for
+a key pair, CertificateMerge never adds a component the stored certificate lacks (item 24's rule for public
+re-imports), and graftNewSecretSubkeys only grafts a secret whose public part the stored certificate already binds.
+So re-importing your own secret export with subkeys added in gpg adds nothing, which also defeats item 22's "subkey
+added where the offline primary is kept" case.
+
+Work:
+
+- A secret re-import of your own key pair (secret material present and proven, as the upgrade path already checks)
+  adds every subkey the stored key lacks that the primary verifiably binds (CertificateBindings on the incoming
+  ring): the public subkey with its verified bindings into the certificate, and its secret (or stub) into the secret
+  ring. A public-only re-import keeps item 24's rule and still adds nothing.
+- The import reports it: "Added N subkeys" next to the existing "updated self-signatures" note.
+- Seeing it (requested on #82): Key Details gives each subkey a status line, where its secret is (on this device,
+  offline as a gpg stub, on a card, or not present) and why it is not used when it is not (expired, revoked, binding
+  with a SHA-1 hash after the cutoff, no back-signature). The import preview lists any subkey it leaves out and why.
+- New strings in all 10 locales.
+
+Tests: a key pair re-imported with one and two new subkeys (classical, and a stub), a public re-import still adding
+none, a subkey with a SHA-1 binding after the cutoff left out and listed, and the Key Details status for each case.
+
 
 ## 41. Recipient review from mail apps when some addresses have no key (#25, reopened)
+
+**Status:** RC3. A non-opportunistic encrypt from a mail app that names an address with no usable key (none held,
+or only a key marked Don't use) now returns USER_INTERACTION_REQUIRED with a PendingIntent to
+ProviderRecipientReviewActivity (:remote_api, not exported, same look as ProviderKeyPickerActivity) instead of
+"No PGPony key found". The screen lists the addresses without a key and those marked Don't use, then a
+searchable keyring with whole-row checkboxes (Don't use and revoked keys left out, expired keys only with "Allow
+expired keys"), with the client's signing key, else the sender's own key, ticked. Confirm returns the request plus
+EXTRA_KEY_IDS_SELECTED; encryptOp adds those keys to the recipients it resolved (deduped by fingerprint), refuses
+any id that is not in the keyring, revoked, Don't use or disallowed expired (new provider error, with an ErrorText
+rule), and no longer fails on the missing addresses for that send. Cancel returns RESULT_CANCELED, so the draft
+stays. Opportunistic sends keep OPPORTUNISTIC_MISSING_KEYS, and a storage failure keeps its own error. A send
+whose only problem is an address whose sole key is Don't use now opens the review; a Don't use key the client
+names by key id keeps the item 10 refusal. GET_KEY_IDS offers the same review (its own request code and URI
+scheme), since FairEmail decides "no key found" from that answer and never reaches encrypt, as OpenKeychain's
+getKeyIdsImpl does: its re-run validates EXTRA_KEY_IDS_SELECTED with the same rules and refusal and returns the
+resolved ids plus the picks, deduped. GET_KEY_IDS no longer hands over a Don't use key's id (the item 10
+fallback); the review covers that address. Opportunistic callers get the silent partial answer, and the Autocrypt
+status action is unchanged. Rules in RecipientReview (pure). 8 new strings, English only so far (other locales
+fall back to English). Test: RecipientReviewTest, plus the new example in ErrorTextTest. On device: whether
+FairEmail's encrypt after the review sends only the returned key ids (if it also sends the addresses, the encrypt
+review opens a second time). On device (Oct 13): green.
 
 Priority: medium (feature, provider). Origin: #25 (Oct 13, reopened): OpenKeychain answers an encrypt with
 addresses it has no key for by showing "Please review the list of recipients": the addresses without keys,

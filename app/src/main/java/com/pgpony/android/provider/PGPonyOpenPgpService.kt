@@ -327,15 +327,15 @@ class PGPonyOpenPgpService : Service() {
         return when (data.action) {
             OpenPgpApi.ACTION_CHECK_PERMISSION -> successResult()
 
-            OpenPgpApi.ACTION_GET_KEY_IDS -> getKeyIds(data)
+            OpenPgpApi.ACTION_GET_KEY_IDS -> getKeyIds(data, callingPackage)
 
             // P2a-1 — signing-key selection (Thunderbird's "Configure
             // end-to-end key").
             OpenPgpApi.ACTION_GET_SIGN_KEY_ID -> getSignKeyId(data, callingPackage)
 
             // P2a-2 — the send path.
-            OpenPgpApi.ACTION_ENCRYPT -> encryptOp(data, input, output, withSignature = false)
-            OpenPgpApi.ACTION_SIGN_AND_ENCRYPT -> encryptOp(data, input, output, withSignature = true)
+            OpenPgpApi.ACTION_ENCRYPT -> encryptOp(data, input, output, withSignature = false, callingPackage = callingPackage)
+            OpenPgpApi.ACTION_SIGN_AND_ENCRYPT -> encryptOp(data, input, output, withSignature = true, callingPackage = callingPackage)
             OpenPgpApi.ACTION_CLEARTEXT_SIGN -> cleartextSign(data, input, output)
             // ACTION_SIGN is the deprecated alias for cleartext sign
             // (see OpenPgpApi.java) — same handler.
@@ -412,29 +412,66 @@ class PGPonyOpenPgpService : Service() {
         return listOfNotNull(pick)
     }
 
-    private fun getKeyIds(data: Intent): Intent {
+    private fun getKeyIds(data: Intent, callingPackage: String): Intent {
         val userIds = data.getStringArrayExtra(OpenPgpApi.EXTRA_USER_IDS) ?: emptyArray()
-        val keyIds = runBlocking {
-            userIds
-                .mapNotNull { raw ->
-                    val email = raw.substringAfterLast('<').substringBefore('>').trim()
-                        .ifEmpty { raw.trim() }
-                    // 4.2.1 (#27): match ANY user id, not just the primary,
-                    // so a secondary identity (4.2.0 #29) resolves here and
-                    // the client is offered encryption to it.
-                    // 4.7.0 (item 10): when the only key for the address is
-                    // marked Don't use, still hand its id over, so the send
-                    // reaches encryptOp and fails with the Don't use message
-                    // instead of the mail app's own "no key found".
-                    recipientCandidates(email).firstOrNull()
-                        ?: repo.getByAnyUserEmail(email).firstOrNull {
-                            !it.isRevoked && it.trustLevel == com.pgpony.android.data.TrustLevel.DONT_USE
-                        }
+        // 4.7.0 (item 41, #25): FairEmail decides "no key found" from this
+        // answer and never reaches encrypt, so the recipient review is offered
+        // here too, as OpenKeychain's getKeyIdsImpl does. An address with no
+        // usable key (none held, or only one marked Don't use) opens the
+        // review; the re-run carries EXTRA_KEY_IDS_SELECTED.
+        val missing = mutableListOf<String>()
+        val dontUse = mutableListOf<String>()
+        val resolvedIds: List<Long> = runBlocking {
+            val ids = mutableListOf<Long>()
+            userIds.forEach { raw ->
+                val email = raw.substringAfterLast('<').substringBefore('>').trim()
+                    .ifEmpty { raw.trim() }
+                // 4.2.1 (#27): match ANY user id, not just the primary,
+                // so a secondary identity (4.2.0 #29) resolves here and
+                // the client is offered encryption to it.
+                // 4.7.0 (item 41): a key marked Don't use is no longer handed
+                // over when it is the only one for the address (the item 10
+                // fallback); the review shows that address as Don't use and
+                // offers the other keys instead. encryptOp still refuses a
+                // Don't use key id a client sends it directly.
+                val pick = recipientCandidates(email).firstOrNull()
+                val pickId = pick?.let { RecipientReview.keyIdOf(it) }
+                if (pickId != null) {
+                    ids += pickId
+                } else {
+                    when (RecipientReview.reasonForAddress(false, repo.getByAnyUserEmail(email))) {
+                        RecipientReview.Reason.DONT_USE -> dontUse += email
+                        RecipientReview.Reason.MISSING -> missing += raw
+                    }
                 }
-                .map { entity -> java.lang.Long.parseUnsignedLong(entity.longKeyId, 16) }
-                .toLongArray()
+            }
+            ids
         }
-        return successResult().putExtra(OpenPgpApi.RESULT_KEY_IDS, keyIds)
+        // Opportunistic callers ("encrypt if possible") get the partial answer
+        // without a prompt, the same as encryptOp keeps them silent.
+        val opportunistic = data.getBooleanExtra(OpenPgpApi.EXTRA_OPPORTUNISTIC_ENCRYPTION, false)
+        val selectedKeyIds: LongArray? =
+            if (opportunistic) null else data.getLongArrayExtra(OpenPgpApi.EXTRA_KEY_IDS_SELECTED)
+        if (selectedKeyIds != null) {
+            // The re-run after the review: the same rules as encryptOp. Every
+            // picked id must be usable, or the answer is the same refusal.
+            val selection = runBlocking {
+                RecipientReview.resolveSelected(selectedKeyIds, repo.getAllKeys(), allowExpiredKeys())
+            }
+            if (selection.refused.isNotEmpty()) {
+                return reviewKeyUnusableResult(selection.refused.map { RecipientReview.formatKeyId(it) })
+            }
+            return successResult().putExtra(
+                OpenPgpApi.RESULT_KEY_IDS,
+                RecipientReview.mergeKeyIds(resolvedIds, selection.accepted)
+            )
+        }
+        if (RecipientReview.needsReview(missing.size + dontUse.size, opportunistic, hasSelection = false) &&
+            storageFailureMessage() == null
+        ) {
+            return recipientReviewInteraction(data, callingPackage, missing, dontUse, forKeyIds = true)
+        }
+        return successResult().putExtra(OpenPgpApi.RESULT_KEY_IDS, resolvedIds.toLongArray())
     }
 
     /**
@@ -541,7 +578,8 @@ class PGPonyOpenPgpService : Service() {
         data: Intent,
         input: ParcelFileDescriptor?,
         output: ParcelFileDescriptor?,
-        withSignature: Boolean
+        withSignature: Boolean,
+        callingPackage: String
     ): Intent {
         // P2d: input is no longer read up front — the software path
         // streams it straight into the encryptor; only the card path
@@ -582,13 +620,25 @@ class PGPonyOpenPgpService : Service() {
         val rings = LinkedHashMap<String, org.bouncycastle.openpgp.PGPPublicKeyRing>()
         val missing = mutableListOf<String>()
         // 4.7.0 (item 10): recipients the user marked Don't use. The mail app
-        // cannot ask for the in-app confirmation, so the send is refused.
+        // cannot ask for the in-app confirmation, so such a key is never used.
+        // 4.7.0 (item 41): an address whose only key is Don't use now opens the
+        // recipient review; the refusal below remains for a storage failure.
         val dontUse = mutableListOf<String>()
+        // 4.7.0 (item 41): a Don't use key the client names by key id. That is
+        // an explicit choice of that key, so it keeps the item 10 refusal; only
+        // an address whose sole key is Don't use goes to the review.
+        val dontUseKeyIds = mutableListOf<String>()
+        // 4.7.0 (item 41, #25): the re-run after the recipient review carries
+        // the keys the user picked there. Opportunistic sends never open the
+        // review, so a selection on one is ignored and that path stays as it was.
+        val opportunistic = data.getBooleanExtra(OpenPgpApi.EXTRA_OPPORTUNISTIC_ENCRYPTION, false)
+        val selectedKeyIds: LongArray? =
+            if (opportunistic) null else data.getLongArrayExtra(OpenPgpApi.EXTRA_KEY_IDS_SELECTED)
         runBlocking {
             requestedKeyIds?.forEach { id ->
                 val entity = findEntityByKeyId(id)?.takeIf { !it.isRevoked }
                 if (entity?.trustLevel == com.pgpony.android.data.TrustLevel.DONT_USE) {
-                    dontUse += entity.userName.ifBlank { entity.userEmail.ifBlank { entity.shortFingerprint } }
+                    dontUseKeyIds += entity.userName.ifBlank { entity.userEmail.ifBlank { entity.shortFingerprint } }
                     return@forEach
                 }
                 val ring = entity?.let { repo.loadEncryptionRecipientRing(it.fingerprint) }
@@ -620,11 +670,63 @@ class PGPonyOpenPgpService : Service() {
                     }
                 }
                 if (!added) {
-                    val marked = matches.isEmpty() &&
-                        repo.getByAnyUserEmail(email).any { !it.isRevoked && it.trustLevel == com.pgpony.android.data.TrustLevel.DONT_USE }
-                    if (marked) dontUse += email else missing += raw
+                    val keysForAddress: List<com.pgpony.android.data.PGPKeyEntity> =
+                        if (matches.isEmpty()) repo.getByAnyUserEmail(email) else emptyList()
+                    when (RecipientReview.reasonForAddress(matches.isNotEmpty(), keysForAddress)) {
+                        RecipientReview.Reason.DONT_USE -> dontUse += email
+                        RecipientReview.Reason.MISSING -> missing += raw
+                    }
                 }
             }
+        }
+        if (dontUseKeyIds.isNotEmpty()) {
+            if (!opportunistic) {
+                return errorResult(
+                    OpenPgpError.GENERIC_ERROR,
+                    "Recipient key is marked Don't use in PGPony: ${dontUseKeyIds.joinToString(", ")}. " +
+                        "Change its trust level in PGPony to encrypt to it."
+                )
+            }
+            // Opportunistic: reported as missing below, as before.
+            dontUse += dontUseKeyIds
+        }
+        if (selectedKeyIds != null) {
+            // 4.7.0 (item 41, #25): the user reviewed this send. Every picked id
+            // must still be a key in the keyring that is not revoked, not
+            // Don't use, and not expired unless expired keys are allowed;
+            // anything else is refused rather than dropped. The picks join the
+            // recipients already resolved (deduped by fingerprint), and the
+            // addresses without a usable key are no longer an error for this send.
+            val selection = runBlocking {
+                RecipientReview.resolveSelected(selectedKeyIds, repo.getAllKeys(), allowExpiredKeys())
+            }
+            val unusable = selection.refused.map { RecipientReview.formatKeyId(it) }.toMutableList()
+            RecipientReview.notYetResolved(rings.keys, selection.accepted).forEach { key ->
+                val ring = repo.loadEncryptionRecipientRing(key.fingerprint)
+                if (ring != null) {
+                    rings[key.fingerprint] = ring
+                } else {
+                    unusable += RecipientReview.keyIdOf(key)?.let { RecipientReview.formatKeyId(it) } ?: key.shortFingerprint
+                }
+            }
+            if (unusable.isNotEmpty()) {
+                storageFailureMessage()?.let { return errorResult(OpenPgpError.GENERIC_ERROR, it) }
+                return reviewKeyUnusableResult(unusable)
+            }
+            if (rings.isEmpty()) {
+                return errorResult(OpenPgpError.NO_USER_IDS, "No recipients provided")
+            }
+            missing.clear()
+            dontUse.clear()
+        }
+        // 4.7.0 (item 41, #25): an address with no usable key (missing, or only
+        // a Don't use key) opens the recipient review instead of failing the
+        // send, as OpenKeychain does. A storage failure keeps its own error:
+        // there every key looks missing and picking keys would not help.
+        if (RecipientReview.needsReview(missing.size + dontUse.size, opportunistic, selectedKeyIds != null) &&
+            storageFailureMessage() == null
+        ) {
+            return recipientReviewInteraction(data, callingPackage, missing, dontUse)
         }
         if (dontUse.isNotEmpty() &&
             !data.getBooleanExtra(OpenPgpApi.EXTRA_OPPORTUNISTIC_ENCRYPTION, false)
@@ -2109,6 +2211,53 @@ class PGPonyOpenPgpService : Service() {
             putExtra(OpenPgpApi.RESULT_INTENT, pendingIntent)
         }
     }
+
+    /**
+     * 4.7.0 (item 41, #25): USER_INTERACTION_REQUIRED with a PendingIntent to
+     * the recipient review. The client launches it and, on RESULT_OK, re-runs
+     * this operation with the returned intent: the original request plus
+     * EXTRA_KEY_IDS_SELECTED. Cancel returns RESULT_CANCELED, so the mail app
+     * keeps its draft.
+     */
+    private fun recipientReviewInteraction(
+        data: Intent,
+        callingPackage: String,
+        missing: List<String>,
+        dontUse: List<String>,
+        forKeyIds: Boolean = false
+    ): Intent {
+        val reviewIntent = Intent(this, ProviderRecipientReviewActivity::class.java).apply {
+            putExtra(ProviderRecipientReviewActivity.EXTRA_API_DATA, data)
+            putExtra(ProviderRecipientReviewActivity.EXTRA_MISSING, missing.toTypedArray())
+            putExtra(ProviderRecipientReviewActivity.EXTRA_DONT_USE, dontUse.toTypedArray())
+            putExtra(ProviderRecipientReviewActivity.EXTRA_SENDER_EMAIL, sendIdentityEmail(data))
+            putExtra(
+                ProviderRecipientReviewActivity.EXTRA_SIGN_KEY_ID,
+                data.getLongExtra(OpenPgpApi.EXTRA_SIGN_KEY_ID, 0L)
+            )
+            // GET_KEY_IDS and encrypt get their own scheme and request code,
+            // so one review's PendingIntent never replaces the other's extras.
+            val reviewScheme = if (forKeyIds) "pgpony-api-recipients-keyids" else "pgpony-api-recipients"
+            setData(android.net.Uri.parse("$reviewScheme://$callingPackage/${data.action}"))
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            this,
+            if (forKeyIds) 5 else 4,
+            reviewIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        return Intent().apply {
+            putExtra(OpenPgpApi.RESULT_CODE, OpenPgpApi.RESULT_CODE_USER_INTERACTION_REQUIRED)
+            putExtra(OpenPgpApi.RESULT_INTENT, pendingIntent)
+        }
+    }
+
+    /** 4.7.0 (item 41, #25): a key picked in the recipient review that the re-run cannot use. */
+    private fun reviewKeyUnusableResult(keys: List<String>): Intent = errorResult(
+        OpenPgpError.GENERIC_ERROR,
+        "A key chosen for this message cannot be used: ${keys.joinToString(", ")}. " +
+            "Send the message again and choose the recipients in PGPony."
+    )
 
     // ── #51: per-send signing-key selection ─────────────────────────────
 

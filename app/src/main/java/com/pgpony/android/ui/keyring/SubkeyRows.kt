@@ -16,6 +16,7 @@ package com.pgpony.android.ui.keyring
 
 import com.pgpony.android.R
 import com.pgpony.android.crypto.CertificateBindings
+import com.pgpony.android.crypto.SubkeyAdmission
 import com.pgpony.android.crypto.SubkeyCapability
 
 internal object SubkeyRows {
@@ -57,6 +58,54 @@ internal object SubkeyRows {
                 expiresAt = s.expiresAtMs,
                 isRevoked = s.revoked,
                 isCardBacked = isCardBacked
+            )
+        }
+    }
+
+    /** 4.7.0 (item 40, #82): the text for why a subkey is left out or not used. */
+    fun issueRes(issue: SubkeyAdmission.Issue): Int = when (issue) {
+        SubkeyAdmission.Issue.WEAK_HASH -> R.string.subkey_issue_weak_hash
+        SubkeyAdmission.Issue.NO_VALID_BINDING -> R.string.subkey_issue_no_binding
+        SubkeyAdmission.Issue.NO_BACK_SIGNATURE -> R.string.subkey_issue_no_back_signature
+        SubkeyAdmission.Issue.REVOKED -> R.string.subkey_issue_revoked
+        SubkeyAdmission.Issue.EXPIRED -> R.string.subkey_issue_expired
+    }
+
+    /** 4.7.0 (item 40, #82): the text for where a subkey's secret is. */
+    fun secretLocationRes(location: SubkeyAdmission.SecretLocation): Int = when (location) {
+        SubkeyAdmission.SecretLocation.ON_DEVICE -> R.string.key_detail_subkey_secret_on_device
+        SubkeyAdmission.SecretLocation.OFFLINE_STUB -> R.string.key_detail_subkey_secret_offline
+        SubkeyAdmission.SecretLocation.ON_CARD -> R.string.key_detail_subkey_secret_on_card
+        SubkeyAdmission.SecretLocation.NOT_PRESENT -> R.string.key_detail_subkey_secret_not_present
+    }
+
+    /** 4.7.0 (item 40): the last 8 hex digits of a key ID, as the preview shows it. */
+    fun shortKeyId(keyId: Long): String = String.format("%016X", keyId).takeLast(8)
+
+    /**
+     * 4.7.0 (item 40, #82): [rows] with each subkey's status for Key Details:
+     * where its secret is ([SubkeyAdmission.locationFor]; null for a public
+     * key) and why it is not usable, read from the stored certificate
+     * [rawPublic]. A certificate the analyser cannot read leaves the reason
+     * out rather than guessing.
+     */
+    fun withStatus(
+        rows: List<SubkeyDisplayInfo>,
+        rawPublic: ByteArray?,
+        isKeyPair: Boolean,
+        isCardBacked: Boolean,
+        cardFingerprints: Set<String>,
+        held: Map<String, SubkeyAdmission.SecretLocation>,
+        nowMs: Long = System.currentTimeMillis()
+    ): List<SubkeyDisplayInfo> {
+        val report: CertificateBindings.Report? = rawPublic?.let { runCatching { CertificateBindings.analyze(it) }.getOrNull() }
+        return rows.map { row ->
+            val issue: SubkeyAdmission.Issue? = if (rawPublic != null) {
+                runCatching { SubkeyAdmission.issueIn(rawPublic, report, row.fingerprint, nowMs) }.getOrNull()
+            } else null
+            row.copy(
+                secretLocation = SubkeyAdmission.locationFor(row.fingerprint, isKeyPair, isCardBacked, cardFingerprints, held),
+                issue = issue
             )
         }
     }

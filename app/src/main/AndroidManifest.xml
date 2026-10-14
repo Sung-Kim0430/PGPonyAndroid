@@ -481,6 +481,20 @@
             android:launchMode="singleTop" />
 
         <!--
+          4.7.0 (item 41, #25): recipient review for API clients, opened when
+          an encrypt names an address PGPony has no usable key for. Same
+          posture as the key picker: NOT exported, reachable only via the
+          PendingIntent in that encrypt's USER_INTERACTION_REQUIRED response.
+        -->
+        <activity
+            android:name=".provider.ProviderRecipientReviewActivity"
+            android:process=":remote_api"
+            android:exported="false"
+            android:theme="@style/Theme.PGPony"
+            android:excludeFromRecents="true"
+            android:launchMode="singleTop" />
+
+        <!--
           4.0.0 Succession Phase P2a-2 — passphrase prompt for provider
           operations on a protected signing key. Same posture: NOT
           exported, PendingIntent-only. The passphrase goes into the

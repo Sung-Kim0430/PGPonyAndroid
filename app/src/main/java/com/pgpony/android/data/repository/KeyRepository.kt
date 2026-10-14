@@ -133,7 +133,10 @@ data class ImportPreview(
     /** 4.6.0 (item 17.9): every OTHER key the same text holds. The commit
      *  imports all of them, so the preview must show all of them; a noisy
      *  paste can no longer slip a second key in behind the one reviewed. */
-    val additionalKeys: List<PreviewKey> = emptyList()
+    val additionalKeys: List<PreviewKey> = emptyList(),
+    /** 4.7.0 (item 40, #82): subkeys of this key that the import leaves out
+     *  or that cannot be used, each with why (SubkeyAdmission.Issue). */
+    val leftOutSubkeys: List<com.pgpony.android.crypto.SubkeyAdmission.LeftOut> = emptyList()
 ) {
     /** Last 8 hex chars, uppercased — same convention as PGPKeyEntity.shortFingerprint. */
     val shortFingerprint: String get() = fingerprint.takeLast(8).uppercase()
@@ -165,7 +168,10 @@ data class ImportOutcome(
     val resolution: ImportResolution,
     /** 4.7.0 (item 24, #78): newer self-signatures of a key pair's owner taken
      *  from the import (preferences, expiry or bindings changed elsewhere). */
-    val selfSignaturesApplied: Int = 0
+    val selfSignaturesApplied: Int = 0,
+    /** 4.7.0 (item 40, #82): subkeys a re-import of your own key pair added
+     *  (bound by the primary, missing from the stored key). */
+    val subkeysAdded: Int = 0
 )
 
 class KeyRepository(
@@ -759,6 +765,21 @@ class KeyRepository(
     }
 
     private suspend fun previewSingle(armoredText: String): ImportPreview? {
+        val preview = previewSingleBase(armoredText) ?: return null
+        // 4.7.0 (item 40, #82): list the subkeys the import drops (no valid
+        // binding, a SHA-1 binding after the cutoff, no back-signature on a
+        // signing subkey) or cannot use (revoked, expired), read from the
+        // incoming octets as they are, before anything is sanitized.
+        val leftOut: List<com.pgpony.android.crypto.SubkeyAdmission.LeftOut> =
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+                runCatching {
+                    com.pgpony.android.crypto.SubkeyAdmission.leftOut(CompositeSigPacket.dearmor(armoredText))
+                }.getOrDefault(emptyList())
+            }
+        return if (leftOut.isEmpty()) preview else preview.copy(leftOutSubkeys = leftOut)
+    }
+
+    private suspend fun previewSingleBase(armoredText: String): ImportPreview? {
         compositeImportPreview(armoredText)?.let { return it }
         v4Algo35ImportPreview(armoredText)?.let { return it }
         return try {
@@ -936,8 +957,19 @@ class KeyRepository(
                 newArmoredPublicKey = crypto.exportArmoredPublicKey(dupPub),
                 newExpiresAtMs = dupExpiresAtMs
             )
-            val resolved = detailed.entity
             val resolution = detailed.resolution
+            // 4.7.0 (item 40, #82): your own secret export with subkeys added
+            // in gpg since adds those subkeys (public part into the
+            // certificate here, secret or stub by the graft below). A
+            // public-only re-import adds none (item 24).
+            val withSubkeys: Pair<PGPKeyEntity, Int> =
+                if (existing.isKeyPair && !existing.isCardBacked && importResult.secretKeyRing != null &&
+                    importResult.publicKeyRing != null
+                ) {
+                    addBoundSubkeysFromSecretImport(detailed.entity, importResult.publicKeyRing, importResult.secretKeyRing, upgrade)
+                } else Pair(detailed.entity, 0)
+            val resolved = withSubkeys.first
+            val subkeysAdded = withSubkeys.second
             // 4.7.0 (item 22): your own key pair re-imported with a subkey
             // whose secret the stored ring lacks (one added in gpg where the
             // offline primary is kept) brings that secret in too.
@@ -947,12 +979,13 @@ class KeyRepository(
             return ImportOutcome(
                 resolved,
                 when {
-                    grafted > 0 -> ImportResolution.MERGED_NEW_MATERIAL
+                    grafted > 0 || subkeysAdded > 0 -> ImportResolution.MERGED_NEW_MATERIAL
                     resolution == KeyDeduplicationService.DuplicateResolution.ALREADY_IN_KEYRING ->
                         ImportResolution.ALREADY_IN_KEYRING
                     else -> ImportResolution.MERGED_NEW_MATERIAL
                 },
-                selfSignaturesApplied = detailed.selfSignaturesApplied
+                selfSignaturesApplied = detailed.selfSignaturesApplied,
+                subkeysAdded = subkeysAdded
             )
         }
 
@@ -1599,6 +1632,10 @@ class KeyRepository(
      * subkey the stored certificate (already merged and sanitized by the
      * duplicate path) binds is taken, with that bound public part, and a
      * secret already held is never replaced. Returns how many were added.
+     * 4.7.0 (item 40, #82): the rules live in SubkeyAdmission.graftSecrets,
+     * which also takes a stub for a subkey the ring does not hold at all (a
+     * subkey just added whose secret gpg exported as a stub), so the stored
+     * ring matches the certificate and exports back to gpg as `ssb#`.
      */
     private fun graftNewSecretSubkeys(fingerprint: String, incoming: org.bouncycastle.openpgp.PGPSecretKeyRing): Int =
         runCatching {
@@ -1611,22 +1648,88 @@ class KeyRepository(
             val certificate = org.bouncycastle.openpgp.PGPPublicKeyRing(
                 store.loadPublicKey(fingerprint) ?: return@runCatching 0, calc
             )
-            var ring = stored
-            var added = 0
-            for (sk in incoming.secretKeys.asSequence().toList()) {
-                if (sk.publicKey.isMasterKey || com.pgpony.android.crypto.OfflineStub.isStub(sk)) continue
-                val held = ring.getSecretKey(sk.keyID)
-                if (held != null && !com.pgpony.android.crypto.OfflineStub.isStub(held)) continue
-                val bound = certificate.getPublicKey(sk.keyID) ?: continue
-                if (!bound.fingerprint.contentEquals(sk.publicKey.fingerprint)) continue
-                ring = org.bouncycastle.openpgp.PGPSecretKeyRing.insertSecretKey(
-                    ring, org.bouncycastle.openpgp.PGPSecretKey.replacePublicKey(sk, bound)
-                )
-                added++
-            }
-            if (added > 0) store.storePrivateKey(fingerprint, ring.encoded)
-            added
+            val grafted: Pair<org.bouncycastle.openpgp.PGPSecretKeyRing, Int> =
+                com.pgpony.android.crypto.SubkeyAdmission.graftSecrets(stored, incoming, certificate)
+            if (grafted.second > 0) store.storePrivateKey(fingerprint, grafted.first.encoded)
+            grafted.second
         }.getOrDefault(0)
+
+    /**
+     * 4.7.0 (item 40, #82): add to the stored certificate of [entity] every
+     * subkey of [incomingPublic] it lacks and that the primary verifiably
+     * binds (SubkeyAdmission.newBoundSubkeys), when the import carries secret
+     * material ([incomingSecret]) that is proven to be this key's, by the same
+     * check that upgrades a contact to a key pair (a protected secret without
+     * a passphrase passes on its structure, as there). Not proven, or nothing
+     * new: unchanged. Returns the row (its cached armor updated) and how many
+     * subkeys were added; their secrets are grafted afterwards.
+     */
+    private suspend fun addBoundSubkeysFromSecretImport(
+        entity: PGPKeyEntity,
+        incomingPublic: PGPPublicKeyRing,
+        incomingSecret: PGPSecretKeyRing,
+        upgrade: SecretUpgrade
+    ): Pair<PGPKeyEntity, Int> {
+        val none: Pair<PGPKeyEntity, Int> = Pair(entity, 0)
+        val storedSecret = store.loadPrivateKey(entity.fingerprint) ?: return none
+        if (CompositeKeyFacade.isCompositePrimary(storedSecret) || CompositeKeyFacade.hasV4Algo35Subkey(storedSecret)) {
+            return none
+        }
+        val storedPublic = store.loadPublicKey(entity.fingerprint) ?: return none
+        val incomingBytes = incomingPublic.encoded
+        val candidates: List<com.pgpony.android.crypto.CertificateBindings.SubkeyState> =
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+                runCatching {
+                    com.pgpony.android.crypto.SubkeyAdmission.newBoundSubkeys(
+                        storedPublic, incomingBytes, incomingHasSecret = true
+                    )
+                }.getOrDefault(emptyList())
+            }
+        if (candidates.isEmpty()) return none
+        if (!secretProvenForReimport(entity, incomingSecret.encoded, storedPublic, upgrade)) return none
+        val merged = com.pgpony.android.crypto.SubkeyAdmission.withSubkeys(
+            storedPublic, incomingBytes, candidates.map { it.fingerprintHex.uppercase() }.toSet()
+        )
+        val added = com.pgpony.android.crypto.SubkeyAdmission.subkeyFingerprints(merged).size -
+            com.pgpony.android.crypto.SubkeyAdmission.subkeyFingerprints(storedPublic).size
+        if (added <= 0) return none
+        // The merged octets must still read as a certificate before they replace the stored one.
+        val ring = runCatching {
+            PGPPublicKeyRing(merged, org.bouncycastle.openpgp.operator.bc.BcKeyFingerprintCalculator())
+        }.getOrNull() ?: return none
+        store.storePublicKey(entity.fingerprint, merged)
+        val armored: String? = armoredAsStored(
+            entity.fingerprint,
+            runCatching { crypto.exportArmoredPublicKey(ring) }.getOrNull() ?: entity.armoredPublicKey
+        )
+        val updated = entity.copy(armoredPublicKey = armored ?: entity.armoredPublicKey)
+        dao.update(updated)
+        return Pair(updated, added)
+    }
+
+    /** 4.7.0 (item 40): [secretBytes] is proven to hold the secret of the
+     *  stored key pair [existing] (SecretKeyCheck, as KEYSTORE-4), without
+     *  throwing: an unproven secret only means no subkeys are added. */
+    private suspend fun secretProvenForReimport(
+        existing: PGPKeyEntity,
+        secretBytes: ByteArray,
+        storedPublic: ByteArray,
+        upgrade: SecretUpgrade
+    ): Boolean {
+        if (KeyDeduplicationService.normalize(existing.fingerprint) in upgrade.sameImport) return true
+        val match: SecretKeyCheck.SecretMatch = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+            runCatching { SecretKeyCheck.checkSecretForPublic(secretBytes, storedPublic, upgrade.passphrase) }
+                .getOrDefault(SecretKeyCheck.SecretMatch.UNREADABLE)
+        }
+        return match == SecretKeyCheck.SecretMatch.OK ||
+            (match == SecretKeyCheck.SecretMatch.NEEDS_PASSPHRASE && upgrade.passphrase == null)
+    }
+
+    /** 4.7.0 (item 40, #82): where each subkey's secret is in the stored
+     *  secret ring of [fingerprint], by subkey fingerprint (Key Details). */
+    fun subkeySecretLocations(fingerprint: String): Map<String, com.pgpony.android.crypto.SubkeyAdmission.SecretLocation> =
+        runCatching { com.pgpony.android.crypto.SubkeyAdmission.secretLocations(store.loadPrivateKey(fingerprint)) }
+            .getOrDefault(emptyMap())
 
     // ── 4.7.0 (item 31, #79): certifying other people's keys ────────────
 

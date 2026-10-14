@@ -119,7 +119,12 @@ data class SubkeyDisplayInfo(
     val createdAt: Long,
     val expiresAt: Long?,
     val isRevoked: Boolean,
-    val isCardBacked: Boolean
+    val isCardBacked: Boolean,
+    /** 4.7.0 (item 40, #82): where this subkey's secret is; null for a public
+     *  key, which shows only why a subkey is not usable. */
+    val secretLocation: com.pgpony.android.crypto.SubkeyAdmission.SecretLocation? = null,
+    /** 4.7.0 (item 40, #82): why this subkey is not usable now; null when it is. */
+    val issue: com.pgpony.android.crypto.SubkeyAdmission.Issue? = null
 )
 
 /**
@@ -1075,7 +1080,26 @@ class KeyDetailViewModel(
         else -> PGPonyApp.instance.getString(R.string.sign_as_subkey_subkey_label, "v6")
     }
 
+    /**
+     * 4.7.0 (item 40, #82): the subkey rows with each one's status line (where
+     * its secret is, and why it is not usable), so a subkey that is present
+     * but never used says why instead of looking like the others.
+     */
     private suspend fun deriveSubkeys(entity: PGPKeyEntity): List<SubkeyDisplayInfo> {
+        val rows = deriveSubkeyRows(entity)
+        if (rows.isEmpty()) return rows
+        return withContext(Dispatchers.Default) {
+            val rawPublic: ByteArray? = runCatching { repo.exportPublicKeyBytes(entity.fingerprint) }.getOrNull()
+            val held: Map<String, com.pgpony.android.crypto.SubkeyAdmission.SecretLocation> =
+                if (entity.isKeyPair) repo.subkeySecretLocations(entity.fingerprint) else emptyMap()
+            val cardFingerprints: Set<String> = listOfNotNull(
+                entity.cardSigFingerprint, entity.cardDecFingerprint, entity.cardAuthFingerprint
+            ).toSet()
+            SubkeyRows.withStatus(rows, rawPublic, entity.isKeyPair, entity.isCardBacked, cardFingerprints, held)
+        }
+    }
+
+    private suspend fun deriveSubkeyRows(entity: PGPKeyEntity): List<SubkeyDisplayInfo> {
         if (entity.algorithm.isCompositeSign) return compositeSubkeys(entity)
         // 4.6.0 (item 19): a classical primary with a composite ML-KEM subkey
         // (algo 35 / 36, or a LibrePGP v5 algo 8) is listed from its

@@ -659,6 +659,31 @@ private fun ImportPreviewCard(
             )
             DetailRow(stringResource(R.string.import_preview_detail_algorithm_label), preview.algorithmShortName)
 
+            // 4.7.0 (item 40, #82): subkeys this import leaves out or cannot
+            // use, one line each (algorithm, short key ID, why), so a subkey
+            // gpg lists but PGPony will not show is explained before import.
+            if (preview.leftOutSubkeys.isNotEmpty()) {
+                HorizontalDivider()
+                Text(
+                    text = stringResource(R.string.import_preview_left_out_title),
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                preview.leftOutSubkeys.forEach { lo ->
+                    Text(
+                        text = stringResource(
+                            R.string.import_preview_left_out_row_format,
+                            SubkeyRows.label(lo.subkey),
+                            SubkeyRows.shortKeyId(lo.subkey.keyId),
+                            stringResource(SubkeyRows.issueRes(lo.issue))
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
             // 4.6.0 (item 17.9): every further key the commit will import.
             if (preview.additionalKeys.isNotEmpty()) {
                 HorizontalDivider()

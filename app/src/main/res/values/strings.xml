@@ -2875,4 +2875,31 @@
     <string name="save_toast_saved_format">Saved %1$s</string>
     <string name="save_toast_failed_format">Couldn\'t save %1$s</string>
     <string name="save_batch_item_cancelled">Not saved: the save was cancelled.</string>
+
+    <!-- 4.7.0 (item 40): subkeys added on a re-import of your own key pair, subkeys an import leaves out, and each subkey's status on Key Details. -->
+    <plurals name="import_result_subkeys_added">
+        <item quantity="one">Added %1$d subkey.</item>
+        <item quantity="other">Added %1$d subkeys.</item>
+    </plurals>
+    <string name="import_preview_left_out_title">Subkeys left out or not usable</string>
+    <string name="import_preview_left_out_row_format">%1$s %2$s: %3$s</string>
+    <string name="subkey_issue_weak_hash">Bound with SHA-1 after the Feb 2023 cutoff</string>
+    <string name="subkey_issue_no_binding">No valid binding signature</string>
+    <string name="subkey_issue_no_back_signature">Signing subkey without a valid back-signature</string>
+    <string name="subkey_issue_revoked">Revoked</string>
+    <string name="subkey_issue_expired">Expired</string>
+    <string name="key_detail_subkey_secret_on_device">Secret on this device</string>
+    <string name="key_detail_subkey_secret_offline">Secret offline (gpg stub)</string>
+    <string name="key_detail_subkey_secret_on_card">Secret on a card</string>
+    <string name="key_detail_subkey_secret_not_present">No secret on this device</string>
+
+    <!-- 4.7.0 (item 41): recipient review when a mail app asks to encrypt to an address PGPony has no usable key for. -->
+    <string name="provider_review_title">Review recipients</string>
+    <string name="provider_review_intro">PGPony has no usable key for some recipients of this message. Choose the keys to encrypt it to, or cancel to go back to your draft.</string>
+    <string name="provider_review_missing_format">%1$s: no key in PGPony</string>
+    <string name="provider_review_dont_use_format">%1$s: marked Don\'t use</string>
+    <string name="provider_review_dont_use_hint">Keys marked Don\'t use are not offered. Change the trust level in PGPony to encrypt to one.</string>
+    <string name="provider_review_no_keys">No keys in PGPony to choose from. Import the recipient\'s public key in PGPony first.</string>
+    <string name="provider_review_confirm">Encrypt to selected</string>
+    <string name="err_provider_review_key_unusable">A key chosen for this message cannot be used: %1$s. Send the message again and choose the recipients in PGPony.</string>
 </resources>
