@@ -79,6 +79,9 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.pgpony.android.R
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.semantics.Role
+import androidx.compose.material3.minimumInteractiveComponentSize
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -266,7 +269,9 @@ fun ExportPrivateKeyResultSheet(
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .toggleable(value = gpgCompat, role = Role.Switch, onValueChange = { gpgCompat = it })
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
@@ -279,7 +284,7 @@ fun ExportPrivateKeyResultSheet(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                Switch(checked = gpgCompat, onCheckedChange = { gpgCompat = it })
+                Switch(checked = gpgCompat, onCheckedChange = null, modifier = Modifier.minimumInteractiveComponentSize())
             }
 
             OutlinedButton(

@@ -22,6 +22,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.pgpony.android.R
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.semantics.Role
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -93,8 +95,21 @@ fun AddUserIdSheet(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Checkbox(checked = makePrimary, onCheckedChange = { makePrimary = it }, enabled = !isProcessing)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth().toggleable(
+                    value = makePrimary,
+                    enabled = !isProcessing,
+                    role = Role.Checkbox,
+                    onValueChange = { makePrimary = it }
+                )
+            ) {
+                Checkbox(
+                    checked = makePrimary,
+                    onCheckedChange = null,
+                    enabled = !isProcessing,
+                    modifier = Modifier.minimumInteractiveComponentSize()
+                )
                 Text(
                     text = stringResource(R.string.key_detail_add_userid_make_primary_label),
                     style = MaterialTheme.typography.bodyMedium

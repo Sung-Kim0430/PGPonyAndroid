@@ -92,6 +92,7 @@ import com.pgpony.android.ui.util.rememberHaptics
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.compose.foundation.selection.toggleable
 
 // ── Encrypt Screen ─────────────────────────────────────────────────────
 
@@ -1376,13 +1377,14 @@ private fun RecipientPickerRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() }
+            .toggleable(value = selected, role = Role.Checkbox, onValueChange = { onClick() })
             .padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Checkbox(
             checked = selected,
-            onCheckedChange = { onClick() }
+            onCheckedChange = null,
+            modifier = Modifier.minimumInteractiveComponentSize()
         )
         Spacer(modifier = Modifier.width(4.dp))
         if (key.isCardBacked) {
@@ -1467,12 +1469,20 @@ private fun AsciiArmorToggleRow(
     viewModel: EncryptDecryptViewModel
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .toggleable(
+                value = state.asciiArmor,
+                role = Role.Switch,
+                onValueChange = { viewModel.setAsciiArmor(it) }
+            )
+            .padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Switch(
             checked = state.asciiArmor,
-            onCheckedChange = { viewModel.setAsciiArmor(it) }
+            onCheckedChange = null,
+            modifier = Modifier.minimumInteractiveComponentSize()
         )
         Spacer(modifier = Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
@@ -1869,7 +1879,13 @@ private fun SignModeBody(state: EncryptUiState, viewModel: EncryptDecryptViewMod
     if (state.signingKey != null) {
         Spacer(modifier = Modifier.height(12.dp))
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .toggleable(
+                    value = state.detachedSignature,
+                    role = Role.Switch,
+                    onValueChange = { viewModel.setDetachedSignature(it) }
+                ),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
@@ -1886,7 +1902,8 @@ private fun SignModeBody(state: EncryptUiState, viewModel: EncryptDecryptViewMod
             Spacer(modifier = Modifier.width(8.dp))
             Switch(
                 checked = state.detachedSignature,
-                onCheckedChange = { viewModel.setDetachedSignature(it) }
+                onCheckedChange = null,
+                modifier = Modifier.minimumInteractiveComponentSize()
             )
         }
     }

@@ -18,7 +18,6 @@
 
 package com.pgpony.android.ui.keyring
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -34,6 +33,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import com.pgpony.android.R
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.semantics.Role
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -181,12 +182,13 @@ fun DeleteKeySheet(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { acknowledged = !acknowledged },
+                    .toggleable(value = acknowledged, role = Role.Checkbox, onValueChange = { acknowledged = it }),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Checkbox(
                     checked = acknowledged,
-                    onCheckedChange = { acknowledged = it }
+                    onCheckedChange = null,
+                    modifier = Modifier.minimumInteractiveComponentSize()
                 )
                 Text(
                     text = stringResource(R.string.key_delete_ack_label),

@@ -75,6 +75,9 @@ import com.pgpony.android.data.PGPKeyEntity
 import kotlinx.coroutines.launch
 import java.text.DateFormat
 import java.util.Date
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.semantics.Role
+import androidx.compose.material3.minimumInteractiveComponentSize
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -150,7 +153,17 @@ fun ApiClientsScreen(onDismiss: () -> Unit) {
                 mutableStateOf(prefs.getBoolean("provider_ask_sign_key_each_send", false))
             }
             Row(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 12.dp)
+                    .toggleable(
+                        value = askSignEachSend,
+                        role = Role.Switch,
+                        onValueChange = {
+                            askSignEachSend = it
+                            prefs.edit().putBoolean("provider_ask_sign_key_each_send", it).apply()
+                        }
+                    ),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
@@ -167,10 +180,8 @@ fun ApiClientsScreen(onDismiss: () -> Unit) {
                 Spacer(modifier = Modifier.width(12.dp))
                 Switch(
                     checked = askSignEachSend,
-                    onCheckedChange = {
-                        askSignEachSend = it
-                        prefs.edit().putBoolean("provider_ask_sign_key_each_send", it).apply()
-                    }
+                    onCheckedChange = null,
+                    modifier = Modifier.minimumInteractiveComponentSize()
                 )
             }
             HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))

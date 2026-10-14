@@ -103,6 +103,9 @@ import com.pgpony.android.data.TrustLevel
 import com.pgpony.android.ui.components.TrustBadge
 import java.util.Date
 import java.util.Locale
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.semantics.Role
+import androidx.compose.material3.minimumInteractiveComponentSize
 
 /**
  * Phase A13 — stable English routing keys for action dispatch.
@@ -1501,7 +1504,10 @@ fun FallbackKeysSection(
             // Only offered when there ARE other keys; with no fallback
             // candidates the switch would only be a foot-gun.
             Row(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .toggleable(value = strictMode, role = Role.Switch, onValueChange = onStrictModeChange)
+                    .padding(vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
@@ -1517,19 +1523,28 @@ fun FallbackKeysSection(
                 }
                 Switch(
                     checked = strictMode,
-                    onCheckedChange = onStrictModeChange
+                    onCheckedChange = null,
+                    modifier = Modifier.minimumInteractiveComponentSize()
                 )
             }
         }
         val enabledCount = rows.count { it.enabled }
         rows.forEachIndexed { index, row ->
             Row(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .toggleable(
+                        value = row.enabled,
+                        role = Role.Switch,
+                        onValueChange = { onToggle(row.key.fingerprint) }
+                    )
+                    .padding(vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Switch(
                     checked = row.enabled,
-                    onCheckedChange = { onToggle(row.key.fingerprint) }
+                    onCheckedChange = null,
+                    modifier = Modifier.minimumInteractiveComponentSize()
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {

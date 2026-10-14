@@ -1145,6 +1145,8 @@ Test: a user with one key, several keys, none, and a username that doesn't exist
 
 ## 43. Toggle and checkbox rows respond to a tap anywhere on the row (#79)
 
+**Status:** RC3. 31 code sites in 17 files (two of them shared row helpers, 54 rows on screen in all) now carry Modifier.toggleable (Role.Switch or Role.Checkbox, same enabled state as before) with the control's onCheckedChange set to null and Modifier.minimumInteractiveComponentSize() on the control, so its 48dp footprint and the look stay the same. Two shared helpers cover most of Settings: SettingsToggle (22 rows) and the Keyservers ToggleRow (3 rows). Other files: ApiClientsScreen, SettingsScreen (the two clear-data acknowledgements), CardKeygenScreen, PublishSheet, KeyDetailSections (strict mode and the fallback rows; the up and down arrows keep their own taps), KeyringScreen (three generate switches), CertifySheet (User IDs, Local only, fingerprint confirmation), ExportPrivateKeyResultSheet, AddUserIdSheet, DeleteKeySheet, ChangePassphraseSheet, FileEncryptionResultScreen, BundleEncryptionResultScreen, Screens.kt (recipient picker, ASCII armor, detached signature), OnboardingPage (five switches) and PairScreen (outgoing and incoming items). Rows that used clickable plus a live checkbox now use toggleable instead. Skipped: the unused LegacyInlineRecipientList in Screens.kt (kept verbatim on purpose), ProviderRecipientReviewActivity (already correct from item 41), and the FileBatch screens (no toggles). Radio rows are out of scope. On device (Oct 13): green.
+
 Priority: low (UI). Origin: #79 (Oct 13, RC2): Local only and the fingerprint confirmation in the Certify sheet
 only respond to a tap on the control itself.
 

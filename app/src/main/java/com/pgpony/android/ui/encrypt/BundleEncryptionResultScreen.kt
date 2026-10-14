@@ -77,6 +77,9 @@ import com.pgpony.android.ui.util.SafeSaveProgress
 import com.pgpony.android.ui.util.rememberSaveState
 import java.io.File
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.semantics.Role
+import androidx.compose.material3.minimumInteractiveComponentSize
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -275,14 +278,22 @@ fun BundleEncryptionResultScreen(state: EncryptUiState, onDismiss: () -> Unit) {
             SectionLabel(stringResource(R.string.bundle_result_section_file))
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .toggleable(
+                        value = wrapZip,
+                        role = Role.Switch,
+                        onValueChange = {
+                            wrapZip = it
+                            prefs.edit().putBoolean("wrap_output_in_zip", it).apply()
+                        }
+                    )
+                    .padding(vertical = 4.dp)
             ) {
                 Switch(
                     checked = wrapZip,
-                    onCheckedChange = {
-                        wrapZip = it
-                        prefs.edit().putBoolean("wrap_output_in_zip", it).apply()
-                    }
+                    onCheckedChange = null,
+                    modifier = Modifier.minimumInteractiveComponentSize()
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {

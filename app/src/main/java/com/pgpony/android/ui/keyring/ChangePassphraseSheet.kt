@@ -21,6 +21,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.pgpony.android.R
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.semantics.Role
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -118,8 +120,21 @@ fun ChangePassphraseSheet(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error
                 )
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Checkbox(checked = ackRemove, onCheckedChange = { ackRemove = it }, enabled = !isProcessing)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth().toggleable(
+                        value = ackRemove,
+                        enabled = !isProcessing,
+                        role = Role.Checkbox,
+                        onValueChange = { ackRemove = it }
+                    )
+                ) {
+                    Checkbox(
+                        checked = ackRemove,
+                        onCheckedChange = null,
+                        enabled = !isProcessing,
+                        modifier = Modifier.minimumInteractiveComponentSize()
+                    )
                     Text(
                         text = stringResource(R.string.change_passphrase_remove_ack),
                         style = MaterialTheme.typography.bodyMedium

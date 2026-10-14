@@ -49,6 +49,8 @@ import com.pgpony.android.data.PGPKeyEntity
 import androidx.compose.ui.unit.Dp
 import com.pgpony.android.ui.components.KeyCard
 import com.pgpony.android.ui.components.ScreenTooltip
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.semantics.Role
 
 // Auto-hiding keyring FAB: idle timeout before the "+" fades out, and the
 // fade duration. Single tunable constants per the spec.
@@ -784,10 +786,16 @@ private fun GenerateKeySheet(state: KeyringUiState, viewModel: KeyringViewModel)
 
             // 4.6.0 (item 16): opt-in SSH authentication subkey.
             if (!state.generateGranular) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .toggleable(value = state.generateSshAuth, role = Role.Switch, onValueChange = { viewModel.setGenerateSshAuth(it) }),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Switch(
                         checked = state.generateSshAuth,
-                        onCheckedChange = { viewModel.setGenerateSshAuth(it) }
+                        onCheckedChange = null,
+                        modifier = Modifier.minimumInteractiveComponentSize()
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Column {
@@ -803,20 +811,32 @@ private fun GenerateKeySheet(state: KeyringUiState, viewModel: KeyringViewModel)
             }
 
             // item 7 (#55): advanced granular composer.
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .toggleable(value = state.generateGranular, role = Role.Switch, onValueChange = { viewModel.toggleGenerateGranular(it) }),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Switch(
                     checked = state.generateGranular,
-                    onCheckedChange = { viewModel.toggleGenerateGranular(it) }
+                    onCheckedChange = null,
+                    modifier = Modifier.minimumInteractiveComponentSize()
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(stringResource(R.string.keyring_generate_granular_toggle))
             }
             if (state.generateGranular) {
                 Spacer(modifier = Modifier.height(8.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .toggleable(value = state.granularIncludeDefaultEncryption, role = Role.Switch, onValueChange = { viewModel.setGranularIncludeDefaultEncryption(it) }),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Switch(
                         checked = state.granularIncludeDefaultEncryption,
-                        onCheckedChange = { viewModel.setGranularIncludeDefaultEncryption(it) }
+                        onCheckedChange = null,
+                        modifier = Modifier.minimumInteractiveComponentSize()
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(stringResource(R.string.keyring_generate_granular_include_default))

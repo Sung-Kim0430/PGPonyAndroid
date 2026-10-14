@@ -53,6 +53,8 @@ import com.pgpony.android.update.UpdateCheckService
 import com.pgpony.android.i18n.LanguageState
 import com.pgpony.android.i18n.SupportedLanguage
 import com.pgpony.android.ui.keyring.KeyringViewModel
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.semantics.Role
 
 @Composable
 fun OnboardingPage(
@@ -364,6 +366,15 @@ private fun BiometricToggleRow(prefs: SharedPreferences) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .toggleable(
+                    value = enabled,
+                    enabled = canAuthenticate,
+                    role = Role.Switch,
+                    onValueChange = { newValue ->
+                        enabled = newValue
+                        prefs.edit().putBoolean("biometric_lock", newValue).apply()
+                    }
+                )
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -388,10 +399,8 @@ private fun BiometricToggleRow(prefs: SharedPreferences) {
             Switch(
                 checked = enabled,
                 enabled = canAuthenticate,
-                onCheckedChange = { newValue ->
-                    enabled = newValue
-                    prefs.edit().putBoolean("biometric_lock", newValue).apply()
-                }
+                onCheckedChange = null,
+                modifier = Modifier.minimumInteractiveComponentSize()
             )
         }
     }
@@ -411,6 +420,14 @@ private fun UpdateToggleRow(prefs: SharedPreferences) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .toggleable(
+                    value = enabled,
+                    role = Role.Switch,
+                    onValueChange = { newValue ->
+                        enabled = newValue
+                        UpdateCheckService.setEnabled(context, newValue)
+                    }
+                )
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -434,10 +451,8 @@ private fun UpdateToggleRow(prefs: SharedPreferences) {
             }
             Switch(
                 checked = enabled,
-                onCheckedChange = { newValue ->
-                    enabled = newValue
-                    UpdateCheckService.setEnabled(context, newValue)
-                }
+                onCheckedChange = null,
+                modifier = Modifier.minimumInteractiveComponentSize()
             )
         }
     }
@@ -457,6 +472,15 @@ private fun OfflineToggleRow(prefs: SharedPreferences) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .toggleable(
+                    value = enabled,
+                    role = Role.Switch,
+                    onValueChange = { newValue ->
+                        enabled = newValue
+                        com.pgpony.android.network.OfflineMode.set(newValue)
+                        com.pgpony.android.sync.KeyRefreshScheduler.apply(context)
+                    }
+                )
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -480,11 +504,8 @@ private fun OfflineToggleRow(prefs: SharedPreferences) {
             }
             Switch(
                 checked = enabled,
-                onCheckedChange = { newValue ->
-                    enabled = newValue
-                    com.pgpony.android.network.OfflineMode.set(newValue)
-                    com.pgpony.android.sync.KeyRefreshScheduler.apply(context)
-                }
+                onCheckedChange = null,
+                modifier = Modifier.minimumInteractiveComponentSize()
             )
         }
     }
@@ -505,6 +526,16 @@ private fun CommentToggleRow() {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .toggleable(
+                    value = enabled,
+                    role = Role.Switch,
+                    onValueChange = { newValue ->
+                        enabled = newValue
+                        scope.launch {
+                            com.pgpony.android.data.ArmorCommentStore.get(context).setInclude(newValue)
+                        }
+                    }
+                )
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -528,12 +559,8 @@ private fun CommentToggleRow() {
             }
             Switch(
                 checked = enabled,
-                onCheckedChange = { newValue ->
-                    enabled = newValue
-                    scope.launch {
-                        com.pgpony.android.data.ArmorCommentStore.get(context).setInclude(newValue)
-                    }
-                }
+                onCheckedChange = null,
+                modifier = Modifier.minimumInteractiveComponentSize()
             )
         }
     }
@@ -556,6 +583,14 @@ private fun DestructiveToggleRow() {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .toggleable(
+                    value = enabled,
+                    role = Role.Switch,
+                    onValueChange = { newValue ->
+                        enabled = newValue
+                        com.pgpony.android.ui.keyring.DestructiveActionsDisabled.setEnabled(context, newValue)
+                    }
+                )
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -579,10 +614,8 @@ private fun DestructiveToggleRow() {
             }
             Switch(
                 checked = enabled,
-                onCheckedChange = { newValue ->
-                    enabled = newValue
-                    com.pgpony.android.ui.keyring.DestructiveActionsDisabled.setEnabled(context, newValue)
-                }
+                onCheckedChange = null,
+                modifier = Modifier.minimumInteractiveComponentSize()
             )
         }
     }

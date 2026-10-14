@@ -61,6 +61,8 @@ import com.pgpony.android.i18n.ErrorText
 import com.pgpony.android.MainActivity
 import java.io.File
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.semantics.Role
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -277,14 +279,22 @@ stringResource(R.string.file_enc_result_badge_can_decrypt),
             // ── 5. Action buttons ────────────────────────────────────
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp)
+                    .toggleable(
+                        value = wrapZip,
+                        role = Role.Switch,
+                        onValueChange = {
+                            wrapZip = it
+                            prefs.edit().putBoolean("wrap_output_in_zip", it).apply()
+                        }
+                    )
             ) {
                 Switch(
                     checked = wrapZip,
-                    onCheckedChange = {
-                        wrapZip = it
-                        prefs.edit().putBoolean("wrap_output_in_zip", it).apply()
-                    }
+                    onCheckedChange = null,
+                    modifier = Modifier.minimumInteractiveComponentSize()
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {

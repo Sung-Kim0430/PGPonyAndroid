@@ -23,6 +23,8 @@ import androidx.compose.ui.unit.dp
 import com.pgpony.android.R
 import com.pgpony.android.crypto.CertificationService
 import com.pgpony.android.data.PGPKeyEntity
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.semantics.Role
 
 /** How long a certification stays valid. */
 enum class CertifyExpiry(val seconds: Long?) {
@@ -98,11 +100,21 @@ fun CertifySheet(
 
             Text(stringResource(R.string.certify_userids_label), style = MaterialTheme.typography.titleSmall)
             certifiable.forEach { uid ->
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                // 4.7.0 (item 43, #79): the whole row toggles, and TalkBack reads one control.
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth().toggleable(
+                        value = uid.raw in picked,
+                        enabled = !isProcessing,
+                        role = Role.Checkbox,
+                        onValueChange = { on -> picked = if (on) picked + uid.raw else picked - uid.raw }
+                    )
+                ) {
                     Checkbox(
                         checked = uid.raw in picked,
-                        onCheckedChange = { on -> picked = if (on) picked + uid.raw else picked - uid.raw },
-                        enabled = !isProcessing
+                        onCheckedChange = null,
+                        enabled = !isProcessing,
+                        modifier = Modifier.minimumInteractiveComponentSize()
                     )
                     Text(uid.raw, style = MaterialTheme.typography.bodyMedium)
                 }
@@ -166,7 +178,15 @@ fun CertifySheet(
                 }
             }
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth().toggleable(
+                    value = localOnly,
+                    enabled = !isProcessing,
+                    role = Role.Switch,
+                    onValueChange = { localOnly = it }
+                )
+            ) {
                 Column(Modifier.weight(1f)) {
                     Text(stringResource(R.string.certify_local_only_label), style = MaterialTheme.typography.bodyMedium)
                     Text(
@@ -175,13 +195,31 @@ fun CertifySheet(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                Switch(checked = localOnly, onCheckedChange = { localOnly = it }, enabled = !isProcessing)
+                Switch(
+                    checked = localOnly,
+                    onCheckedChange = null,
+                    enabled = !isProcessing,
+                    modifier = Modifier.minimumInteractiveComponentSize()
+                )
             }
 
             Text(stringResource(R.string.import_preview_detail_fingerprint_label), style = MaterialTheme.typography.titleSmall)
             Text(formattedFingerprint, style = MaterialTheme.typography.bodyMedium, fontFamily = FontFamily.Monospace)
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Checkbox(checked = compared, onCheckedChange = { compared = it }, enabled = !isProcessing)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth().toggleable(
+                    value = compared,
+                    enabled = !isProcessing,
+                    role = Role.Checkbox,
+                    onValueChange = { compared = it }
+                )
+            ) {
+                Checkbox(
+                    checked = compared,
+                    onCheckedChange = null,
+                    enabled = !isProcessing,
+                    modifier = Modifier.minimumInteractiveComponentSize()
+                )
                 Text(stringResource(R.string.certify_fingerprint_confirm), style = MaterialTheme.typography.bodyMedium)
             }
 

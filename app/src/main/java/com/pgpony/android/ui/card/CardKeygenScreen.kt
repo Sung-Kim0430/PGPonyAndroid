@@ -29,6 +29,8 @@ import com.pgpony.android.R
 import com.pgpony.android.crypto.card.CardKeygenService
 import com.pgpony.android.i18n.ErrorText
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.semantics.Role
 
 private const val PW1_MIN = 6
 private const val PW3_MIN = 8
@@ -213,10 +215,12 @@ private fun FormBody(
     Spacer(Modifier.height(8.dp))
 
     Row(
-        Modifier.fillMaxWidth(),
+        Modifier
+            .fillMaxWidth()
+            .toggleable(value = acknowledged, role = Role.Checkbox, onValueChange = onAck),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Checkbox(checked = acknowledged, onCheckedChange = onAck)
+        Checkbox(checked = acknowledged, onCheckedChange = null, modifier = Modifier.minimumInteractiveComponentSize())
         Spacer(Modifier.width(4.dp))
         Text(
             stringResource(R.string.card_keygen_ack),

@@ -108,6 +108,9 @@ import java.text.DateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.semantics.Role
+import androidx.compose.material3.minimumInteractiveComponentSize
 
 private sealed class PairStage {
     object Choose : PairStage()
@@ -1002,8 +1005,21 @@ private fun OutgoingGroup(
     if (list.isEmpty()) return
     Text(title, style = MaterialTheme.typography.labelLarge)
     list.forEach { o ->
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Checkbox(checked = o in picked, enabled = enabled, onCheckedChange = { if (it) picked += o else picked -= o })
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth().toggleable(
+                value = o in picked,
+                enabled = enabled,
+                role = Role.Checkbox,
+                onValueChange = { if (it) picked += o else picked -= o }
+            )
+        ) {
+            Checkbox(
+                checked = o in picked,
+                enabled = enabled,
+                onCheckedChange = null,
+                modifier = Modifier.minimumInteractiveComponentSize()
+            )
             Text(o.name, style = MaterialTheme.typography.bodyMedium)
         }
     }
@@ -1026,8 +1042,19 @@ private fun IncomingPane(
         style = MaterialTheme.typography.titleSmall
     )
     items.forEach { item ->
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Checkbox(checked = item.id in chosen, onCheckedChange = { if (it) chosen += item.id else chosen -= item.id })
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth().toggleable(
+                value = item.id in chosen,
+                role = Role.Checkbox,
+                onValueChange = { if (it) chosen += item.id else chosen -= item.id }
+            )
+        ) {
+            Checkbox(
+                checked = item.id in chosen,
+                onCheckedChange = null,
+                modifier = Modifier.minimumInteractiveComponentSize()
+            )
             Column {
                 Text(
                     when (item.kind) {

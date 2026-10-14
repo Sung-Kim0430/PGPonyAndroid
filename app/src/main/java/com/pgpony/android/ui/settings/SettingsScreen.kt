@@ -59,6 +59,8 @@ import com.pgpony.android.data.ArmorCommentValidator
 import com.pgpony.android.ui.components.rememberTooltipState
 import com.pgpony.android.ui.help.HelpScreen
 import com.pgpony.android.ui.theme.AppTheme
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.semantics.Role
 
 // Version display reads BuildConfig.VERSION_NAME, generated from versionName in
 // app/build.gradle.kts, so it can never drift out of sync again.
@@ -1266,10 +1268,10 @@ fun SettingsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { clearAck1 = !clearAck1 },
+                                .toggleable(value = clearAck1, role = Role.Checkbox, onValueChange = { clearAck1 = it }),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Checkbox(checked = clearAck1, onCheckedChange = { clearAck1 = it })
+                            Checkbox(checked = clearAck1, onCheckedChange = null, modifier = Modifier.minimumInteractiveComponentSize())
                             Text(
                                 stringResource(R.string.key_delete_ack_label),
                                 style = MaterialTheme.typography.bodyMedium
@@ -1319,10 +1321,10 @@ fun SettingsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { clearAck2 = !clearAck2 },
+                                .toggleable(value = clearAck2, role = Role.Checkbox, onValueChange = { clearAck2 = it }),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Checkbox(checked = clearAck2, onCheckedChange = { clearAck2 = it })
+                            Checkbox(checked = clearAck2, onCheckedChange = null, modifier = Modifier.minimumInteractiveComponentSize())
                             Text(
                                 stringResource(R.string.settings_data_clear_ack2_label),
                                 style = MaterialTheme.typography.bodyMedium
@@ -1471,6 +1473,10 @@ private fun UpdateCheckSection() {
     }
 }
 
+// 4.7.0 (item 43, #79): the whole row is the switch (Role.Switch on the row,
+// the Switch itself not clickable), so a tap anywhere toggles it and TalkBack
+// reads one control. minimumInteractiveComponentSize keeps the Switch's
+// former 48dp footprint now that it has no click handler of its own.
 @Composable
 private fun SettingsToggle(
     title: String,
@@ -1481,7 +1487,10 @@ private fun SettingsToggle(
     onCheckedChange: (Boolean) -> Unit
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .toggleable(value = checked, role = Role.Switch, onValueChange = onCheckedChange)
+            .padding(vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(icon, null, tint = iconTint, modifier = Modifier.size(24.dp))
@@ -1491,7 +1500,7 @@ private fun SettingsToggle(
             Text(subtitle, style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        Switch(checked = checked, onCheckedChange = onCheckedChange)
+        Switch(checked = checked, onCheckedChange = null, modifier = Modifier.minimumInteractiveComponentSize())
     }
 }
 
