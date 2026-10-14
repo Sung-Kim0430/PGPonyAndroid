@@ -927,35 +927,35 @@ fun PGPonyMainScreen(
     // Settings without untoggling here, the LockScreen surfaces a
     // clear error message and keeps the unlock button available
     // for a retry — they can re-enroll and unlock without uninstall.
+    // 4.7.0 (item 32): the lock is on for a PGPony PIN as well as for device
+    // unlock (AppLock.isEnabled); LockScreen picks the PIN screen when a PIN is set.
     val biometricLockEnabled = remember {
-        prefs.getBoolean("biometric_lock", false)
+        com.pgpony.android.lock.AppLock.isEnabled(app)
     }
     var isLocked by remember { mutableStateOf(biometricLockEnabled) }
 
     val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner, biometricLockEnabled) {
-        // Re-lock observer is only attached when the user opted in.
-        // No-op disposer when biometricLockEnabled is false so we
-        // don't pay the observer cost for users who aren't using
-        // the feature.
-        if (biometricLockEnabled) {
-            val observer = LifecycleEventObserver { _, event ->
-                // RC5 (Kevin): re-check the pref at event time instead of
-                // trusting the composition-time snapshot. A clear-all
-                // (reinstall semantics) wipes `biometric_lock` mid-session;
-                // without the live read the stale snapshot would re-lock a
-                // factory-fresh app on the next ON_STOP.
-                if (event == Lifecycle.Event.ON_STOP && !isAutoLockSuppressed() &&
-                    prefs.getBoolean("biometric_lock", false)
-                ) {
-                    isLocked = true
-                }
+    DisposableEffect(lifecycleOwner) {
+        // 4.7.0 (item 32): attached whatever the lock was at launch, so a PIN
+        // (or device unlock) turned on in Settings re-locks on the next ON_STOP
+        // instead of the next launch. The check at event time is a file stat
+        // and a prefs read.
+        val observer = LifecycleEventObserver { _, event ->
+            // RC5 (Kevin): re-check the pref at event time instead of
+            // trusting the composition-time snapshot. A clear-all
+            // (reinstall semantics) wipes `biometric_lock` mid-session;
+            // without the live read the stale snapshot would re-lock a
+            // factory-fresh app on the next ON_STOP.
+            if (event == Lifecycle.Event.ON_STOP && !isAutoLockSuppressed() &&
+                com.pgpony.android.lock.AppLock.isEnabled(app)
+            ) {
+                isLocked = true
+                // 4.7.0 (item 32): Settings' PIN check does not outlive a lock.
+                com.pgpony.android.lock.AppLock.noteLocked()
             }
-            lifecycleOwner.lifecycle.addObserver(observer)
-            onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
-        } else {
-            onDispose { }
         }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     // 4.2.0 RC2 (D#19): navController used to be created AFTER this gate,

@@ -107,6 +107,8 @@ fun SettingsScreen(
 
     val context = androidx.compose.ui.platform.LocalContext.current
     val activity = context as? android.app.Activity
+    // 4.7.0 (item 32): whether a PGPony PIN is the app lock (a file stat).
+    var pinLockOn by remember { mutableStateOf(com.pgpony.android.lock.AppLock.isPinSet(context)) }
     // #50: turning a security setting on or off is itself a security action,
     // so gate both directions behind a biometric check when the device has one.
     // Falls through only where no biometric is enrolled (matching the clear-all
@@ -297,18 +299,30 @@ fun SettingsScreen(
                     com.pgpony.android.sync.KeyRefreshScheduler.apply(context)
                 }
             )
-            SettingsToggle(
-                title = stringResource(R.string.settings_biometric_lock_title),
-                subtitle = stringResource(R.string.settings_biometric_lock_subtitle),
-                icon = Icons.Filled.Fingerprint,
-                iconTint = Color(0xFF8B5CF6),
-                checked = state.biometricLockEnabled,
-                onCheckedChange = { target ->
-                    guardSecurityChange(
-                        context.getString(R.string.settings_security_confirm_lock_title),
-                        context.getString(if (target) R.string.settings_security_confirm_enable_subtitle else R.string.settings_security_confirm_disable_subtitle)
-                    ) { viewModel.setBiometricLock(context, target) }
-                }
+            // 4.7.0 (item 32): while a PGPony PIN is the lock, this device-unlock
+            // switch steps aside; the Lock method row below switches back.
+            if (!pinLockOn) {
+                SettingsToggle(
+                    title = stringResource(R.string.settings_biometric_lock_title),
+                    subtitle = stringResource(R.string.settings_biometric_lock_subtitle),
+                    icon = Icons.Filled.Fingerprint,
+                    iconTint = Color(0xFF8B5CF6),
+                    checked = state.biometricLockEnabled,
+                    onCheckedChange = { target ->
+                        guardSecurityChange(
+                            context.getString(R.string.settings_security_confirm_lock_title),
+                            context.getString(if (target) R.string.settings_security_confirm_enable_subtitle else R.string.settings_security_confirm_disable_subtitle)
+                        ) { viewModel.setBiometricLock(context, target) }
+                    }
+                )
+            }
+            // 4.7.0 (item 32): device unlock or a PGPony PIN, the duress PIN and
+            // the wrong-PIN wipe (AppLockSettings.kt).
+            AppLockSection(
+                deviceLockOn = state.biometricLockEnabled,
+                onSetDeviceLock = { viewModel.setBiometricLock(context, it) },
+                pinLockOn = pinLockOn,
+                onPinLockChanged = { pinLockOn = it }
             )
             if (state.biometricLockEnabled) {
                 SettingsToggle(

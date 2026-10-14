@@ -478,30 +478,20 @@ class SettingsViewModel(
         viewModelScope.launch {
             _state.value = _state.value.copy(isClearing = true, showClearStep2 = false)
             try {
-                // 4.7.0 (item 33): live keys and Recently Deleted together,
-                // then the whole secure store.
-                try {
-                    repo.clearAllKeys()
-                } finally {
-                    // Provider and SSH approvals (allowed_api_clients) and
-                    // Autocrypt peers lived on after the reset too. Clear every
-                    // table so the database matches a fresh install.
-                    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                        PGPonyApp.instance.database.clearAllTables()
-                    }
-                }
-                // RC5 (Kevin): reinstall semantics. Wipe the whole prefs
-                // file — onboarding_completed, biometric_lock, theme,
-                // cache durations, fallback strict flags, all of it —
-                // and drop any held provider passphrases. The app then
-                // routes back to onboarding exactly like a fresh
-                // install (the screen consumes clearCompleted below).
-                prefs.edit().clear().apply()
-                com.pgpony.android.provider.ProviderPassphraseCache.clearAll()
-                com.pgpony.android.session.InAppPassphraseCache.clearAll()
-                com.pgpony.android.crypto.card.CardPinCache.clear()
-                // #2.1: clear the provider process's cache too.
-                com.pgpony.android.provider.ProviderCacheClearReceiver.requestClearAll()
+                // 4.7.0 (item 32): the reset moved to AppReset so the duress wipe
+                // runs the same code. Still item 33's purge of live keys and
+                // Recently Deleted, every table and the whole prefs file (RC5
+                // reinstall semantics, the screen consumes clearCompleted below),
+                // with the Keystore crypto-erase first and the leftovers item 32
+                // found (DataStore settings, the app lock, scratch files, folder
+                // grants, reminders, the passphrase hold service). Every step
+                // runs; the first failure is reported.
+                val failure = com.pgpony.android.data.AppReset.resetAll(
+                    PGPonyApp.instance, com.pgpony.android.data.AppReset.Mode.CLEAR_ALL_DATA
+                )
+                // Back on the main thread: the per-app language, as on a fresh install.
+                com.pgpony.android.data.AppReset.resetAppLocale()
+                if (failure != null) throw failure
                 // Fresh default state, not a patch of the old one: every
                 // pref-backed field must read as factory-new, and the
                 // dialog flags must drop so the gauntlet dismisses.

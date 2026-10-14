@@ -117,6 +117,51 @@ object BiometricGate {
         subtitle: String,
         onSuccess: () -> Unit,
         onError: (errorCode: Int, message: String) -> Unit
+    ) = authenticateWith(activity, title, subtitle, authenticatorsForCurrentApi(), null, { onSuccess() }, onError)
+
+    /**
+     * 4.7.0 (item 32): a fingerprint (or other class 3 biometric) only, never the
+     * device PIN, pattern or password. The PGPony PIN lock offers this as its
+     * alternative; letting the device credential in would step around the PIN,
+     * and with it the duress PIN. Class 3 on every API level, since only class 3
+     * can unlock the CryptoObject the PIN lock binds it to.
+     */
+    fun canAuthenticateBiometricOnly(context: Context): BiometricAvailability =
+        when (BiometricManager.from(context).canAuthenticate(biometricOnlyAuthenticators())) {
+            BiometricManager.BIOMETRIC_SUCCESS               -> BiometricAvailability.Available
+            BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED   -> BiometricAvailability.NoneEnrolled
+            else                                             -> BiometricAvailability.Unavailable
+        }
+
+    /**
+     * 4.7.0 (item 32): class 3 biometric bound to [cipher] (a key from
+     * AppLockBiometricKey). [onSuccess] gets the cipher the prompt unlocked, or
+     * null; the caller proves it with a real operation before trusting it.
+     */
+    fun authenticateBiometricWithCrypto(
+        activity: FragmentActivity,
+        title: String,
+        subtitle: String,
+        cipher: javax.crypto.Cipher,
+        onSuccess: (javax.crypto.Cipher?) -> Unit,
+        onError: (errorCode: Int, message: String) -> Unit
+    ) = authenticateWith(
+        activity, title, subtitle, biometricOnlyAuthenticators(),
+        BiometricPrompt.CryptoObject(cipher),
+        { result -> onSuccess(result.cryptoObject?.cipher) },
+        onError
+    )
+
+    private fun biometricOnlyAuthenticators(): Int = BIOMETRIC_STRONG
+
+    private fun authenticateWith(
+        activity: FragmentActivity,
+        title: String,
+        subtitle: String,
+        authenticators: Int,
+        crypto: BiometricPrompt.CryptoObject?,
+        onSuccess: (BiometricPrompt.AuthenticationResult) -> Unit,
+        onError: (errorCode: Int, message: String) -> Unit
     ) {
         val executor = ContextCompat.getMainExecutor(activity)
         val prompt = BiometricPrompt(
@@ -124,7 +169,7 @@ object BiometricGate {
             executor,
             object : BiometricPrompt.AuthenticationCallback() {
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-                    onSuccess()
+                    onSuccess(result)
                 }
                 override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
                     onError(errorCode, errString.toString())
@@ -138,7 +183,6 @@ object BiometricGate {
             .setTitle(title)
             .setSubtitle(subtitle)
 
-        val authenticators = authenticatorsForCurrentApi()
         builder.setAllowedAuthenticators(authenticators)
 
         // setNegativeButtonText is illegal when DEVICE_CREDENTIAL is in
@@ -149,7 +193,7 @@ object BiometricGate {
             builder.setNegativeButtonText(activity.getString(R.string.common_button_cancel))
         }
 
-        prompt.authenticate(builder.build())
+        if (crypto != null) prompt.authenticate(builder.build(), crypto) else prompt.authenticate(builder.build())
     }
 
     /**

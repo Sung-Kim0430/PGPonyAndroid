@@ -98,6 +98,10 @@ class SecureKeyStore(context: Context) {
 
         // Legacy store (read-only, for migration).
         private const val LEGACY_PREFS_FILE = "pgpony_secure_keys"
+        // 4.7.0 (item 32): the androidx.security master key that wraps the legacy
+        // store's Tink keysets, deleted by cryptoErase. The value of
+        // MasterKey.DEFAULT_MASTER_KEY_ALIAS, which MasterKey.Builder above uses.
+        private const val LEGACY_MASTER_KEY_ALIAS = "_androidx_security_master_key_"
 
         @Volatile
         private var instance: SecureKeyStore? = null
@@ -543,6 +547,38 @@ class SecureKeyStore(context: Context) {
             sawUnrecoverable = false
             sawRecoverable = false
         }
+    }
+
+    /**
+     * 4.7.0 (item 32): the duress wipe's first step, also run by Clear All Data
+     * ahead of [wipeAll]. Deletes the Android Keystore key every DEK is wrapped
+     * under ([HW_ALIAS]) and the legacy store's androidx master key, then every
+     * DEK envelope, which also carries the passphrase recovery wraps. After it,
+     * no sealed blob here can be opened, by the hardware path or by a key's
+     * passphrase, even if the rest of the wipe never runs. The blob files
+     * themselves are left for [wipeAll].
+     */
+    fun cryptoErase() {
+        // The Keystore deletes first and outside the cross-process lock, so a
+        // provider write holding that lock cannot delay them.
+        try {
+            val ks = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
+            if (ks.containsAlias(HW_ALIAS)) ks.deleteEntry(HW_ALIAS)
+            if (ks.containsAlias(LEGACY_MASTER_KEY_ALIAS)) ks.deleteEntry(LEGACY_MASTER_KEY_ALIAS)
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not delete a hardware key on crypto-erase: ${e.message}")
+        }
+        crossProcess {
+            dir.listFiles()?.forEach { f ->
+                if (f.name.endsWith(".dek") || f.name.endsWith(".dek.tmp")) f.delete()
+            }
+        }
+        // The legacy file, raw: its Tink keysets and every value under them.
+        runCatching {
+            appContext.getSharedPreferences(LEGACY_PREFS_FILE, Context.MODE_PRIVATE).edit().clear().commit()
+        }
+        sawUnrecoverable = false
+        sawRecoverable = false
     }
 
     fun hasPublicKey(fingerprint: String): Boolean {

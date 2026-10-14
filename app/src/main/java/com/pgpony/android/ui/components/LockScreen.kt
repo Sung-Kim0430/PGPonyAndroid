@@ -95,6 +95,21 @@ import kotlinx.coroutines.delay
  */
 @Composable
 fun LockScreen(onUnlock: () -> Unit) {
+    // 4.7.0 (item 32): with a PGPony PIN set, every place that shows the lock
+    // (the app, the Quick Action) asks for the PIN instead. Device unlock is
+    // unchanged below.
+    val context = LocalContext.current
+    val pinMode = remember(context) { com.pgpony.android.lock.AppLock.isPinSet(context) }
+    if (pinMode) {
+        PinLockScreen(onUnlock = onUnlock)
+    } else {
+        DeviceUnlockLockScreen(onUnlock = onUnlock)
+    }
+}
+
+/** The device-unlock lock screen (BiometricGate's system prompt), as before 4.7.0. */
+@Composable
+private fun DeviceUnlockLockScreen(onUnlock: () -> Unit) {
     val context = LocalContext.current
     // Walk the ContextWrapper chain to the FragmentActivity — same
     // pattern as findEncryptMainActivity / findImportMainActivity in

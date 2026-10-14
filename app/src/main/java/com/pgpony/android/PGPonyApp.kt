@@ -127,6 +127,11 @@ class PGPonyApp : Application() {
 
         instance = this
 
+        // 4.7.0 (item 32): a duress wipe the system cut short finishes here in
+        // the main process, before any screen opens; :remote_api only drops its
+        // in-memory secrets and its service before it serves.
+        com.pgpony.android.lock.AppWipe.resumeIfPending(this, mainProcess = !isRemoteApiProcess())
+
         // #2.1: the OpenPGP API service and its provider activities run in a
         // dedicated :remote_api process (see AndroidManifest) so a
         // background-kill ROM that freezes the main app process cannot freeze

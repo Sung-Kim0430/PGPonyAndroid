@@ -120,8 +120,9 @@ class ShareTargetActivity : AppCompatActivity(), DocumentCreatorHost {
     private var locked by androidx.compose.runtime.mutableStateOf(false)
     private var pickerInFlight = false
 
-    private fun lockEnabled(): Boolean =
-        getSharedPreferences("pgpony_prefs", MODE_PRIVATE).getBoolean("biometric_lock", false)
+    // 4.7.0 (item 32): a PGPony PIN locks the Quick Action too; LockScreen shows
+    // the PIN screen (and the duress PIN works the same) when one is set.
+    private fun lockEnabled(): Boolean = com.pgpony.android.lock.AppLock.isEnabled(this)
 
     override fun onStop() {
         super.onStop()

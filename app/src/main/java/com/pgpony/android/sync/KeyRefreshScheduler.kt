@@ -32,7 +32,8 @@ object KeyRefreshScheduler {
     const val KEY_WIFI_ONLY = "key_refresh_wifi_only"
     const val KEY_INTERVAL_DAYS = "key_refresh_interval_days"
 
-    private const val WORK_NAME = "pgpony_key_refresh"
+    // 4.7.0 (item 32): visible to AppReset, which cancels the job.
+    const val WORK_NAME = "pgpony_key_refresh"
 
     const val DEFAULT_INTERVAL_DAYS = 3
     const val DEFAULT_WIFI_ONLY = true
