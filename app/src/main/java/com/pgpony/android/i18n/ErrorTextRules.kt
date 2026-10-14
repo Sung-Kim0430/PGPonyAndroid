@@ -186,6 +186,12 @@ internal object ErrorTextRules {
             ErrorText.Rule("""\QThe primary key's secret is not on this device (offline primary). Make this change where the primary key is kept, then import the key here again.\E""", R.string.err_offline_primary_edit),
             // 4.7.0 (item 39, #83): every signing key on the key pair has expired or been revoked.
             ErrorText.Rule("""\QEvery signing key in this key pair has expired or been revoked\E""", R.string.err_signing_keys_expired),
+            // 4.7.0 RC4 (item 31): certifying on a card that does not hold the certifier.
+            ErrorText.Rule("""\QThis security key does not hold the key chosen to certify with\E""", R.string.err_certify_card_mismatch),
+            // 4.7.0 RC4 (item 13): Move to Security Key.
+            ErrorText.Rule("""\QThe primary key is not in this security key's signature slot, so the expiry cannot be changed with it\E""", R.string.err_card_expiry_primary_missing),
+            ErrorText.Rule("""\QThis security key cannot hold one of the chosen keys. Choose another key or slot.\E""", R.string.err_move_to_card_unsupported),
+            ErrorText.Rule("""\QThe security key did not pass the check after the keys were written, so nothing on this phone was changed. Do not rely on the keys on the security key.\E""", R.string.err_move_to_card_check_failed),
             // 4.7.0 (item 10): keys marked Don't use, refused through the provider.
             ErrorText.Rule("""\QRecipient key is marked Don't use in PGPony: \E(.*?)\Q. Change its trust level in PGPony to encrypt to it.\E""", R.string.err_provider_recipient_dont_use),
             ErrorText.Rule("""\QSigning key is marked Don't use in PGPony. Pick another signing key in your mail app, or change its trust level in PGPony.\E""", R.string.err_provider_signer_dont_use),

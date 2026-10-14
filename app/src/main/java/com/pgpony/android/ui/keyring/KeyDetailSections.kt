@@ -142,6 +142,8 @@ internal object KeyDetailActionIds {
     const val EXPORT_REVOCATION_CERT = "Export Revocation Certificate"
     const val EXPORT_PRIVATE_KEY = "Export Private Key"
     const val CHANGE_PASSPHRASE = "Change Passphrase"
+    // 4.7.0 RC4 (item 13, #71)
+    const val MOVE_TO_CARD = "Move to Security Key"
 }
 
 // ── SectionGroup — visual wrapper for grouped-list sections ────────────
@@ -365,7 +367,8 @@ fun KeyHeaderSection(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(top = 4.dp)
             ) {
-                KeyTypeChip(isKeyPair = key.isKeyPair)
+                // 4.7.0 (item 34, #43): a key on a card reads as a key pair, on a card.
+                KeyTypeChip(isKeyPair = key.isOwnKey, onCard = key.isCardBacked)
                 if (key.isDefault) {
                     DefaultChip()
                 }
@@ -403,7 +406,7 @@ fun KeyHeaderSection(
 }
 
 @Composable
-private fun KeyTypeChip(isKeyPair: Boolean) {
+private fun KeyTypeChip(isKeyPair: Boolean, onCard: Boolean = false) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -415,7 +418,11 @@ private fun KeyTypeChip(isKeyPair: Boolean) {
             tint = if (isKeyPair) Color(0xFF8B5CF6) else MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
-            text = if (isKeyPair) stringResource(R.string.key_detail_type_key_pair) else stringResource(R.string.key_detail_type_public_key),
+            text = when {
+                isKeyPair && onCard -> stringResource(R.string.key_detail_type_key_pair_on_card)
+                isKeyPair -> stringResource(R.string.key_detail_type_key_pair)
+                else -> stringResource(R.string.key_detail_type_public_key)
+            },
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.SemiBold,
             color = if (isKeyPair) Color(0xFF8B5CF6) else MaterialTheme.colorScheme.onSurfaceVariant
@@ -1162,9 +1169,21 @@ fun SubkeysSection(
     // only (same gating as Add Subkey); card-backed subkeys never get a menu.
     canManageSubkeys: Boolean = false,
     onRevokeSubkey: ((SubkeyDisplayInfo) -> Unit)? = null,
-    onRemoveSubkey: ((SubkeyDisplayInfo) -> Unit)? = null
+    onRemoveSubkey: ((SubkeyDisplayInfo) -> Unit)? = null,
+    // 4.7.0 (item 34, #43): on a key generated on a card the signing key is the
+    // primary itself, so the list of subkeys alone showed only the encryption
+    // key; this line says where the primary is.
+    primaryOnCard: Boolean = false
 ) {
     SectionGroup(title = stringResource(R.string.key_detail_subkeys_title)) {
+        if (primaryOnCard) {
+            Text(
+                text = stringResource(R.string.key_detail_primary_on_card),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+        }
         subkeys.forEachIndexed { index, sub ->
             Column(
                 modifier = Modifier

@@ -34,6 +34,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
@@ -101,6 +102,8 @@ class ProviderPassphraseActivity : ComponentActivity() {
                     }
                 }
                 var passphrase by remember { mutableStateOf("") }
+                // 4.7.0 (item 50, #59): the field takes focus and the keyboard opens.
+                val focus = rememberProviderAutoFocus()
                 AlertDialog(
                     onDismissRequest = { cancel() },
                     title = { Text(stringResource(purpose.titleRes)) },
@@ -140,6 +143,7 @@ class ProviderPassphraseActivity : ComponentActivity() {
                                 // ones. See ui/util/Autofill.kt.
                                 modifier = Modifier
                                     .fillMaxWidth()
+                                    .focusRequester(focus)
                                     .autofillPassword { passphrase = it }
                             )
                             if (allowKeyChange) TextButton(

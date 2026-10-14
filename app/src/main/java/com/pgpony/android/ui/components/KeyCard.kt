@@ -65,7 +65,8 @@ fun KeyCard(
                     .size(44.dp)
                     .clip(CircleShape)
                     .background(
-                        if (key.isKeyPair) Color(0xFF8B5CF6) else Color(0xFF6366F1)
+                        // 4.7.0 (item 34, #43): a key on a card is the user's own too.
+                        if (key.isOwnKey) Color(0xFF8B5CF6) else Color(0xFF6366F1)
                     ),
                 contentAlignment = Alignment.Center
             ) {
@@ -90,7 +91,7 @@ fun KeyCard(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f, fill = false)
                     )
-                    if (key.isKeyPair) {
+                    if (key.isOwnKey) {
                         Spacer(modifier = Modifier.width(6.dp))
                         Icon(
                             imageVector = Icons.Filled.VpnKey,
@@ -103,6 +104,11 @@ fun KeyCard(
                     if (key.isDefault) {
                         Spacer(modifier = Modifier.width(6.dp))
                         DefaultPill()
+                    }
+                    // 4.7.0 (item 34, #43): the secret is on a security key.
+                    if (key.isCardBacked) {
+                        Spacer(modifier = Modifier.width(6.dp))
+                        OnCardPill()
                     }
                 }
 
@@ -238,6 +244,24 @@ fun DefaultPill() {
     ) {
         Text(
             text = stringResource(R.string.key_card_default_badge),
+            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+            fontWeight = FontWeight.Bold,
+            color = Color.White,
+            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+        )
+    }
+}
+
+/** 4.7.0 (item 34, #43): "ON CARD", in the shape of [DefaultPill]. */
+@Composable
+fun OnCardPill() {
+    Surface(
+        shape = RoundedCornerShape(4.dp),
+        color = Color(0xFF0E7490),
+        modifier = Modifier.height(18.dp)
+    ) {
+        Text(
+            text = stringResource(R.string.key_detail_subkeys_card_backed_badge).uppercase(),
             style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
             fontWeight = FontWeight.Bold,
             color = Color.White,

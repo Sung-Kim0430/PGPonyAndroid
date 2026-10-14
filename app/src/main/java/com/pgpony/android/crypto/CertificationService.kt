@@ -15,8 +15,13 @@
 // Scope for 4.7.0 RC2: software certifiers and targets that Bouncy Castle
 // reads (v4 and v6 classical keys). A composite ML-DSA certifier or target is
 // not offered yet: a composite signature inside a classical certificate would
-// stop Bouncy Castle from loading that certificate at all. Certifying with a
-// card waits for the card RC.
+// stop Bouncy Castle from loading that certificate at all.
+//
+// 4.7.0 RC4 (item 31, card): a certifier whose primary sits in an OpenPGP
+// card's signature slot certifies on the card ([certifyOnCard], [revokeOnCard]),
+// after the PIN, over NFC or USB, through CardPGPContentSigner (SHA-256, the
+// hash the card signer formats; EdDSA and RSA, as the card signer supports).
+// The tapped card must hold that primary before any PIN is sent.
 
 package com.pgpony.android.crypto
 
@@ -111,11 +116,26 @@ object CertificationService {
         if (userIds.isEmpty() || missing.isNotEmpty()) throw CertifyError("Pick at least one User ID of this key to certify")
         val privateKey = unlockPrimary(certifier, passphrase)
         val signerPub = certifier.publicKey
+        return makeCertifications(signerPub, target, userIds, level, expirySeconds, exportable, now) { type ->
+            PGPSignatureGenerator(BcPGPContentSignerBuilder(signerPub.algorithm, HashAlgorithmTags.SHA512), signerPub)
+                .apply { init(type, privateKey) }
+        }
+    }
+
+    /** One signature per User ID by [signerPub], from generators [newGenerator] makes. */
+    private fun makeCertifications(
+        signerPub: PGPPublicKey,
+        target: PGPPublicKeyRing,
+        userIds: List<String>,
+        level: Level,
+        expirySeconds: Long?,
+        exportable: Boolean,
+        now: Date,
+        newGenerator: (Int) -> PGPSignatureGenerator
+    ): List<Made> {
+        val targetPrimary = target.publicKey
         return userIds.map { uid ->
-            val gen = PGPSignatureGenerator(
-                BcPGPContentSignerBuilder(signerPub.algorithm, HashAlgorithmTags.SHA512), signerPub
-            )
-            gen.init(level.sigType, privateKey)
+            val gen = newGenerator(level.sigType)
             val hashed = PGPSignatureSubpacketGenerator()
             hashed.setSignatureCreationTime(false, now)
             hashed.setIssuerFingerprint(false, signerPub)
@@ -124,6 +144,110 @@ object CertificationService {
             gen.setHashedSubpackets(hashed.generate())
             Made(uid, gen.generateCertification(uid, targetPrimary))
         }
+    }
+
+    // ── 4.7.0 RC4 (item 31): certifying on a card ───────────────────────
+
+    /**
+     * True when [certifier]'s primary may certify on a card: it carries
+     * Certify, is not revoked or weak, and is an algorithm the card signer
+     * handles (EdDSA legacy, RSA).
+     */
+    fun canCertifyOnCard(certifier: PGPPublicKeyRing): Boolean {
+        val pub = certifier.publicKey
+        if (KeyPolicy.isWeak(pub)) return false
+        if (pub.hasRevocation()) return false
+        if (pub.algorithm !in CARD_SIGNER_ALGORITHMS) return false
+        val caps = SubkeyCapability.fromPgpPublicKey(pub, PGPCryptoService.shared.detectAlgorithm(pub), true)
+        return SubkeyCapability.hasCapability(caps, SubkeyCapability.Certify)
+    }
+
+    /** Public key algorithms CardPGPContentSigner turns into signatures. */
+    private val CARD_SIGNER_ALGORITHMS = setOf(
+        org.bouncycastle.bcpg.PublicKeyAlgorithmTags.EDDSA_LEGACY,
+        org.bouncycastle.bcpg.PublicKeyAlgorithmTags.RSA_GENERAL,
+        org.bouncycastle.bcpg.PublicKeyAlgorithmTags.RSA_SIGN
+    )
+
+    /**
+     * Refuse before any PIN reaches the card unless [cardSigFingerprint] (the
+     * tapped card's signature slot) is [certifier]'s primary.
+     */
+    private fun requireCardHolds(certifier: PGPPublicKeyRing, cardSigFingerprint: String?) {
+        val want = hex(certifier.publicKey.fingerprint)
+        val got = cardSigFingerprint?.filterNot { it.isWhitespace() }?.uppercase()
+        if (got != want) throw com.pgpony.android.crypto.card.OpenPgpCardException.Malformed(CARD_MISMATCH_MESSAGE)
+    }
+
+    /** The tapped card does not hold the certifying primary in its signature slot. */
+    const val CARD_MISMATCH_MESSAGE = "This security key does not hold the key chosen to certify with"
+
+    private fun cardGenerator(
+        session: com.pgpony.android.crypto.card.OpenPgpCardSession,
+        pin: ByteArray,
+        signerPub: PGPPublicKey
+    ): (Int) -> PGPSignatureGenerator = { type ->
+        PGPSignatureGenerator(com.pgpony.android.crypto.card.CardPGPContentSignerBuilder(session, pin, signerPub), signerPub)
+            .apply { init(type, org.bouncycastle.openpgp.PGPPrivateKey(signerPub.keyID, signerPub.publicKeyPacket, null)) }
+    }
+
+    /**
+     * Certify [userIds] on [target] on the card in [session], whose signature
+     * slot holds [certifier]'s primary ([cardSigFingerprint], read from the
+     * card). Same signatures as [certify], signed with SHA-256 on the card.
+     * Runs inside a card operation (NFC or USB).
+     */
+    fun certifyOnCard(
+        session: com.pgpony.android.crypto.card.OpenPgpCardSession,
+        cardSigFingerprint: String?,
+        pin: ByteArray,
+        certifier: PGPPublicKeyRing,
+        target: PGPPublicKeyRing,
+        userIds: List<String>,
+        level: Level,
+        expirySeconds: Long?,
+        exportable: Boolean,
+        now: Date = Date()
+    ): List<Made> {
+        val targetPrimary = target.publicKey
+        if (targetPrimary.fingerprint.contentEquals(certifier.publicKey.fingerprint)) {
+            throw CertifyError("A key cannot certify itself")
+        }
+        val available = targetPrimary.userIDs.asSequence().toSet()
+        if (userIds.isEmpty() || userIds.any { it !in available }) {
+            throw CertifyError("Pick at least one User ID of this key to certify")
+        }
+        if (!canCertifyOnCard(certifier)) throw CertifyError("This key cannot certify other keys")
+        requireCardHolds(certifier, cardSigFingerprint)
+        val signerPub = certifier.publicKey
+        return unwrapCard {
+            makeCertifications(signerPub, target, userIds, level, expirySeconds, exportable, now, cardGenerator(session, pin, signerPub))
+        }
+    }
+
+    /** [revoke], signed on the card in [session]; see [certifyOnCard]. */
+    fun revokeOnCard(
+        session: com.pgpony.android.crypto.card.OpenPgpCardSession,
+        cardSigFingerprint: String?,
+        pin: ByteArray,
+        certifier: PGPPublicKeyRing,
+        target: PGPPublicKeyRing,
+        userId: String,
+        now: Date = Date()
+    ): Made {
+        if (!canCertifyOnCard(certifier)) throw CertifyError("This key cannot certify other keys")
+        requireCardHolds(certifier, cardSigFingerprint)
+        val signerPub = certifier.publicKey
+        return unwrapCard { revocation(signerPub, target, userId, now, cardGenerator(session, pin, signerPub)) }
+    }
+
+    /** A card error (wrong PIN, card gone) surfaces as itself, not as BC's wrapper. */
+    private fun <T> unwrapCard(block: () -> T): T = try {
+        block()
+    } catch (e: PGPException) {
+        val cause = e.cause
+        if (cause is com.pgpony.android.crypto.card.OpenPgpCardException) throw cause
+        throw e
     }
 
     /** A 0x30 revoking [certifier]'s certification of [userId] on [target]. */
@@ -136,8 +260,20 @@ object CertificationService {
     ): Made {
         val privateKey = unlockPrimary(certifier, passphrase)
         val signerPub = certifier.publicKey
-        val gen = PGPSignatureGenerator(BcPGPContentSignerBuilder(signerPub.algorithm, HashAlgorithmTags.SHA512), signerPub)
-        gen.init(PGPSignature.CERTIFICATION_REVOCATION, privateKey)
+        return revocation(signerPub, target, userId, now) { type ->
+            PGPSignatureGenerator(BcPGPContentSignerBuilder(signerPub.algorithm, HashAlgorithmTags.SHA512), signerPub)
+                .apply { init(type, privateKey) }
+        }
+    }
+
+    private fun revocation(
+        signerPub: PGPPublicKey,
+        target: PGPPublicKeyRing,
+        userId: String,
+        now: Date,
+        newGenerator: (Int) -> PGPSignatureGenerator
+    ): Made {
+        val gen = newGenerator(PGPSignature.CERTIFICATION_REVOCATION)
         val hashed = PGPSignatureSubpacketGenerator()
         hashed.setSignatureCreationTime(false, now)
         hashed.setIssuerFingerprint(false, signerPub)

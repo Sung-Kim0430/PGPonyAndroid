@@ -63,11 +63,17 @@ fun CertifySheet(
     var compared by remember { mutableStateOf(false) }
     var passphrase by remember { mutableStateOf("") }
 
-    val canApply = !isProcessing && certifier != null && picked.isNotEmpty() && compared
+    // 4.7.0 RC4 (item 31): a certifier on a card asks for its PIN, not a passphrase.
+    val onCard = certifier?.isCardBacked == true
+    val canApply = !isProcessing && certifier != null && picked.isNotEmpty() && compared &&
+        (!onCard || passphrase.isNotEmpty())
 
+    // Same as MoveToCardSheet: no swipe to dismiss while filling in the form.
     ModalBottomSheet(
         onDismissRequest = { if (!isProcessing) onDismiss() },
-        sheetState = sheetState
+        sheetState = sheetState,
+        sheetGesturesEnabled = false,
+        dragHandle = null
     ) {
         Column(
             modifier = Modifier
@@ -76,6 +82,7 @@ fun CertifySheet(
                 .imePadding()
                 .navigationBarsPadding()
                 .padding(horizontal = 24.dp)
+                .padding(top = 24.dp)
                 .padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
@@ -88,7 +95,7 @@ fun CertifySheet(
 
             if (certifiers.isEmpty()) {
                 Text(
-                    stringResource(R.string.certify_no_certifier),
+                    stringResource(R.string.certify_no_certifier_card),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.error
                 )
@@ -226,13 +233,27 @@ fun CertifySheet(
             OutlinedTextField(
                 value = passphrase,
                 onValueChange = { passphrase = it },
-                label = { Text(stringResource(R.string.key_detail_add_userid_passphrase_label)) },
+                label = {
+                    Text(
+                        stringResource(
+                            if (onCard) R.string.provider_cardop_pin_hint
+                            else R.string.key_detail_add_userid_passphrase_label
+                        )
+                    )
+                },
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 singleLine = true,
                 enabled = !isProcessing,
                 modifier = Modifier.fillMaxWidth()
             )
+            if (onCard) {
+                Text(
+                    stringResource(R.string.certify_card_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
 
             if (errorMessage != null) {
                 Text(errorMessage, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
@@ -272,8 +293,12 @@ fun CertifySheet(
     }
 }
 
-private fun certifierLabel(key: PGPKeyEntity): String =
-    "${key.userName.ifBlank { key.userEmail.ifBlank { key.userID } }} (${key.shortFingerprint})"
+@Composable
+private fun certifierLabel(key: PGPKeyEntity): String {
+    val base = "${key.userName.ifBlank { key.userEmail.ifBlank { key.userID } }} (${key.shortFingerprint})"
+    // 4.7.0 RC4 (item 31): say which certifiers sign on a card.
+    return if (key.isCardBacked) base + " \u00B7 " + stringResource(R.string.key_detail_subkeys_card_backed_badge) else base
+}
 
 @Composable
 fun certifyLevelLabel(level: CertificationService.Level): String = stringResource(

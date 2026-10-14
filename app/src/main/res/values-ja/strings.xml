@@ -1501,7 +1501,6 @@ PGPony は、古い OpenPGP 実装との相互運用性のために従来の RSA
     <string name="key_detail_action_certify">認証…</string>
     <string name="certify_sheet_title">この鍵を認証</string>
     <string name="certify_sheet_subtitle">認証すると、選んだ各ユーザー ID に記載された人物がこの鍵の持ち主であることを確認した、と表明することになります。先にフィンガープリント全体を持ち主と照合してください。</string>
-    <string name="certify_no_certifier">ここで認証に使える鍵ペアがありません。認証には、主鍵の秘密鍵がこのデバイスにあるソフトウェア鍵ペアが必要です。ML-DSA 鍵とカード上の鍵は、まだ認証に使えません。</string>
     <string name="certify_userids_label">認証するユーザー ID</string>
     <string name="certify_certifier_label">認証に使う鍵</string>
     <string name="certify_level_label">確認の程度</string>
@@ -2883,4 +2882,64 @@ PGPony は、古い OpenPGP 実装との相互運用性のために従来の RSA
     </plurals>
     <string name="err_replace_secrets_passphrase">%1$s について、このパスフレーズでは、このファイル内の秘密鍵のロックをすべて解除することはできませんでした。保存されている秘密鍵はそのまま残り、何もインポートされませんでした。</string>
     <string name="err_replace_secrets_unproven">このファイル内の秘密鍵が %1$s の秘密鍵であることを確認できませんでした。保存されている秘密鍵はそのまま残り、何もインポートされませんでした。</string>
+
+    <!-- 4.7.0 RC4 security key work, translated Oct 2026 -->
+    <!-- 4.7.0 RC4 (item 28, #36, #43): the card prompt a mail app opens also takes a key plugged in over USB. -->
+    <string name="provider_cardop_usb_hint">USB で接続したキーも使えます。PIN を入力してから「USB キーを使用」をタップしてください。</string>
+    <string name="provider_cardop_use_usb">USB キーを使用</string>
+    <string name="provider_cardop_wrong_pin_usb">PIN が違います。残り %1$d 回です。PIN を確認して、もう一度お試しください。</string>
+    <string name="provider_cardop_usb_lost">キーが取り外されました。差し込み直して、もう一度お試しください。</string>
+
+    <!-- 4.7.0 RC4 (item 34, #43): keys whose secret is on a security key (generated on it, or paired with it). -->
+    <string name="key_detail_type_key_pair_on_card">セキュリティキー上の鍵ペア</string>
+    <string name="key_detail_primary_on_card">主鍵: セキュリティキーの署名スロットにあり、そこで署名と鍵の認証を行います。</string>
+
+    <!-- 4.7.0 RC4 (item 31, card): certifying with a key whose primary is on a security key. -->
+    <string name="certify_no_certifier_card">ここで認証できる鍵ペアがありません。認証するには、主鍵で認証でき、その秘密鍵がこのデバイス上またはセキュリティキー上にある鍵ペアが必要です。ML-DSA 鍵はまだ認証できません。</string>
+    <string name="certify_card_hint">「認証」をタップした後、セキュリティキーをスマートフォンにかざすか、差し込んでください。</string>
+    <string name="err_certify_card_mismatch">このセキュリティキーには、認証に使うよう選んだ鍵が入っていません</string>
+
+    <!-- 4.7.0 RC4 (item 13, #71): Move to Security Key, like gpg's keytocard. -->
+    <string name="move_to_card_menu">セキュリティキーに移動</string>
+    <string name="move_to_card_title">セキュリティキーへの移動</string>
+    <string name="move_to_card_intro">gpg の keytocard と同じように、この鍵ペアの鍵を OpenPGP セキュリティキーのスロットに書き込みます。以後は、セキュリティキーがそれらの鍵で署名と復号を行います。</string>
+    <string name="move_to_card_nothing">この鍵ペアには、セキュリティキーに移せる鍵がありません。</string>
+    <string name="move_to_card_slot_signature">署名スロット</string>
+    <string name="move_to_card_slot_decryption">復号スロット</string>
+    <string name="move_to_card_slot_authentication">認証スロット</string>
+    <string name="move_to_card_slot_leave">このスロットはそのままにする</string>
+    <string name="move_to_card_key_primary_format">主鍵、%1$s、%2$s</string>
+    <string name="move_to_card_key_subkey_format">サブキー、%1$s、%2$s</string>
+    <string name="move_to_card_one_slot_each">スロットごとに別の鍵を選んでください。</string>
+    <string name="move_to_card_refused_title">セキュリティキーに移せない鍵:</string>
+    <string name="move_to_card_refused_v6">v6 鍵は OpenPGP セキュリティキーに格納できません</string>
+    <string name="move_to_card_refused_rsa_size">移動できるのは RSA 2048、3072、4096 のみです</string>
+    <string name="move_to_card_refused_curve">この曲線にはまだ対応していません</string>
+    <string name="move_to_card_refused_algorithm">この種類の鍵は移動できません</string>
+    <string name="move_to_card_backup_body">セキュリティキー上の鍵は、そこから再びコピーして取り出すことができません。セキュリティキーと一緒に鍵を失わないよう、先にこの鍵ペアのバックアップを保存してください。</string>
+    <string name="move_to_card_backup_action">先にバックアップを保存</string>
+    <string name="move_to_card_backup_confirm">この鍵ペアのバックアップがあります</string>
+    <string name="move_to_card_remove_label">移動した鍵をこのスマートフォンから削除</string>
+    <string name="move_to_card_remove_hint">gpg と同じく、スマートフォンには鍵がセキュリティキー上にあるという記録だけが残り、以後はセキュリティキーを使用します。ここにもコピーを残すには、これをオフにしてください。</string>
+    <string name="move_to_card_remove_unavailable">この鍵ペアのすべての鍵をセキュリティキーに移す場合のみ利用できます。それ以外の場合はこのスマートフォンにコピーが残り、引き続きそのコピーが使われます。</string>
+    <string name="move_to_card_wrong_admin_pin">管理者 PIN が違います。残り %1$d 回です。残り回数がなくなると、セキュリティキーを初期化する必要があります。</string>
+    <string name="move_to_card_wrong_user_pin">ユーザー PIN が違います。残り %1$d 回です。セキュリティキーには何も書き込まれていません。</string>
+    <string name="move_to_card_replace_confirm">選択したスロットにすでにある鍵を置き換える</string>
+    <string name="move_to_card_slots_occupied">セキュリティキーの選択したスロットのいずれかに別の鍵がすでに入っているため、何も書き込まれていません。上書きするには、「選択したスロットにすでにある鍵を置き換える」をオンにしてから、もう一度「移動」をタップしてください。</string>
+    <string name="move_to_card_admin_pin">セキュリティキーの管理者 PIN</string>
+    <string name="move_to_card_user_pin">セキュリティキーのユーザー PIN</string>
+    <string name="move_to_card_pins_hint">管理者 PIN で鍵を書き込みます。その後、スマートフォン上で何かを変更する前に、セキュリティキーがそれらの鍵で署名と復号を行えることを確かめるため、ユーザー PIN をスロットごとに 1 回使用します。</string>
+    <string name="move_to_card_action">移動</string>
+    <string name="move_to_card_waiting">セキュリティキーをスマートフォンにかざすか差し込み、完了するまでそのままにしてください。</string>
+    <string name="move_to_card_failed">鍵をセキュリティキーに移動できませんでした</string>
+    <string name="move_to_card_done_title">鍵を移動しました</string>
+    <plurals name="move_to_card_done_removed">
+        <item quantity="other">%1$d 個の鍵が現在セキュリティキー上にあり、このスマートフォンからは削除されました。</item>
+    </plurals>
+    <plurals name="move_to_card_done_kept">
+        <item quantity="other">%1$d 個の鍵が現在セキュリティキー上にあります。このスマートフォンにもコピーが残り、引き続きそのコピーが使われます。</item>
+    </plurals>
+    <string name="err_card_expiry_primary_missing">主鍵がこのセキュリティキーの署名スロットにないため、このセキュリティキーでは有効期限を変更できません</string>
+    <string name="err_move_to_card_unsupported">このセキュリティキーには、選択した鍵のうち 1 つを格納できません。別の鍵またはスロットを選んでください。</string>
+    <string name="err_move_to_card_check_failed">鍵の書き込み後にセキュリティキーが確認に合格しなかったため、このスマートフォン上では何も変更されていません。セキュリティキー上の鍵には頼らないでください。</string>
 </resources>

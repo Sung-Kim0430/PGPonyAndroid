@@ -128,6 +128,32 @@ data class SubkeyDisplayInfo(
 )
 
 /**
+ * 4.7.0 RC4 (item 13, #71): one key of a key pair, for Move to Security Key:
+ * what it can do, and whether it can go to a card ([refusal] says why not).
+ */
+data class MoveToCardCandidate(
+    val fingerprint: String,
+    val keyIdHex: String,
+    val algorithmLabel: String,
+    val isPrimary: Boolean,
+    val createdAt: Long,
+    val canSign: Boolean,
+    val canEncrypt: Boolean,
+    val canAuthenticate: Boolean,
+    val canCertify: Boolean,
+    val kind: com.pgpony.android.crypto.card.KeyToCard.Kind?,
+    val refusal: com.pgpony.android.crypto.card.KeyToCard.Refusal?
+) {
+    fun fits(slot: com.pgpony.android.crypto.card.CardSlot): Boolean =
+        kind != null && com.pgpony.android.crypto.card.KeyToCard.fitsSlot(
+            kind, slot, canSign, canEncrypt, canAuthenticate, primaryCanCertify = isPrimary && canCertify
+        )
+}
+
+/** 4.7.0 RC4 (item 13): the done dialog after Move to Security Key. */
+data class MoveToCardDone(val moved: Int, val removedFromPhone: Boolean)
+
+/**
  * RC3 §N (#34): one row of the Key Detail fallback list — another
  * private key of the user's, with whether it is enabled as a decryption
  * fallback for THIS key. Enabled rows come first, in the user's saved
@@ -285,6 +311,16 @@ data class KeyDetailUiState(
     /** 4.7.0 (item 46): the subkey fingerprint chosen in Use for signing, or
      *  null for automatic. */
     val signingSubkeyPin: String? = null,
+    /** 4.7.0 RC4 (item 13, #71): Move to Security Key. */
+    val showMoveToCardSheet: Boolean = false,
+    val moveToCardCandidates: List<MoveToCardCandidate> = emptyList(),
+    /** How many keys of this key pair have their secret on the phone; the moved
+     *  keys may only leave the phone when every one of them is moved. */
+    val moveToCardSecretCount: Int = 0,
+    val moveToCardInFlight: Boolean = false,
+    val moveToCardError: String? = null,
+    /** Set after a move, for the done dialog: how many keys, and whether they left the phone. */
+    val moveToCardDone: MoveToCardDone? = null,
     /** 4.0.0 Phase 2 (F5) — true while "Refresh from key server" is in
      *  flight; drives that row's inline spinner. */
     val isRefreshingFromKeyServer: Boolean = false,
@@ -1899,6 +1935,232 @@ PGPonyApp.instance.getString(R.string.kd_vm_upload_verify_skipped)
             } catch (e: Exception) {
                 _state.value = _state.value.copy(certifyInFlight = false, certifyError = certifyErrorText(e))
             }
+        }
+    }
+
+    // ── 4.7.0 RC4 (item 13, #71): Move to Security Key ─────────────────
+
+    /** Open the sheet: every key of this key pair with its secret here, valid now. */
+    fun openMoveToCardSheet() {
+        val key = _state.value.key ?: return
+        viewModelScope.launch {
+            val secretCount = withContext(Dispatchers.Default) {
+                runCatching {
+                    repo.loadSecretKeyRing(key.fingerprint)?.secretKeys?.asSequence()
+                        ?.count { !com.pgpony.android.crypto.OfflineStub.isStub(it) } ?: 0
+                }.getOrDefault(0)
+            }
+            val candidates = withContext(Dispatchers.Default) {
+                runCatching {
+                    val ring = repo.loadSecretKeyRing(key.fingerprint) ?: return@runCatching emptyList()
+                    val now = System.currentTimeMillis()
+                    ring.secretKeys.asSequence()
+                        .filter { !com.pgpony.android.crypto.OfflineStub.isStub(it) }
+                        .map { it.publicKey }
+                        .filter { pub ->
+                            !pub.hasRevocation() &&
+                                (pub.validSeconds == 0L || pub.creationTime.time + pub.validSeconds * 1000 > now)
+                        }
+                        .map { pub ->
+                            val algo = PGPCryptoService.shared.detectAlgorithm(pub)
+                            val caps = com.pgpony.android.crypto.SubkeyCapability.fromPgpPublicKey(pub, algo, pub.isMasterKey)
+                            val e = com.pgpony.android.crypto.card.KeyToCard.eligibility(pub)
+                            MoveToCardCandidate(
+                                fingerprint = org.bouncycastle.util.encoders.Hex.toHexString(pub.fingerprint).uppercase(),
+                                keyIdHex = String.format("%016X", pub.keyID),
+                                algorithmLabel = algo.displayName,
+                                isPrimary = pub.isMasterKey,
+                                createdAt = pub.creationTime.time,
+                                canSign = com.pgpony.android.crypto.SubkeyCapability.hasCapability(caps, com.pgpony.android.crypto.SubkeyCapability.Sign),
+                                canEncrypt = com.pgpony.android.crypto.SubkeyCapability.hasCapability(caps, com.pgpony.android.crypto.SubkeyCapability.Encrypt),
+                                canAuthenticate = com.pgpony.android.crypto.SubkeyCapability.hasCapability(caps, com.pgpony.android.crypto.SubkeyCapability.Authenticate),
+                                canCertify = com.pgpony.android.crypto.SubkeyCapability.hasCapability(caps, com.pgpony.android.crypto.SubkeyCapability.Certify),
+                                kind = (e as? com.pgpony.android.crypto.card.KeyToCard.Eligibility.Movable)?.kind,
+                                refusal = (e as? com.pgpony.android.crypto.card.KeyToCard.Eligibility.Refused)?.reason
+                            )
+                        }.toList()
+                }.getOrDefault(emptyList())
+            }
+            _state.value = _state.value.copy(
+                showMoveToCardSheet = true,
+                moveToCardCandidates = candidates,
+                moveToCardSecretCount = secretCount,
+                moveToCardError = null
+            )
+        }
+    }
+
+    fun dismissMoveToCardSheet() {
+        if (_state.value.moveToCardInFlight) return
+        _state.value = _state.value.copy(showMoveToCardSheet = false, moveToCardError = null)
+    }
+
+    /**
+     * Unlock the chosen keys with [passphrase] and hand them, with the
+     * certificate, to [onReady] (the screen runs the card operation). A wrong
+     * passphrase stops here, before any card is touched.
+     */
+    fun prepareMoveToCard(
+        choices: Map<com.pgpony.android.crypto.card.CardSlot, String>,
+        passphrase: String?,
+        onReady: (List<com.pgpony.android.crypto.card.KeyToCardService.Move>, org.bouncycastle.openpgp.PGPPublicKeyRing) -> Unit
+    ) {
+        val key = _state.value.key ?: return
+        if (choices.isEmpty()) return
+        _state.value = _state.value.copy(moveToCardInFlight = true, moveToCardError = null)
+        viewModelScope.launch {
+            try {
+                val (moves, certificate) = withContext(Dispatchers.Default) {
+                    val ring = repo.loadSecretKeyRing(key.fingerprint)
+                        ?: throw IllegalStateException(PGPonyApp.instance.getString(R.string.move_to_card_failed))
+                    val certificate = repo.loadPublicKeyRing(key.fingerprint)
+                        ?: throw IllegalStateException(PGPonyApp.instance.getString(R.string.move_to_card_failed))
+                    val moves = choices.map { (slot, fp) ->
+                        val sk = ring.secretKeys.asSequence().first {
+                            org.bouncycastle.util.encoders.Hex.toHexString(it.publicKey.fingerprint).equals(fp, ignoreCase = true)
+                        }
+                        val priv = try {
+                            com.pgpony.android.crypto.SecretKeyUnlock.extract(sk, passphrase?.takeIf { it.isNotEmpty() }?.toCharArray())
+                        } catch (e: org.bouncycastle.openpgp.PGPException) {
+                            if (sk.s2KUsage.toInt() == 0) throw e
+                            if (passphrase.isNullOrEmpty()) throw com.pgpony.android.crypto.PGPCryptoError.PassphraseRequired()
+                            throw com.pgpony.android.crypto.PGPCryptoError.InvalidPassphrase()
+                        } ?: throw IllegalStateException(PGPonyApp.instance.getString(R.string.move_to_card_failed))
+                        com.pgpony.android.crypto.card.KeyToCardService.Move(slot, sk.publicKey, priv)
+                    }
+                    moves to certificate
+                }
+                onReady(moves, certificate)
+            } catch (e: Exception) {
+                _state.value = _state.value.copy(moveToCardInFlight = false, moveToCardError = moveErrorText(e))
+            }
+        }
+    }
+
+    /** The card operation finished; on success link the card and, if asked, drop the secrets. */
+    fun onMoveToCardResult(result: Result<com.pgpony.android.crypto.card.KeyToCardService.Done>, removeFromPhone: Boolean) {
+        val key = _state.value.key ?: return
+        result.fold(
+            onSuccess = { done ->
+                viewModelScope.launch {
+                    try {
+                        val (updated, removed) = repo.finishKeyToCard(key.fingerprint, done.cardInfo, done.movedFingerprints, removeFromPhone)
+                        _state.value = _state.value.copy(
+                            key = updated,
+                            subkeys = deriveSubkeys(updated),
+                            moveToCardInFlight = false,
+                            showMoveToCardSheet = false,
+                            moveToCardDone = MoveToCardDone(done.movedFingerprints.size, removed)
+                        )
+                        refreshSigningSubkeys()
+                    } catch (e: Exception) {
+                        _state.value = _state.value.copy(moveToCardInFlight = false, moveToCardError = moveErrorText(e))
+                    }
+                }
+            },
+            onFailure = { e ->
+                _state.value = _state.value.copy(moveToCardInFlight = false, moveToCardError = moveErrorText(e))
+            }
+        )
+    }
+
+    fun onMoveToCardNoLink() {
+        _state.value = _state.value.copy(
+            moveToCardInFlight = false,
+            moveToCardError = PGPonyApp.instance.getString(R.string.card_scan_nfc_unavailable)
+        )
+    }
+
+    fun dismissMoveToCardDone() {
+        _state.value = _state.value.copy(moveToCardDone = null)
+    }
+
+    private fun moveErrorText(e: Throwable): String {
+        val app = PGPonyApp.instance
+        return when (e) {
+            is com.pgpony.android.crypto.PGPCryptoError.PassphraseRequired ->
+                app.getString(R.string.kd_vm_error_revoke_passphrase_required)
+            is com.pgpony.android.crypto.PGPCryptoError.InvalidPassphrase ->
+                app.getString(R.string.kd_vm_error_revoke_incorrect_passphrase)
+            is com.pgpony.android.crypto.card.OpenPgpCardException.WrongPin ->
+                app.getString(R.string.move_to_card_wrong_user_pin, e.triesRemaining)
+            is com.pgpony.android.crypto.card.OpenPgpCardException.WrongAdminPin ->
+                app.getString(R.string.move_to_card_wrong_admin_pin, e.triesRemaining)
+            is com.pgpony.android.crypto.card.OpenPgpCardException.SlotsOccupied ->
+                app.getString(R.string.move_to_card_slots_occupied)
+            else -> ErrorText.localize(e.message) ?: app.getString(R.string.move_to_card_failed)
+        }
+    }
+
+    // ── 4.7.0 RC4 (item 31): certifying with a key on a card ────────────
+    // The screen runs the card operation (NFC or USB, through
+    // MainActivity.startCardOperation) and reports here.
+
+    fun onCardCertifyStarted() {
+        _state.value = _state.value.copy(certifyInFlight = true, certifyError = null)
+    }
+
+    fun onCardCertified(
+        certifierFingerprint: String,
+        made: List<com.pgpony.android.crypto.CertificationService.Made>,
+        userIds: List<String>,
+        exportable: Boolean
+    ) {
+        val key = _state.value.key ?: return
+        viewModelScope.launch {
+            try {
+                repo.storeCardCertifications(key.fingerprint, certifierFingerprint, made, userIds, exportable)
+                val reloaded = repo.getByFingerprint(key.fingerprint)
+                _state.value = _state.value.copy(
+                    key = reloaded ?: key,
+                    certifications = runCatching { repo.certificationsOf(key.fingerprint) }.getOrDefault(_state.value.certifications),
+                    certifyInFlight = false,
+                    showCertifySheet = false,
+                    certifyDoneExportable = exportable
+                )
+            } catch (e: Exception) {
+                _state.value = _state.value.copy(certifyInFlight = false, certifyError = certifyErrorText(e))
+            }
+        }
+    }
+
+    fun onCardCertifyFailure(e: Throwable) {
+        _state.value = _state.value.copy(certifyInFlight = false, certifyError = cardErrorText(e))
+    }
+
+    fun onCardRevokeStarted() {
+        _state.value = _state.value.copy(certRevokeInFlight = true, certRevokeError = null)
+    }
+
+    fun onCardRevoked(certifierFingerprint: String, made: com.pgpony.android.crypto.CertificationService.Made) {
+        val key = _state.value.key ?: return
+        viewModelScope.launch {
+            try {
+                repo.storeCardCertificationRevocation(key.fingerprint, certifierFingerprint, made)
+                val reloaded = repo.getByFingerprint(key.fingerprint)
+                _state.value = _state.value.copy(
+                    key = reloaded ?: key,
+                    certifications = runCatching { repo.certificationsOf(key.fingerprint) }.getOrDefault(_state.value.certifications),
+                    certRevokeInFlight = false,
+                    certRevokeRequest = null
+                )
+            } catch (e: Exception) {
+                _state.value = _state.value.copy(certRevokeInFlight = false, certRevokeError = certifyErrorText(e))
+            }
+        }
+    }
+
+    fun onCardRevokeFailure(e: Throwable) {
+        _state.value = _state.value.copy(certRevokeInFlight = false, certRevokeError = cardErrorText(e))
+    }
+
+    private fun cardErrorText(e: Throwable): String {
+        val app = PGPonyApp.instance
+        return when (e) {
+            is com.pgpony.android.crypto.card.OpenPgpCardException.WrongPin ->
+                app.getString(R.string.provider_cardop_wrong_pin_usb, e.triesRemaining)
+            is Exception -> certifyErrorText(e)
+            else -> app.getString(R.string.certify_failed)
         }
     }
 

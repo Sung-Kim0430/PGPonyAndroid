@@ -1501,7 +1501,6 @@ Vous pouvez aussi verrouiller l\'application derrière votre empreinte digitale 
     <string name="key_detail_action_certify">Certifier…</string>
     <string name="certify_sheet_title">Certifier cette clé</string>
     <string name="certify_sheet_subtitle">Certifier signifie que vous avez vérifié que cette clé appartient à la personne nommée dans chaque identité choisie. Comparez d\'abord l\'empreinte complète avec celle de son propriétaire.</string>
-    <string name="certify_no_certifier">Aucune de vos paires de clés ne peut certifier ici. La certification nécessite une paire de clés logicielle avec le secret de la clé principale sur cet appareil. Les clés ML-DSA et les clés sur une carte ne peuvent pas encore certifier.</string>
     <string name="certify_userids_label">Identités à certifier</string>
     <string name="certify_certifier_label">Certifier avec</string>
     <string name="certify_level_label">Soin apporté à la vérification</string>
@@ -2906,4 +2905,68 @@ Vous pouvez aussi verrouiller l\'application derrière votre empreinte digitale 
     </plurals>
     <string name="err_replace_secrets_passphrase">La phrase secrète n\'a pas déverrouillé toutes les clés privées de ce fichier pour %1$s. Les clés privées stockées ont été conservées et rien n\'a été importé.</string>
     <string name="err_replace_secrets_unproven">Impossible de confirmer que les clés privées de ce fichier sont celles de %1$s. Les clés privées stockées ont été conservées et rien n\'a été importé.</string>
+
+    <!-- 4.7.0 RC4 security key work, translated Oct 2026 -->
+    <!-- 4.7.0 RC4 (item 28, #36, #43): the card prompt a mail app opens also takes a key plugged in over USB. -->
+    <string name="provider_cardop_usb_hint">Une clé branchée en USB fonctionne aussi : saisissez le PIN, puis touchez Utiliser la clé USB.</string>
+    <string name="provider_cardop_use_usb">Utiliser la clé USB</string>
+    <string name="provider_cardop_wrong_pin_usb">PIN incorrect. Essais restants : %1$d. Vérifiez le PIN et réessayez.</string>
+    <string name="provider_cardop_usb_lost">La clé a été débranchée. Rebranchez-la et réessayez.</string>
+
+    <!-- 4.7.0 RC4 (item 34, #43): keys whose secret is on a security key (generated on it, or paired with it). -->
+    <string name="key_detail_type_key_pair_on_card">Paire de clés sur une clé de sécurité</string>
+    <string name="key_detail_primary_on_card">Clé principale : dans l\'emplacement de signature de la clé de sécurité, où elle signe et certifie.</string>
+
+    <!-- 4.7.0 RC4 (item 31, card): certifying with a key whose primary is on a security key. -->
+    <string name="certify_no_certifier_card">Aucune de vos paires de clés ne peut certifier ici. Pour certifier, il faut une paire de clés dont la clé principale peut certifier, avec son secret sur cet appareil ou sur une clé de sécurité. Les clés ML-DSA ne peuvent pas encore certifier.</string>
+    <string name="certify_card_hint">Après avoir touché Certifier, tenez la clé de sécurité contre le téléphone ou branchez-la.</string>
+    <string name="err_certify_card_mismatch">Cette clé de sécurité ne contient pas la clé choisie pour certifier</string>
+
+    <!-- 4.7.0 RC4 (item 13, #71): Move to Security Key, like gpg's keytocard. -->
+    <string name="move_to_card_menu">Déplacer vers une clé de sécurité</string>
+    <string name="move_to_card_title">Déplacer vers une clé de sécurité</string>
+    <string name="move_to_card_intro">Écrit les clés de cette paire de clés dans les emplacements d\'une clé de sécurité OpenPGP, comme le fait keytocard de gpg. Ensuite, la clé de sécurité signe et déchiffre avec elles.</string>
+    <string name="move_to_card_nothing">Aucune des clés de cette paire de clés ne peut aller sur une clé de sécurité.</string>
+    <string name="move_to_card_slot_signature">Emplacement de signature</string>
+    <string name="move_to_card_slot_decryption">Emplacement de déchiffrement</string>
+    <string name="move_to_card_slot_authentication">Emplacement d\'authentification</string>
+    <string name="move_to_card_slot_leave">Laisser cet emplacement tel quel</string>
+    <string name="move_to_card_key_primary_format">Clé principale, %1$s, %2$s</string>
+    <string name="move_to_card_key_subkey_format">Sous-clé, %1$s, %2$s</string>
+    <string name="move_to_card_one_slot_each">Choisissez une clé différente pour chaque emplacement.</string>
+    <string name="move_to_card_refused_title">Clés qui ne peuvent pas aller sur une clé de sécurité :</string>
+    <string name="move_to_card_refused_v6">les clés v6 ne tiennent pas sur les clés de sécurité OpenPGP</string>
+    <string name="move_to_card_refused_rsa_size">seules les clés RSA 2048, 3072 et 4096 peuvent être déplacées</string>
+    <string name="move_to_card_refused_curve">cette courbe n\'est pas encore prise en charge</string>
+    <string name="move_to_card_refused_algorithm">ce type de clé ne peut pas être déplacé</string>
+    <string name="move_to_card_backup_body">Une clé placée sur une clé de sécurité ne peut plus en être copiée. Enregistrez d\'abord une sauvegarde de cette paire de clés, pour que les clés ne soient pas perdues avec la clé de sécurité.</string>
+    <string name="move_to_card_backup_action">Enregistrer d\'abord une sauvegarde</string>
+    <string name="move_to_card_backup_confirm">J\'ai une sauvegarde de cette paire de clés</string>
+    <string name="move_to_card_remove_label">Supprimer de ce téléphone les clés déplacées</string>
+    <string name="move_to_card_remove_hint">Comme avec gpg, le téléphone ne garde qu\'une note indiquant que les clés sont sur la clé de sécurité, et utilise la clé de sécurité à partir de ce moment. Désactivez cette option pour en garder aussi une copie ici.</string>
+    <string name="move_to_card_remove_unavailable">Uniquement quand toutes les clés de cette paire de clés vont sur la clé de sécurité. Sinon, une copie reste sur ce téléphone, qui continue de l\'utiliser.</string>
+    <string name="move_to_card_wrong_admin_pin">PIN admin incorrect. Essais restants : %1$d. Quand il n\'en reste plus aucun, la clé de sécurité doit être réinitialisée.</string>
+    <string name="move_to_card_wrong_user_pin">PIN utilisateur incorrect. Essais restants : %1$d. Rien n\'a été écrit sur la clé de sécurité.</string>
+    <string name="move_to_card_replace_confirm">Remplacer les clés déjà présentes dans les emplacements choisis</string>
+    <string name="move_to_card_slots_occupied">La clé de sécurité contient déjà une autre clé dans un emplacement que vous avez choisi : rien n\'a donc été écrit. Pour l\'écraser, cochez « Remplacer les clés déjà présentes dans les emplacements choisis » et touchez de nouveau Déplacer.</string>
+    <string name="move_to_card_admin_pin">PIN admin de la clé de sécurité</string>
+    <string name="move_to_card_user_pin">PIN utilisateur de la clé de sécurité</string>
+    <string name="move_to_card_pins_hint">Le PIN admin écrit les clés. Le PIN utilisateur sert ensuite une fois par emplacement, pour vérifier que la clé de sécurité signe et déchiffre avec elles avant que quoi que ce soit ne change sur le téléphone.</string>
+    <string name="move_to_card_action">Déplacer</string>
+    <string name="move_to_card_waiting">Tenez la clé de sécurité contre le téléphone ou branchez-la, et laissez-la en place jusqu\'à la fin de l\'opération.</string>
+    <string name="move_to_card_failed">Impossible de déplacer les clés vers la clé de sécurité</string>
+    <string name="move_to_card_done_title">Clés déplacées</string>
+    <plurals name="move_to_card_done_removed">
+        <item quantity="one">%1$d clé est maintenant sur la clé de sécurité et a été supprimée de ce téléphone.</item>
+        <item quantity="many">%1$d clés sont maintenant sur la clé de sécurité et ont été supprimées de ce téléphone.</item>
+        <item quantity="other">%1$d clés sont maintenant sur la clé de sécurité et ont été supprimées de ce téléphone.</item>
+    </plurals>
+    <plurals name="move_to_card_done_kept">
+        <item quantity="one">%1$d clé est maintenant sur la clé de sécurité. Une copie reste sur ce téléphone, qui continue de l\'utiliser.</item>
+        <item quantity="many">%1$d clés sont maintenant sur la clé de sécurité. Des copies restent sur ce téléphone, qui continue de les utiliser.</item>
+        <item quantity="other">%1$d clés sont maintenant sur la clé de sécurité. Des copies restent sur ce téléphone, qui continue de les utiliser.</item>
+    </plurals>
+    <string name="err_card_expiry_primary_missing">La clé principale n\'est pas dans l\'emplacement de signature de cette clé de sécurité : l\'expiration ne peut donc pas être modifiée avec celle-ci</string>
+    <string name="err_move_to_card_unsupported">Cette clé de sécurité ne peut pas contenir l\'une des clés choisies. Choisissez une autre clé ou un autre emplacement.</string>
+    <string name="err_move_to_card_check_failed">La clé de sécurité n\'a pas réussi la vérification après l\'écriture des clés : rien n\'a donc été modifié sur ce téléphone. Ne vous fiez pas aux clés présentes sur la clé de sécurité.</string>
 </resources>

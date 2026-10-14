@@ -816,7 +816,6 @@
     <string name="key_detail_action_certify">Сертифікувати…</string>
     <string name="certify_sheet_title">Сертифікувати цей ключ</string>
     <string name="certify_sheet_subtitle">Сертифікація означає, що ви перевірили: цей ключ належить людині, зазначеній у кожному вибраному вами ідентифікаторі користувача. Спочатку звірте повний відбиток із його власником.</string>
-    <string name="certify_no_certifier">Жодна з ваших пар ключів не може тут сертифікувати. Для сертифікації потрібна програмна пара ключів, закритий основний ключ якої є на цьому пристрої. Ключі ML-DSA і ключі на картці поки не можуть сертифікувати.</string>
     <string name="certify_userids_label">Ідентифікатори користувача для сертифікації</string>
     <string name="certify_certifier_label">Сертифікувати ключем</string>
     <string name="certify_level_label">Наскільки ретельно ви перевірили</string>
@@ -3016,4 +3015,70 @@
     </plurals>
     <string name="err_replace_secrets_passphrase">Парольна фраза не розблокувала всі закриті ключі в цьому файлі для %1$s. Збережені закриті ключі залишено, нічого не імпортовано.</string>
     <string name="err_replace_secrets_unproven">Не вдалося підтвердити, що закриті ключі в цьому файлі належать до %1$s. Збережені закриті ключі залишено, нічого не імпортовано.</string>
+
+    <!-- 4.7.0 RC4 security key work, translated Oct 2026 -->
+    <!-- 4.7.0 RC4 (item 28, #36, #43): the card prompt a mail app opens also takes a key plugged in over USB. -->
+    <string name="provider_cardop_usb_hint">Ключ, під’єднаний через USB, теж підходить: введіть PIN, потім натисніть «Використати USB-ключ».</string>
+    <string name="provider_cardop_use_usb">Використати USB-ключ</string>
+    <string name="provider_cardop_wrong_pin_usb">Неправильний PIN. Залишилось спроб: %1$d. Перевірте PIN і спробуйте ще раз.</string>
+    <string name="provider_cardop_usb_lost">Ключ від’єднано. Під’єднайте його знову і спробуйте ще раз.</string>
+
+    <!-- 4.7.0 RC4 (item 34, #43): keys whose secret is on a security key (generated on it, or paired with it). -->
+    <string name="key_detail_type_key_pair_on_card">Пара ключів на ключі безпеки</string>
+    <string name="key_detail_primary_on_card">Основний ключ: у слоті підпису ключа безпеки, де він підписує та сертифікує.</string>
+
+    <!-- 4.7.0 RC4 (item 31, card): certifying with a key whose primary is on a security key. -->
+    <string name="certify_no_certifier_card">Жодна з ваших пар ключів не може тут сертифікувати. Для сертифікації потрібна пара ключів, основний ключ якої може сертифікувати, із закритим ключем на цьому пристрої або на ключі безпеки. Ключі ML-DSA поки не можуть сертифікувати.</string>
+    <string name="certify_card_hint">Після натискання «Сертифікувати» прикладіть ключ безпеки до телефона або під’єднайте його.</string>
+    <string name="err_certify_card_mismatch">На цьому ключі безпеки немає ключа, вибраного для сертифікації</string>
+
+    <!-- 4.7.0 RC4 (item 13, #71): Move to Security Key, like gpg's keytocard. -->
+    <string name="move_to_card_menu">Перенести на ключ безпеки</string>
+    <string name="move_to_card_title">Перенесення на ключ безпеки</string>
+    <string name="move_to_card_intro">Записує ключі цієї пари ключів у слоти ключа безпеки OpenPGP, як це робить keytocard у gpg. Після цього ключ безпеки підписує та розшифровує ними.</string>
+    <string name="move_to_card_nothing">Жодного з ключів цієї пари ключів не можна перенести на ключ безпеки.</string>
+    <string name="move_to_card_slot_signature">Слот підпису</string>
+    <string name="move_to_card_slot_decryption">Слот розшифрування</string>
+    <string name="move_to_card_slot_authentication">Слот автентифікації</string>
+    <string name="move_to_card_slot_leave">Залишити цей слот без змін</string>
+    <string name="move_to_card_key_primary_format">Основний ключ, %1$s, %2$s</string>
+    <string name="move_to_card_key_subkey_format">Підключ, %1$s, %2$s</string>
+    <string name="move_to_card_one_slot_each">Виберіть для кожного слота інший ключ.</string>
+    <string name="move_to_card_refused_title">Ключі, які не можна перенести на ключ безпеки:</string>
+    <string name="move_to_card_refused_v6">ключі v6 не вміщуються на ключах безпеки OpenPGP</string>
+    <string name="move_to_card_refused_rsa_size">перенести можна лише RSA 2048, 3072 і 4096</string>
+    <string name="move_to_card_refused_curve">ця крива ще не підтримується</string>
+    <string name="move_to_card_refused_algorithm">ключ цього типу не можна перенести</string>
+    <string name="move_to_card_backup_body">Ключ, записаний на ключ безпеки, неможливо знову скопіювати з нього. Спершу збережіть резервну копію цієї пари ключів, щоб не втратити ключі разом із ключем безпеки.</string>
+    <string name="move_to_card_backup_action">Спершу зберегти резервну копію</string>
+    <string name="move_to_card_backup_confirm">У мене є резервна копія цієї пари ключів</string>
+    <string name="move_to_card_remove_label">Вилучити перенесені ключі з цього телефона</string>
+    <string name="move_to_card_remove_hint">Як і gpg, телефон зберігає лише позначку про те, що ключі зберігаються на ключі безпеки, і відтоді використовує ключ безпеки. Вимкніть цей параметр, щоб також залишити копію тут.</string>
+    <string name="move_to_card_remove_unavailable">Лише якщо на ключ безпеки переноситься кожен ключ цієї пари ключів. Інакше копія залишається на цьому телефоні, і він і далі її використовує.</string>
+    <string name="move_to_card_wrong_admin_pin">Неправильний PIN адміністратора. Залишилось спроб: %1$d. Коли їх не залишиться, ключ безпеки доведеться скинути.</string>
+    <string name="move_to_card_wrong_user_pin">Неправильний PIN користувача. Залишилось спроб: %1$d. На ключ безпеки нічого не записано.</string>
+    <string name="move_to_card_replace_confirm">Замінити ключі, які вже є у вибраних слотах</string>
+    <string name="move_to_card_slots_occupied">Ключ безпеки вже містить інший ключ в одному з вибраних слотів, тому нічого не записано. Щоб перезаписати цей ключ, позначте «Замінити ключі, які вже є у вибраних слотах» і знову натисніть «Перенести».</string>
+    <string name="move_to_card_admin_pin">PIN адміністратора ключа безпеки</string>
+    <string name="move_to_card_user_pin">PIN користувача ключа безпеки</string>
+    <string name="move_to_card_pins_hint">PIN адміністратора записує ключі. PIN користувача потім використовується по одному разу для кожного слота, щоб перевірити, що ключ безпеки підписує та розшифровує ними, перш ніж на телефоні щось зміниться.</string>
+    <string name="move_to_card_action">Перенести</string>
+    <string name="move_to_card_waiting">Прикладіть ключ безпеки до телефона або під’єднайте його й не прибирайте, доки операцію не буде завершено.</string>
+    <string name="move_to_card_failed">Не вдалося перенести ключі на ключ безпеки</string>
+    <string name="move_to_card_done_title">Ключі перенесено</string>
+    <plurals name="move_to_card_done_removed">
+        <item quantity="one">%1$d ключ тепер на ключі безпеки, його вилучено з цього телефона.</item>
+        <item quantity="few">%1$d ключі тепер на ключі безпеки, їх вилучено з цього телефона.</item>
+        <item quantity="many">%1$d ключів тепер на ключі безпеки, їх вилучено з цього телефона.</item>
+        <item quantity="other">%1$d ключа тепер на ключі безпеки, їх вилучено з цього телефона.</item>
+    </plurals>
+    <plurals name="move_to_card_done_kept">
+        <item quantity="one">%1$d ключ тепер на ключі безпеки. Копія залишається на цьому телефоні, і він і далі її використовує.</item>
+        <item quantity="few">%1$d ключі тепер на ключі безпеки. Копія залишається на цьому телефоні, і він і далі її використовує.</item>
+        <item quantity="many">%1$d ключів тепер на ключі безпеки. Копія залишається на цьому телефоні, і він і далі її використовує.</item>
+        <item quantity="other">%1$d ключа тепер на ключі безпеки. Копія залишається на цьому телефоні, і він і далі її використовує.</item>
+    </plurals>
+    <string name="err_card_expiry_primary_missing">Основного ключа немає в слоті підпису цього ключа безпеки, тому цим ключем безпеки термін дії змінити неможливо</string>
+    <string name="err_move_to_card_unsupported">Цей ключ безпеки не може зберігати один із вибраних ключів. Виберіть інший ключ або слот.</string>
+    <string name="err_move_to_card_check_failed">Ключ безпеки не пройшов перевірку після запису ключів, тому на цьому телефоні нічого не змінено. Не покладайтеся на ключі, записані на ключ безпеки.</string>
 </resources>

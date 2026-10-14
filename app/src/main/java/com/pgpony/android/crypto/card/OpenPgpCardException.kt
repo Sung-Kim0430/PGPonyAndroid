@@ -71,6 +71,23 @@ sealed class OpenPgpCardException(message: String, cause: Throwable? = null) :
             "Wrong PIN — no tries remaining; the PIN is now blocked"
     )
 
+    /**
+     * 4.7.0 (item 13): the ADMIN PIN (PW3) was wrong, kept apart from
+     * [WrongPin] so the screen can name it: a blocked admin PIN needs a card
+     * reset, a blocked user PIN only the admin PIN.
+     */
+    class WrongAdminPin(val triesRemaining: Int) : OpenPgpCardException(
+        "Wrong admin PIN. Tries remaining: $triesRemaining"
+    )
+
+    /**
+     * 4.7.0 RC4 (item 13): a slot chosen for a move already holds a different
+     * key and the user did not ask to replace it. Raised before any PIN is sent.
+     */
+    class SlotsOccupied : OpenPgpCardException(
+        "A chosen slot on this security key already holds another key"
+    )
+
     /** A response was structurally invalid (bad TLV, short data, etc.). */
     class Malformed(message: String, cause: Throwable? = null) :
         OpenPgpCardException(message, cause)

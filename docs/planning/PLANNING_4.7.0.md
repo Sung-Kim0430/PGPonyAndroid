@@ -242,6 +242,8 @@ a 4.6.3 on the `4.6.x` branch carries the walker and the card result change (not
 
 ## 13. Move an existing key onto an OpenPGP card, like gpg's keytocard (#71)
 
+**Status:** RC4. Key Details menu Move to security key on a v4 classical key pair (MoveToCardSheet): each slot (Signature, Decryption, Authentication) gets one key that fits it, defaulting to the newest subkey for that use, or Leave as it is; keys that cannot move are listed with why (v6, RSA other than 2048/3072/4096, NIST and brainpool curves and RFC 9580 Ed25519/X25519 not supported yet, other types). Before Move: Save a backup first (the Export private key flow) and I have a backup, Replace keys already in the chosen slots, Remove the moved keys from this phone (on by default), the key's passphrase, the admin PIN and the user PIN. The keys are unlocked before any card is touched (a wrong passphrase stops there). Replace is not required to enable Move (on device Oct 14 it read as a statement and kept Move greyed out): the card is read before any PIN is sent, and a chosen slot already holding a different key stops the move with move_to_card_slots_occupied unless Replace is on. crypto/card/KeyToCard.kt (pure): eligibility and slot fit, algorithm attributes (RSA 01 | n bits | e bits | format, keeping an RSA slot's import format; Ed25519 16 + OID; Cv25519 12 + OID), the Extended Header List 4D { CRT 00, 7F48 template, 5F48 values } built in one exactly sized array, RSA parts for formats 00 to 03 (e, p, q, 1/q mod p, d mod p-1, d mod q-1, n), the Ed25519 seed, the X25519 secret in native or stored order, and the divert-to-card stub (GNU S2K 1002 with the card's AID). OpenPgpCardSession.importPrivateKey (PUT DATA odd INS 0xDB, P1P2 3FFF, command chaining past 255 octets) and readAlgorithmAttributes. crypto/card/KeyToCardService.kt, one card operation over NFC or USB: the user PIN (PW1) is checked first, so a wrong user PIN stops before anything is written, then the admin PIN (PW3, a wrong one is reported as the admin PIN with its tries left); then per slot set the algorithm attributes only when they differ from what the slot already has, import, write fingerprint and creation time; then with PW1 use each slot once and check it against the public key (a signature that verifies, a test message that decrypts through CardDecryptService, an INTERNAL AUTHENTICATE that verifies); a Cv25519 slot is written in OpenPGP's stored byte order first and, if its test fails, written again in native X25519 order and tested again; then the card's fingerprints are read back and compared. A card that refuses the attributes or the import gives err_move_to_card_unsupported; a failed check gives err_move_to_card_check_failed and nothing on the phone changes. Only then KeyRepository.finishKeyToCard runs (not through the card scan's matching, which could pick another key pair held in another slot): it first unlinks any other keyring entry from the slots this move overwrote on the same card, then, when Remove is on, replaces the moved keys' secrets with divert-to-card stubs (exports to gpg as ssb>/sec>) and turns the key pair into a key on a card. Remove is offered only when every secret key in the key moves (one per slot, no two slots sharing a key); a partial move keeps the full key pair on the phone and the card holds copies. A certify-only primary may go to the Signature slot, as in gpg. Changing expiry with a security key now checks the card's Signature slot holds this key's primary and says so if not (err_card_expiry_primary_missing). Buffers that held private key bytes are wiped after their APDU (BigInteger values from Bouncy Castle cannot be). Tests: KeyToCardTest (run on the JVM against Bouncy Castle 1.85: BER lengths, the EC and RSA lists, CRT values, attributes, Ed25519 seed and X25519 byte order against Bouncy Castle's own keys, slot fit, the stub read back as a card stub). Left out: ECDSA and ECDH on NIST and brainpool curves (PGPony's card signer does not handle ECDSA yet), checking the card's algorithm information DO before writing (the card's refusal is reported instead), and restoring a backup onto a second card in one step (import the backup, then move again).
+
 Priority: medium-high (feature). Origin: m0a0k0s (#71).
 
 Requested: write an existing secret key from the PGPony keyring onto an OpenPGP card (YubiKey 5 NFC), the way
@@ -666,6 +668,8 @@ a backup holding it restores the same way; a key with both a SHA-1 and a SHA-256
 
 ## 28. Thunderbird on Android fails to decrypt with a USB security key (#36)
 
+**Status:** RC4. ProviderCardOpActivity also watches for a wired OpenPGP reader (UsbCardConnectionManager, registered in onStart), asks for USB permission from the dialog when one is plugged in, and offers Use USB key once the PIN is in; the operation then runs through UsbCardOperations.run with the same performOperation a tap runs. One operation at a time across NFC and USB (an overlapping tap is refused quietly and the NFC reader re-armed). Without NFC the dialog no longer says NFC is unavailable when USB can be used. USB wording for a wrong PIN and an unplugged key. 4 new strings in all 10 locales.
+
 Priority: medium (bug, needs information). Origin: #36 (Sep 24): a key that works in PGPony over USB, and in
 Thunderbird with GnuPG on Linux, gives "error decrypting" in Thunderbird on Android. Not answered on the thread yet.
 
@@ -711,6 +715,8 @@ Priority: medium (docs, promised). Not gated on 4.7.0; can land on main at any t
 
 
 ## 31. Certify other people's keys, like gpg's --sign-key (#79)
+
+RC4 (card): a key whose certifying primary sits in a card's signature slot (primaryOnCard, Certify, EdDSA or RSA, not revoked or weak) is offered in Certify with (marked On card); the sheet asks for the card PIN instead of a passphrase and says to hold or plug in the key. CertificationService.certifyOnCard and revokeOnCard sign on the card through CardPGPContentSigner (SHA-256), after checking the card's signature slot holds that primary (err_certify_card_mismatch otherwise, before any PIN is sent); KeyRepository.storeCardCertifications and storeCardCertificationRevocation keep them like software ones. Certifications made by a key on a card count as yours (CertificationRow.isMine uses isOwnKey), so they get Revoke; a local one is removed without signing. The certify_no_certifier text was replaced (certify_no_certifier_card) and the old string removed from every locale. 3 new strings in all 10 locales.
 
 **Status:** RC2, software certifiers. Key Details of a public key has Certify… (CertifySheet): pick the User
 IDs, the certifying key pair (software, classical, unrevoked, unexpired, not Don't use, primary secret here with
@@ -824,6 +830,8 @@ as a 4.6.x fix.
 
 
 ## 34. A key generated on a card shows like a public key (#43)
+
+**Status:** RC4. PGPKeyEntity.isOwnKey (key pair or card-backed) drives how a key is shown: the Keyring row's avatar color and key icon, an ON CARD pill next to DEFAULT (the existing On card badge text), the Key Details type chip (Key pair on a security key), the avatar tap (decrypt with it) and the same-identity list. Key Details lists the subkeys of a key generated on a card under a line saying the primary key is on the security key's signature slot (PGPKeyEntity.primaryOnCard), since the signing key there is the primary, not a subkey. isKeyPair is unchanged for everything that needs the secret on the phone. 2 new strings in all 10 locales.
 
 Priority: medium (bug, visible). Origin: #43, a Nitrokey 3C over USB on 4.6.4.
 
@@ -1138,7 +1146,7 @@ the key server search messages. KeyringViewModel.fetchKeysFromGitHub, ImportKeyS
 GitHubKeyFetcherTest (normalization, validation, the link, one and two keys, no keys, 404, other statuses, HTML
 and private key answers, offline and invalid input refused before any request). Classification was also run
 against GitHub's real answers for a user with keys, one without, and an unknown name. No network security
-config change was needed (only the first-party onion is listed there). New strings are English only for now. On device (Oct 13): green.
+config change was needed (only the first-party onion is listed there). New strings are English only for now. On device (Oct 13): green. RC4: after a review comment on e85b48b, the binary key check in GitHubKeyFetcher and KeyResponse now reads ((body[0].toInt() and 0x80) != 0). Kotlin's infix and already binds tighter than !=, so the behavior is unchanged; the parentheses and a comment make that plain, and the comment also says why the check comes after validate (validate accepts binary keys too).
 
 Priority: low-medium (feature). Origin: #81 (Oct 13): when a commit is signed by someone whose key you don't
 have, fetch that GitHub user's keys and import them.
@@ -1251,6 +1259,51 @@ is black and would read better white, like a traffic sign; key pairs generated i
 Work: draw the bar white. A key pair generated in PGPony (or on a card from PGPony) starts at Ultimate; imported
 key pairs and public keys keep Unverified, so the owner decides. No change to keys already in the keyring.
 
+## 50. The mail-app unlock prompt does not focus the passphrase field (#59, reopened)
+
+**Status:** RC4. New provider/ProviderAutoFocus.kt (rememberProviderAutoFocus) focuses the field and asks the keyboard controller to open it, after a short delay so the dialog window is attached. Used by ProviderPassphraseActivity (Unlock decryption key, Unlock signing key) and the card PIN field in ProviderCardOpActivity. No new strings.
+
+Priority: low (UI, regression of a promise). Origin: #59 (Oct 14, reopened on 4.6.4): the Unlock decryption key dialog a mail app opens has no focus and no keyboard. 4.5.0 item 20 fixed the in-app unlock dialogs (Screens.kt rememberAutoFocusRequester) and said the same went to the other prompts, but the provider prompts, which run in their own activity in :remote_api, were never changed.
+
+## 51. Re-sign a key's self-signatures with a current hash (#86)
+
+**Status:** Planned, after RC4 (one RC at a time). Not started.
+
+Priority: medium (feature, interop). Origin: #86 (Oct 14): gpg appears to have no way to remake a key's
+cross-certifications with a newer hash, so a subkey bound or back-signed with SHA-1 after the Feb 2023 cutoff
+stays unusable. PGPony could let the key's owner fix it instead of only warning that the subkey is left out.
+
+What exists: KeyExpirationService.rebuildExpiration already remakes every user ID self-certification, every
+subkey binding and, for a signing subkey, the embedded 0x19 back-signature (made by the subkey), all with SHA-256.
+So changing a key pair's expiry already clears the weak-hash mark on its user IDs. It cannot reach a subkey whose
+only binding is weak: CertificateBindings.sanitize drops that subkey before the certificate is stored
+(SecureKeyStore.storePublicKey), and the import preview lists it as left out (item 40, SubkeyAdmission
+Issue.WEAK_HASH).
+
+Work:
+
+- Key Details > Refresh self-signatures on a key pair: the same rebuild as an expiry change, keeping each
+  component's current expiry, offered when a user ID carries the weak-hash mark or a subkey was left out for
+  WEAK_HASH. Keep every hashed subpacket the old signature had (copySubkeySubpackets keeps only key flags and
+  expiry today, so preferences and features on a subkey binding would be lost; fix that for expiry changes too).
+- Import of your own key pair: a subkey left out only for WEAK_HASH gets Re-sign and keep, when the import holds
+  real secret material for both the primary and that subkey. Before re-signing, check the weak signature
+  otherwise verifies (only the hash is the problem) and that the subkey's secret matches its public part.
+  Holding the subkey's secret is what makes this safe: the SHA-1 risk is a binding forged over a subkey someone
+  else controls, and that subkey's secret would not be in the owner's export. A public-only import or a stub
+  subkey gets no offer.
+- A subkey whose secret was dropped earlier may still sit in the stored secret ring with its old binding;
+  check whether the refresh can reach it from there.
+- Card-backed keys: the card path skips signing subkeys today (it cannot make the back-signature). A signing
+  subkey in the card's signature slot could make its own back-signature on the card; decide whether that is in
+  scope or stays a stated limit.
+- Hash: SHA-256 as everywhere else, or SHA-512 when the key is RSA 3072 or larger; decide once.
+
+Test: a fixture key with a SHA-1 subkey binding and SHA-1 back-signature dated after the cutoff (made with Bouncy
+Castle, since gpg will not make one now): before, the subkey is left out; after Re-sign and keep, it is admitted,
+signs, and its new binding verifies in gpg and Sequoia. Same for a user ID self-certification. A public-only import
+of the same key gets no offer.
+
 RC3 translation pass (Oct 13): every string missing from a locale went into all 10 (about 125 each; Korean 322,
 including 184 strings and 10 plurals that had fallen behind since 4.6.3, still no err_ strings), and strings that
 were English copies (key_count_summary, clipboard_will_clear_in and a few per locale) were translated. One
@@ -1276,7 +1329,7 @@ uk, b+zh+Hans).
   32 (duress PIN, builds on 33), 6, 21 remainder (protocol change shared with desktop and iOS PGPonyPair), 8.
   Oct 13: 21's remainder moves to the next release (it needs the desktop side too); 8 stays open until checked
   against gpg 2.5 and does not hold the RC3 build.
-- RC4: 44 to 49 first (RC3 tester reports, no card needed), then the card work: 13 (keytocard), card certification for 31, 34 (card-generated key display) and 28 (provider card
+- RC4: 44 to 50 first (RC3 tester reports, no card needed), then the card work (Token2 on hand for testing): 13 (keytocard), card certification for 31, 34 (card-generated key display) and 28 (provider card
   prompt over USB), once a working card is on hand for testing.
 - Last RC: the 12a on-device checks (Tor with Orbot, custom proxy, OpenKeychain restore, protected key over a
   contact, the provider with Thunderbird including a card).

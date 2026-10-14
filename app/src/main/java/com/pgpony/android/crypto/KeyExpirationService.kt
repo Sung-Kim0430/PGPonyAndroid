@@ -103,6 +103,9 @@ class KeyExpirationService private constructor() {
      * subkey binding on the card. The card's primary key is the signer.
      * [pin] is the raw PW1 bytes; runs inside an NFC operation.
      */
+    /** The card's signature slot does not hold this key's primary. */
+    val CARD_PRIMARY_MISSING_MESSAGE = "The primary key is not in this security key's signature slot, so the expiry cannot be changed with it"
+
     fun setExpirationCard(
         session: OpenPgpCardSession,
         publicRing: PGPPublicKeyRing,
@@ -110,6 +113,15 @@ class KeyExpirationService private constructor() {
         pin: ByteArray
     ): UpdatedRings {
         val primaryPublic = publicRing.publicKey
+        // 4.7.0 RC4 (item 13 review): every signature here is the primary's,
+        // so the card's signature slot has to hold the primary. A card whose
+        // signature slot holds a subkey (subkeys moved, primary kept elsewhere)
+        // would sign self-signatures that never verify.
+        val sigSlot = runCatching { session.getApplicationRelatedData().sigFingerprint }.getOrNull()
+        val primaryHex = org.bouncycastle.util.encoders.Hex.toHexString(primaryPublic.fingerprint)
+        if (sigSlot == null || !sigSlot.equals(primaryHex, ignoreCase = true)) {
+            throw com.pgpony.android.crypto.card.OpenPgpCardException.Malformed(CARD_PRIMARY_MISSING_MESSAGE)
+        }
         val newPublic = try {
             rebuildExpiration(publicRing, expiresAtEpochSeconds, null, null) { type ->
                 PGPSignatureGenerator(CardPGPContentSignerBuilder(session, pin, primaryPublic), primaryPublic).apply {

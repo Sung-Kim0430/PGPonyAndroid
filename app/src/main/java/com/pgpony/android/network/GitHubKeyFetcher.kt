@@ -108,7 +108,9 @@ object GitHubKeyFetcher {
         if (body.isEmpty()) return Result.NoKeys(username)
         val armored: String? = KeyResponse.validate(body, answer.contentType)
         if (armored != null) return Result.Keys(armored, username, keysUrl(username))
-        if (body[0].toInt() and 0x80 != 0) return Result.Unreadable(username)
+        // Binary data that did not validate as keys above: not a note either.
+        // (validate accepts binary key data, so this check comes after it.)
+        if ((body[0].toInt() and 0x80) != 0) return Result.Unreadable(username)
         val text = String(body, Charsets.UTF_8)
         val blocks = PUBLIC_BLOCK.findAll(text).map { it.value }.toList()
         if (blocks.isEmpty()) {

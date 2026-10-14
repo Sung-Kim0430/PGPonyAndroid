@@ -443,7 +443,7 @@ fun KeyringScreen(
                                 listOfNotNull(
                                     k.userName.ifBlank { k.userEmail },
                                     k.noteLabel,
-                                    if (k.isKeyPair) stringResource(R.string.key_detail_type_key_pair) else null
+                                    if (k.isOwnKey) stringResource(R.string.key_detail_type_key_pair) else null
                                 ).joinToString(" · "),
                                 style = MaterialTheme.typography.bodyMedium,
                                 maxLines = 1,

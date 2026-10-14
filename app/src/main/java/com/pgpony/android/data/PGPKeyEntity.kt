@@ -259,6 +259,22 @@ data class PGPKeyEntity(
         get() = algorithm.isV6
 
     /**
+     * 4.7.0 (item 34, #43): one of the user's own keys, its secret here or on
+     * an OpenPGP card. A card-backed key is stored with isKeyPair false (no
+     * secret in this app), which made a key generated on a card look like a
+     * contact's public key. Use this for how a key is shown; keep [isKeyPair]
+     * for anything that needs the secret on the device.
+     */
+    val isOwnKey: Boolean
+        get() = isKeyPair || isCardBacked
+
+    /** 4.7.0 (item 34): the primary key itself sits in the card's signature slot. */
+    val primaryOnCard: Boolean
+        get() = isCardBacked && cardSigFingerprint?.let {
+            it.filterNot { c -> c.isWhitespace() }.equals(fingerprint.filterNot { c -> c.isWhitespace() }, ignoreCase = true)
+        } == true
+
+    /**
      * The 8-byte (16 hex char) long key ID, version-aware:
      *   • v6 (RFC 9580): the LEADING 16 hex chars of the fingerprint.
      *   • v4 (RFC 4880): the TRAILING 16 hex chars.

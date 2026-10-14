@@ -1501,7 +1501,6 @@ Optional kannst du die App hinter deinem Fingerabdruck oder Gesicht sperren, um 
     <string name="key_detail_action_certify">Beglaubigen…</string>
     <string name="certify_sheet_title">Diesen Schlüssel beglaubigen</string>
     <string name="certify_sheet_subtitle">Mit einer Beglaubigung bestätigst du, dass du geprüft hast, dass dieser Schlüssel der Person gehört, die in jeder gewählten Benutzer-ID genannt ist. Vergleiche vorher den vollständigen Fingerabdruck mit dem des Inhabers.</string>
-    <string name="certify_no_certifier">Keines deiner Schlüsselpaare kann hier beglaubigen. Zum Beglaubigen ist ein Software-Schlüsselpaar nötig, bei dem der geheime Teil des Hauptschlüssels auf diesem Gerät liegt. ML-DSA-Schlüssel und Schlüssel auf einer Karte können noch nicht beglaubigen.</string>
     <string name="certify_userids_label">Zu beglaubigende Benutzer-IDs</string>
     <string name="certify_certifier_label">Beglaubigen mit</string>
     <string name="certify_level_label">Wie sorgfältig du geprüft hast</string>
@@ -2902,4 +2901,66 @@ Optional kannst du die App hinter deinem Fingerabdruck oder Gesicht sperren, um 
     </plurals>
     <string name="err_replace_secrets_passphrase">Die Passphrase hat nicht jeden geheimen Schlüssel in dieser Datei für %1$s entsperrt. Die gespeicherten geheimen Schlüssel wurden beibehalten und es wurde nichts importiert.</string>
     <string name="err_replace_secrets_unproven">Die geheimen Schlüssel in dieser Datei konnten nicht als die zu %1$s gehörenden bestätigt werden. Die gespeicherten geheimen Schlüssel wurden beibehalten und es wurde nichts importiert.</string>
+
+    <!-- 4.7.0 RC4 security key work, translated Oct 2026 -->
+    <!-- 4.7.0 RC4 (item 28, #36, #43): the card prompt a mail app opens also takes a key plugged in over USB. -->
+    <string name="provider_cardop_usb_hint">Ein per USB angeschlossener Schlüssel funktioniert auch: Gib die PIN ein und tippe dann auf „USB-Schlüssel verwenden“.</string>
+    <string name="provider_cardop_use_usb">USB-Schlüssel verwenden</string>
+    <string name="provider_cardop_wrong_pin_usb">Falsche PIN. Verbleibende Versuche: %1$d. Prüfe die PIN und versuche es erneut.</string>
+    <string name="provider_cardop_usb_lost">Der Schlüssel wurde abgezogen. Stecke ihn wieder ein und versuche es erneut.</string>
+
+    <!-- 4.7.0 RC4 (item 34, #43): keys whose secret is on a security key (generated on it, or paired with it). -->
+    <string name="key_detail_type_key_pair_on_card">Schlüsselpaar auf einem Sicherheitsschlüssel</string>
+    <string name="key_detail_primary_on_card">Hauptschlüssel: im Signatur-Slot des Sicherheitsschlüssels, wo er signiert und beglaubigt.</string>
+
+    <!-- 4.7.0 RC4 (item 31, card): certifying with a key whose primary is on a security key. -->
+    <string name="certify_no_certifier_card">Keines deiner Schlüsselpaare kann hier beglaubigen. Zum Beglaubigen wird ein Schlüsselpaar benötigt, dessen Hauptschlüssel beglaubigen kann und dessen geheimer Teil auf diesem Gerät oder auf einem Sicherheitsschlüssel liegt. ML-DSA-Schlüssel können noch nicht beglaubigen.</string>
+    <string name="certify_card_hint">Halte nach „Beglaubigen“ den Sicherheitsschlüssel an das Telefon oder stecke ihn ein.</string>
+    <string name="err_certify_card_mismatch">Dieser Sicherheitsschlüssel enthält nicht den Schlüssel, der zum Beglaubigen gewählt wurde</string>
+
+    <!-- 4.7.0 RC4 (item 13, #71): Move to Security Key, like gpg's keytocard. -->
+    <string name="move_to_card_menu">Auf Sicherheitsschlüssel verschieben</string>
+    <string name="move_to_card_title">Auf einen Sicherheitsschlüssel verschieben</string>
+    <string name="move_to_card_intro">Schreibt Schlüssel dieses Schlüsselpaars in die Slots eines OpenPGP-Sicherheitsschlüssels, so wie keytocard in gpg. Danach signiert und entschlüsselt der Sicherheitsschlüssel mit ihnen.</string>
+    <string name="move_to_card_nothing">Keiner der Schlüssel dieses Schlüsselpaars kann auf einen Sicherheitsschlüssel verschoben werden.</string>
+    <string name="move_to_card_slot_signature">Signatur-Slot</string>
+    <string name="move_to_card_slot_decryption">Entschlüsselungs-Slot</string>
+    <string name="move_to_card_slot_authentication">Authentifizierungs-Slot</string>
+    <string name="move_to_card_slot_leave">Diesen Slot unverändert lassen</string>
+    <string name="move_to_card_key_primary_format">Hauptschlüssel, %1$s, %2$s</string>
+    <string name="move_to_card_key_subkey_format">Unterschlüssel, %1$s, %2$s</string>
+    <string name="move_to_card_one_slot_each">Wähle für jeden Slot einen anderen Schlüssel.</string>
+    <string name="move_to_card_refused_title">Schlüssel, die nicht auf einen Sicherheitsschlüssel verschoben werden können:</string>
+    <string name="move_to_card_refused_v6">v6-Schlüssel passen nicht auf OpenPGP-Sicherheitsschlüssel</string>
+    <string name="move_to_card_refused_rsa_size">nur RSA 2048, 3072 und 4096 können verschoben werden</string>
+    <string name="move_to_card_refused_curve">diese Kurve wird noch nicht unterstützt</string>
+    <string name="move_to_card_refused_algorithm">dieser Schlüsseltyp kann nicht verschoben werden</string>
+    <string name="move_to_card_backup_body">Ein Schlüssel auf einem Sicherheitsschlüssel kann nicht wieder von ihm herunterkopiert werden. Speichere zuerst ein Backup dieses Schlüsselpaars, damit die Schlüssel nicht mit dem Sicherheitsschlüssel verloren gehen.</string>
+    <string name="move_to_card_backup_action">Zuerst ein Backup speichern</string>
+    <string name="move_to_card_backup_confirm">Ich habe ein Backup dieses Schlüsselpaars</string>
+    <string name="move_to_card_remove_label">Die verschobenen Schlüssel von diesem Telefon entfernen</string>
+    <string name="move_to_card_remove_hint">Wie bei gpg behält das Telefon nur einen Vermerk, dass die Schlüssel auf dem Sicherheitsschlüssel liegen, und verwendet ab dann den Sicherheitsschlüssel. Schalte dies aus, um zusätzlich eine Kopie hier zu behalten.</string>
+    <string name="move_to_card_remove_unavailable">Nur wenn jeder Schlüssel dieses Schlüsselpaars auf den Sicherheitsschlüssel verschoben wird. Andernfalls bleibt eine Kopie auf diesem Telefon, das sie weiterhin verwendet.</string>
+    <string name="move_to_card_wrong_admin_pin">Falsche Admin-PIN. Verbleibende Versuche: %1$d. Wenn keine mehr übrig sind, muss der Sicherheitsschlüssel zurückgesetzt werden.</string>
+    <string name="move_to_card_wrong_user_pin">Falsche Benutzer-PIN. Verbleibende Versuche: %1$d. Es wurde nichts auf den Sicherheitsschlüssel geschrieben.</string>
+    <string name="move_to_card_replace_confirm">Bereits vorhandene Schlüssel in den gewählten Slots ersetzen</string>
+    <string name="move_to_card_slots_occupied">Der Sicherheitsschlüssel enthält in einem der gewählten Slots bereits einen anderen Schlüssel, daher wurde nichts geschrieben. Um ihn zu überschreiben, aktiviere „Bereits vorhandene Schlüssel in den gewählten Slots ersetzen“ und tippe erneut auf „Verschieben“.</string>
+    <string name="move_to_card_admin_pin">Admin-PIN des Sicherheitsschlüssels</string>
+    <string name="move_to_card_user_pin">Benutzer-PIN des Sicherheitsschlüssels</string>
+    <string name="move_to_card_pins_hint">Die Admin-PIN schreibt die Schlüssel. Die Benutzer-PIN wird danach einmal pro Slot verwendet, um zu prüfen, ob der Sicherheitsschlüssel mit ihnen signiert und entschlüsselt, bevor sich auf dem Telefon etwas ändert.</string>
+    <string name="move_to_card_action">Verschieben</string>
+    <string name="move_to_card_waiting">Halte den Sicherheitsschlüssel an das Telefon oder stecke ihn ein und lass ihn dort, bis der Vorgang abgeschlossen ist.</string>
+    <string name="move_to_card_failed">Die Schlüssel konnten nicht auf den Sicherheitsschlüssel verschoben werden</string>
+    <string name="move_to_card_done_title">Schlüssel verschoben</string>
+    <plurals name="move_to_card_done_removed">
+        <item quantity="one">%1$d Schlüssel liegt jetzt auf dem Sicherheitsschlüssel und wurde von diesem Telefon entfernt.</item>
+        <item quantity="other">%1$d Schlüssel liegen jetzt auf dem Sicherheitsschlüssel und wurden von diesem Telefon entfernt.</item>
+    </plurals>
+    <plurals name="move_to_card_done_kept">
+        <item quantity="one">%1$d Schlüssel liegt jetzt auf dem Sicherheitsschlüssel. Eine Kopie bleibt auf diesem Telefon, das sie weiterhin verwendet.</item>
+        <item quantity="other">%1$d Schlüssel liegen jetzt auf dem Sicherheitsschlüssel. Eine Kopie bleibt auf diesem Telefon, das sie weiterhin verwendet.</item>
+    </plurals>
+    <string name="err_card_expiry_primary_missing">Der Hauptschlüssel liegt nicht im Signatur-Slot dieses Sicherheitsschlüssels, daher kann das Ablaufdatum damit nicht geändert werden</string>
+    <string name="err_move_to_card_unsupported">Dieser Sicherheitsschlüssel kann einen der gewählten Schlüssel nicht aufnehmen. Wähle einen anderen Schlüssel oder Slot.</string>
+    <string name="err_move_to_card_check_failed">Der Sicherheitsschlüssel hat die Prüfung nach dem Schreiben der Schlüssel nicht bestanden, daher wurde auf diesem Telefon nichts geändert. Verlass dich nicht auf die Schlüssel auf dem Sicherheitsschlüssel.</string>
 </resources>

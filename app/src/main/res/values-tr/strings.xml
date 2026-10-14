@@ -812,7 +812,6 @@
     <string name="key_detail_action_certify">Onayla…</string>
     <string name="certify_sheet_title">Bu anahtarı onayla</string>
     <string name="certify_sheet_subtitle">Onaylamak, bu anahtarın seçtiğiniz her Kullanıcı Kimliğinde adı geçen kişiye ait olduğunu kontrol ettiğinizi bildirir. Önce tam parmak izini anahtarın sahibiyle karşılaştırın.</string>
-    <string name="certify_no_certifier">Anahtar çiftlerinizin hiçbiri burada onaylama yapamaz. Onaylama için birincil anahtarının gizli kısmı bu cihazda bulunan bir yazılım anahtar çifti gerekir. ML-DSA anahtarları ve karttaki anahtarlar henüz onaylama yapamaz.</string>
     <string name="certify_userids_label">Onaylanacak Kullanıcı Kimlikleri</string>
     <string name="certify_certifier_label">Onaylayan anahtar</string>
     <string name="certify_level_label">Ne kadar dikkatli kontrol ettiniz</string>
@@ -2978,4 +2977,66 @@
     </plurals>
     <string name="err_replace_secrets_passphrase">Parola ifadesi, bu dosyada %1$s için bulunan gizli anahtarların hepsinin kilidini açmadı. Saklanan gizli anahtarlar korundu ve hiçbir şey içe aktarılmadı.</string>
     <string name="err_replace_secrets_unproven">Bu dosyadaki gizli anahtarların %1$s anahtarına ait olduğu doğrulanamadı. Saklanan gizli anahtarlar korundu ve hiçbir şey içe aktarılmadı.</string>
+
+    <!-- 4.7.0 RC4 security key work, translated Oct 2026 -->
+    <!-- 4.7.0 RC4 (item 28, #36, #43): the card prompt a mail app opens also takes a key plugged in over USB. -->
+    <string name="provider_cardop_usb_hint">USB üzerinden takılan bir anahtar da çalışır: PIN\'i girin, ardından \"USB anahtarını kullan\" düğmesine dokunun.</string>
+    <string name="provider_cardop_use_usb">USB anahtarını kullan</string>
+    <string name="provider_cardop_wrong_pin_usb">Yanlış PIN. %1$d deneme hakkı kaldı. PIN\'i kontrol edin ve yeniden deneyin.</string>
+    <string name="provider_cardop_usb_lost">Anahtar çıkarıldı. Yeniden takın ve tekrar deneyin.</string>
+
+    <!-- 4.7.0 RC4 (item 34, #43): keys whose secret is on a security key (generated on it, or paired with it). -->
+    <string name="key_detail_type_key_pair_on_card">Güvenlik anahtarındaki anahtar çifti</string>
+    <string name="key_detail_primary_on_card">Birincil anahtar: güvenlik anahtarının imza yuvasında; imzalama ve onaylama işlemlerini orada yapar.</string>
+
+    <!-- 4.7.0 RC4 (item 31, card): certifying with a key whose primary is on a security key. -->
+    <string name="certify_no_certifier_card">Anahtar çiftlerinizin hiçbiri burada onaylama yapamaz. Onaylamak için birincil anahtarı onaylama yapabilen ve gizli kısmı bu cihazda veya bir güvenlik anahtarında bulunan bir anahtar çifti gerekir. ML-DSA anahtarları henüz onaylama yapamaz.</string>
+    <string name="certify_card_hint">Onayla düğmesine dokunduktan sonra güvenlik anahtarını telefona yaklaştırın veya takın.</string>
+    <string name="err_certify_card_mismatch">Bu güvenlik anahtarı, onaylamak için seçilen anahtarı içermiyor</string>
+
+    <!-- 4.7.0 RC4 (item 13, #71): Move to Security Key, like gpg's keytocard. -->
+    <string name="move_to_card_menu">Güvenlik anahtarına taşı</string>
+    <string name="move_to_card_title">Bir güvenlik anahtarına taşı</string>
+    <string name="move_to_card_intro">Bu anahtar çiftinin anahtarlarını, gpg\'nin keytocard komutunun yaptığı gibi bir OpenPGP güvenlik anahtarının yuvalarına yazar. Ardından güvenlik anahtarı bu anahtarlarla imzalar ve şifre çözer.</string>
+    <string name="move_to_card_nothing">Bu anahtar çiftinin hiçbir anahtarı bir güvenlik anahtarına taşınamaz.</string>
+    <string name="move_to_card_slot_signature">İmza yuvası</string>
+    <string name="move_to_card_slot_decryption">Şifre çözme yuvası</string>
+    <string name="move_to_card_slot_authentication">Kimlik doğrulama yuvası</string>
+    <string name="move_to_card_slot_leave">Bu yuvayı olduğu gibi bırak</string>
+    <string name="move_to_card_key_primary_format">Birincil anahtar, %1$s, %2$s</string>
+    <string name="move_to_card_key_subkey_format">Alt anahtar, %1$s, %2$s</string>
+    <string name="move_to_card_one_slot_each">Her yuva için farklı bir anahtar seçin.</string>
+    <string name="move_to_card_refused_title">Güvenlik anahtarına taşınamayan anahtarlar:</string>
+    <string name="move_to_card_refused_v6">v6 anahtarları OpenPGP güvenlik anahtarlarına sığmaz</string>
+    <string name="move_to_card_refused_rsa_size">yalnızca RSA 2048, 3072 ve 4096 taşınabilir</string>
+    <string name="move_to_card_refused_curve">bu eğri henüz desteklenmiyor</string>
+    <string name="move_to_card_refused_algorithm">bu anahtar türü taşınamaz</string>
+    <string name="move_to_card_backup_body">Güvenlik anahtarındaki bir anahtar oradan bir daha kopyalanamaz. Anahtarlar güvenlik anahtarıyla birlikte kaybolmasın diye önce bu anahtar çiftinin bir yedeğini kaydedin.</string>
+    <string name="move_to_card_backup_action">Önce bir yedek kaydet</string>
+    <string name="move_to_card_backup_confirm">Bu anahtar çiftinin bir yedeği bende var</string>
+    <string name="move_to_card_remove_label">Taşınan anahtarları bu telefondan kaldır</string>
+    <string name="move_to_card_remove_hint">gpg\'de olduğu gibi telefon yalnızca anahtarların güvenlik anahtarında olduğuna dair bir not tutar ve bundan sonra güvenlik anahtarını kullanır. Burada da bir kopya tutmak için bunu kapatın.</string>
+    <string name="move_to_card_remove_unavailable">Yalnızca bu anahtar çiftinin her anahtarı güvenlik anahtarına gittiğinde. Aksi hâlde bu telefonda bir kopya kalır ve telefon onu kullanmaya devam eder.</string>
+    <string name="move_to_card_wrong_admin_pin">Yanlış yönetici PIN\'i. %1$d deneme hakkı kaldı. Hiç kalmadığında güvenlik anahtarının sıfırlanması gerekir.</string>
+    <string name="move_to_card_wrong_user_pin">Yanlış kullanıcı PIN\'i. %1$d deneme hakkı kaldı. Güvenlik anahtarına hiçbir şey yazılmadı.</string>
+    <string name="move_to_card_replace_confirm">Seçilen yuvalarda zaten bulunan anahtarları değiştir</string>
+    <string name="move_to_card_slots_occupied">Güvenlik anahtarının seçtiğiniz yuvalarından birinde zaten farklı bir anahtar var, bu yüzden hiçbir şey yazılmadı. Üzerine yazmak için \"Seçilen yuvalarda zaten bulunan anahtarları değiştir\" seçeneğini işaretleyin ve Taşı düğmesine yeniden dokunun.</string>
+    <string name="move_to_card_admin_pin">Güvenlik anahtarının yönetici PIN\'i</string>
+    <string name="move_to_card_user_pin">Güvenlik anahtarının kullanıcı PIN\'i</string>
+    <string name="move_to_card_pins_hint">Yönetici PIN\'i anahtarları yazar. Kullanıcı PIN\'i ardından her yuva için bir kez kullanılır; böylece telefonda herhangi bir şey değişmeden önce güvenlik anahtarının bu anahtarlarla imzaladığı ve şifre çözdüğü kontrol edilir.</string>
+    <string name="move_to_card_action">Taşı</string>
+    <string name="move_to_card_waiting">Güvenlik anahtarını telefona yaklaştırın veya takın ve bu işlem bitene kadar orada tutun.</string>
+    <string name="move_to_card_failed">Anahtarlar güvenlik anahtarına taşınamadı</string>
+    <string name="move_to_card_done_title">Anahtarlar taşındı</string>
+    <plurals name="move_to_card_done_removed">
+        <item quantity="one">%1$d anahtar artık güvenlik anahtarında ve bu telefondan kaldırıldı.</item>
+        <item quantity="other">%1$d anahtar artık güvenlik anahtarında ve bu telefondan kaldırıldı.</item>
+    </plurals>
+    <plurals name="move_to_card_done_kept">
+        <item quantity="one">%1$d anahtar artık güvenlik anahtarında. Bu telefonda bir kopya kalır ve telefon onu kullanmaya devam eder.</item>
+        <item quantity="other">%1$d anahtar artık güvenlik anahtarında. Bu telefonda bir kopya kalır ve telefon onu kullanmaya devam eder.</item>
+    </plurals>
+    <string name="err_card_expiry_primary_missing">Birincil anahtar bu güvenlik anahtarının imza yuvasında değil, bu yüzden son kullanma tarihi onunla değiştirilemez</string>
+    <string name="err_move_to_card_unsupported">Bu güvenlik anahtarı seçilen anahtarlardan birini tutamaz. Başka bir anahtar veya yuva seçin.</string>
+    <string name="err_move_to_card_check_failed">Anahtarlar yazıldıktan sonra güvenlik anahtarı kontrolü geçemedi, bu yüzden bu telefonda hiçbir şey değiştirilmedi. Güvenlik anahtarındaki anahtarlara güvenmeyin.</string>
 </resources>

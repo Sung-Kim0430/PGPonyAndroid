@@ -821,7 +821,6 @@
     <string name="key_detail_action_certify">Certify…</string>
     <string name="certify_sheet_title">Certify this key</string>
     <string name="certify_sheet_subtitle">Certifying says you checked that this key belongs to the person named in each User ID you pick. Compare the full fingerprint with its owner first.</string>
-    <string name="certify_no_certifier">None of your key pairs can certify here. Certifying needs a software key pair whose primary key\'s secret is on this device. ML-DSA keys and keys on a card can\'t certify yet.</string>
     <string name="certify_userids_label">User IDs to certify</string>
     <string name="certify_certifier_label">Certify with</string>
     <string name="certify_level_label">How carefully you checked</string>
@@ -1998,7 +1997,7 @@
     <string name="provider_cardop_pin_hint">Card PIN</string>
     <string name="provider_cardop_pin_needed">Enter the card PIN first, then tap the card again.</string>
     <string name="provider_cardop_waiting">Waiting for the card…</string>
-    <string name="provider_cardop_wrong_pin">Wrong PIN. %1$d tries remaining. Check the PIN and tap the card again.</string>
+    <string name="provider_cardop_wrong_pin">Wrong PIN. Tries remaining: %1$d. Check the PIN and tap the card again.</string>
     <string name="provider_cardop_tag_lost">The card moved away. Hold it still against the phone and try again.</string>
     <string name="provider_cardop_nfc_unavailable">NFC is unavailable or turned off. Enable NFC and try again.</string>
     <string name="provider_cardop_generic_error">The card operation failed. Hold the card still and try again.</string>
@@ -2996,4 +2995,65 @@
     </plurals>
     <string name="err_replace_secrets_passphrase">The passphrase did not unlock every secret key in this file for %1$s. The stored secret keys were kept and nothing was imported.</string>
     <string name="err_replace_secrets_unproven">The secret keys in this file could not be confirmed as the ones for %1$s. The stored secret keys were kept and nothing was imported.</string>
+
+    <!-- 4.7.0 RC4 (item 28, #36, #43): the card prompt a mail app opens also takes a key plugged in over USB. -->
+    <string name="provider_cardop_usb_hint">A key plugged in over USB works too: enter the PIN, then tap Use USB key.</string>
+    <string name="provider_cardop_use_usb">Use USB key</string>
+    <string name="provider_cardop_wrong_pin_usb">Wrong PIN. Tries remaining: %1$d. Check the PIN and try again.</string>
+    <string name="provider_cardop_usb_lost">The key was unplugged. Plug it back in and try again.</string>
+
+    <!-- 4.7.0 RC4 (item 34, #43): keys whose secret is on a security key (generated on it, or paired with it). -->
+    <string name="key_detail_type_key_pair_on_card">Key pair on a security key</string>
+    <string name="key_detail_primary_on_card">Primary key: on the security key\'s signature slot, where it signs and certifies.</string>
+
+    <!-- 4.7.0 RC4 (item 31, card): certifying with a key whose primary is on a security key. -->
+    <string name="certify_no_certifier_card">None of your key pairs can certify here. Certifying needs a key pair whose primary key can certify, with its secret on this device or on a security key. ML-DSA keys can\'t certify yet.</string>
+    <string name="certify_card_hint">After Certify, hold the security key against the phone or plug it in.</string>
+    <string name="err_certify_card_mismatch">This security key does not hold the key chosen to certify with</string>
+
+    <!-- 4.7.0 RC4 (item 13, #71): Move to Security Key, like gpg's keytocard. -->
+    <string name="move_to_card_menu">Move to security key</string>
+    <string name="move_to_card_title">Move to a security key</string>
+    <string name="move_to_card_intro">Writes keys of this key pair into the slots of an OpenPGP security key, the way gpg\'s keytocard does. Afterwards the security key signs and decrypts with them.</string>
+    <string name="move_to_card_nothing">None of this key pair\'s keys can go to a security key.</string>
+    <string name="move_to_card_slot_signature">Signature slot</string>
+    <string name="move_to_card_slot_decryption">Decryption slot</string>
+    <string name="move_to_card_slot_authentication">Authentication slot</string>
+    <string name="move_to_card_slot_leave">Leave this slot as it is</string>
+    <string name="move_to_card_key_primary_format">Primary key, %1$s, %2$s</string>
+    <string name="move_to_card_key_subkey_format">Subkey, %1$s, %2$s</string>
+    <string name="move_to_card_one_slot_each">Choose a different key for each slot.</string>
+    <string name="move_to_card_refused_title">Keys that cannot go to a security key:</string>
+    <string name="move_to_card_refused_v6">v6 keys do not fit on OpenPGP security keys</string>
+    <string name="move_to_card_refused_rsa_size">only RSA 2048, 3072 and 4096 can be moved</string>
+    <string name="move_to_card_refused_curve">this curve is not supported yet</string>
+    <string name="move_to_card_refused_algorithm">this key type cannot be moved</string>
+    <string name="move_to_card_backup_body">A key on a security key cannot be copied off it again. Save a backup of this key pair first, so the keys are not lost with the security key.</string>
+    <string name="move_to_card_backup_action">Save a backup first</string>
+    <string name="move_to_card_backup_confirm">I have a backup of this key pair</string>
+    <string name="move_to_card_remove_label">Remove the moved keys from this phone</string>
+    <string name="move_to_card_remove_hint">Like gpg, the phone keeps only a note that the keys are on the security key, and uses the security key from then on. Turn this off to keep a copy here as well.</string>
+    <string name="move_to_card_remove_unavailable">Only when every key of this key pair goes to the security key. Otherwise a copy stays on this phone, which keeps using it.</string>
+    <string name="move_to_card_wrong_admin_pin">Wrong admin PIN. Tries remaining: %1$d. When none are left, the security key has to be reset.</string>
+    <string name="move_to_card_wrong_user_pin">Wrong user PIN. Tries remaining: %1$d. Nothing was written to the security key.</string>
+    <string name="move_to_card_replace_confirm">Replace keys already in the chosen slots</string>
+    <string name="move_to_card_slots_occupied">The security key already holds a different key in a slot you chose, so nothing was written. To overwrite it, check \"Replace keys already in the chosen slots\" and move again.</string>
+    <string name="move_to_card_admin_pin">Admin PIN of the security key</string>
+    <string name="move_to_card_user_pin">User PIN of the security key</string>
+    <string name="move_to_card_pins_hint">The admin PIN writes the keys. The user PIN is used once per slot afterwards, to check that the security key signs and decrypts with them before anything on the phone changes.</string>
+    <string name="move_to_card_action">Move</string>
+    <string name="move_to_card_waiting">Hold the security key against the phone or plug it in, and keep it there until this finishes.</string>
+    <string name="move_to_card_failed">Could not move the keys to the security key</string>
+    <string name="move_to_card_done_title">Keys moved</string>
+    <plurals name="move_to_card_done_removed">
+        <item quantity="one">%1$d key is on the security key now and was removed from this phone.</item>
+        <item quantity="other">%1$d keys are on the security key now and were removed from this phone.</item>
+    </plurals>
+    <plurals name="move_to_card_done_kept">
+        <item quantity="one">%1$d key is on the security key now. A copy stays on this phone, which keeps using it.</item>
+        <item quantity="other">%1$d keys are on the security key now. A copy stays on this phone, which keeps using it.</item>
+    </plurals>
+    <string name="err_card_expiry_primary_missing">The primary key is not in this security key\'s signature slot, so the expiry cannot be changed with it</string>
+    <string name="err_move_to_card_unsupported">This security key cannot hold one of the chosen keys. Choose another key or slot.</string>
+    <string name="err_move_to_card_check_failed">The security key did not pass the check after the keys were written, so nothing on this phone was changed. Do not rely on the keys on the security key.</string>
 </resources>

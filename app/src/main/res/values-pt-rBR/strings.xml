@@ -1501,7 +1501,6 @@ Opcionalmente, bloqueie o app com sua impressão digital ou rosto para mais tran
     <string name="key_detail_action_certify">Certificar…</string>
     <string name="certify_sheet_title">Certificar esta chave</string>
     <string name="certify_sheet_subtitle">Certificar declara que você verificou que esta chave pertence à pessoa indicada em cada ID de usuário que escolher. Antes, compare a impressão digital completa com o dono da chave.</string>
-    <string name="certify_no_certifier">Nenhum dos seus pares de chaves pode certificar aqui. Certificar exige um par de chaves em software cujo segredo da chave principal esteja neste dispositivo. Chaves ML-DSA e chaves em cartão ainda não podem certificar.</string>
     <string name="certify_userids_label">IDs de usuário a certificar</string>
     <string name="certify_certifier_label">Certificar com</string>
     <string name="certify_level_label">Com que cuidado você verificou</string>
@@ -2906,4 +2905,68 @@ Opcionalmente, bloqueie o app com sua impressão digital ou rosto para mais tran
     </plurals>
     <string name="err_replace_secrets_passphrase">A frase-senha não desbloqueou todas as chaves privadas deste arquivo para %1$s. As chaves privadas armazenadas foram mantidas e nada foi importado.</string>
     <string name="err_replace_secrets_unproven">Não foi possível confirmar que as chaves privadas deste arquivo são as de %1$s. As chaves privadas armazenadas foram mantidas e nada foi importado.</string>
+
+    <!-- 4.7.0 RC4 security key work, translated Oct 2026 -->
+    <!-- 4.7.0 RC4 (item 28, #36, #43): the card prompt a mail app opens also takes a key plugged in over USB. -->
+    <string name="provider_cardop_usb_hint">Uma chave conectada via USB também funciona: digite o PIN e toque em Usar chave USB.</string>
+    <string name="provider_cardop_use_usb">Usar chave USB</string>
+    <string name="provider_cardop_wrong_pin_usb">PIN incorreto. Tentativas restantes: %1$d. Verifique o PIN e tente novamente.</string>
+    <string name="provider_cardop_usb_lost">A chave foi desconectada. Conecte-a novamente e tente de novo.</string>
+
+    <!-- 4.7.0 RC4 (item 34, #43): keys whose secret is on a security key (generated on it, or paired with it). -->
+    <string name="key_detail_type_key_pair_on_card">Par de chaves em uma chave de segurança</string>
+    <string name="key_detail_primary_on_card">Chave principal: no slot de assinatura da chave de segurança, onde ela assina e certifica.</string>
+
+    <!-- 4.7.0 RC4 (item 31, card): certifying with a key whose primary is on a security key. -->
+    <string name="certify_no_certifier_card">Nenhum dos seus pares de chaves pode certificar aqui. Para certificar, é preciso um par de chaves cuja chave principal possa certificar, com o segredo neste dispositivo ou em uma chave de segurança. Chaves ML-DSA ainda não podem certificar.</string>
+    <string name="certify_card_hint">Depois de tocar em Certificar, encoste a chave de segurança no telefone ou conecte-a.</string>
+    <string name="err_certify_card_mismatch">Esta chave de segurança não contém a chave escolhida para certificar</string>
+
+    <!-- 4.7.0 RC4 (item 13, #71): Move to Security Key, like gpg's keytocard. -->
+    <string name="move_to_card_menu">Mover para chave de segurança</string>
+    <string name="move_to_card_title">Mover para uma chave de segurança</string>
+    <string name="move_to_card_intro">Grava chaves deste par de chaves nos slots de uma chave de segurança OpenPGP, como faz o keytocard do gpg. Depois disso, a chave de segurança assina e decifra com elas.</string>
+    <string name="move_to_card_nothing">Nenhuma das chaves deste par de chaves pode ir para uma chave de segurança.</string>
+    <string name="move_to_card_slot_signature">Slot de assinatura</string>
+    <string name="move_to_card_slot_decryption">Slot de decifragem</string>
+    <string name="move_to_card_slot_authentication">Slot de autenticação</string>
+    <string name="move_to_card_slot_leave">Deixar este slot como está</string>
+    <string name="move_to_card_key_primary_format">Chave principal, %1$s, %2$s</string>
+    <string name="move_to_card_key_subkey_format">Subchave, %1$s, %2$s</string>
+    <string name="move_to_card_one_slot_each">Escolha uma chave diferente para cada slot.</string>
+    <string name="move_to_card_refused_title">Chaves que não podem ir para uma chave de segurança:</string>
+    <string name="move_to_card_refused_v6">chaves v6 não cabem em chaves de segurança OpenPGP</string>
+    <string name="move_to_card_refused_rsa_size">só chaves RSA 2048, 3072 e 4096 podem ser movidas</string>
+    <string name="move_to_card_refused_curve">esta curva ainda não é suportada</string>
+    <string name="move_to_card_refused_algorithm">este tipo de chave não pode ser movido</string>
+    <string name="move_to_card_backup_body">Uma chave em uma chave de segurança não pode mais ser copiada para fora dela. Salve primeiro um backup deste par de chaves, para que as chaves não se percam junto com a chave de segurança.</string>
+    <string name="move_to_card_backup_action">Salvar um backup primeiro</string>
+    <string name="move_to_card_backup_confirm">Tenho um backup deste par de chaves</string>
+    <string name="move_to_card_remove_label">Remover deste telefone as chaves movidas</string>
+    <string name="move_to_card_remove_hint">Como no gpg, o telefone guarda só uma anotação de que as chaves estão na chave de segurança e passa a usar a chave de segurança a partir daí. Desative isto para manter uma cópia aqui também.</string>
+    <string name="move_to_card_remove_unavailable">Só quando todas as chaves deste par de chaves vão para a chave de segurança. Caso contrário, uma cópia fica neste telefone, que continua a usá-la.</string>
+    <string name="move_to_card_wrong_admin_pin">PIN de administrador incorreto. Tentativas restantes: %1$d. Quando não restar nenhuma, a chave de segurança terá de ser restaurada de fábrica.</string>
+    <string name="move_to_card_wrong_user_pin">PIN de usuário incorreto. Tentativas restantes: %1$d. Nada foi gravado na chave de segurança.</string>
+    <string name="move_to_card_replace_confirm">Substituir as chaves que já estão nos slots escolhidos</string>
+    <string name="move_to_card_slots_occupied">A chave de segurança já tem outra chave em um dos slots que você escolheu, então nada foi gravado. Para sobrescrevê-la, marque \"Substituir as chaves que já estão nos slots escolhidos\" e toque em Mover novamente.</string>
+    <string name="move_to_card_admin_pin">PIN de administrador da chave de segurança</string>
+    <string name="move_to_card_user_pin">PIN de usuário da chave de segurança</string>
+    <string name="move_to_card_pins_hint">O PIN de administrador grava as chaves. Depois, o PIN de usuário é usado uma vez por slot, para verificar se a chave de segurança assina e decifra com elas antes que qualquer coisa mude no telefone.</string>
+    <string name="move_to_card_action">Mover</string>
+    <string name="move_to_card_waiting">Encoste a chave de segurança no telefone ou conecte-a e mantenha-a ali até que isto termine.</string>
+    <string name="move_to_card_failed">Não foi possível mover as chaves para a chave de segurança</string>
+    <string name="move_to_card_done_title">Chaves movidas</string>
+    <plurals name="move_to_card_done_removed">
+        <item quantity="one">%1$d chave agora está na chave de segurança e foi removida deste telefone.</item>
+        <item quantity="many">%1$d chaves agora estão na chave de segurança e foram removidas deste telefone.</item>
+        <item quantity="other">%1$d chaves agora estão na chave de segurança e foram removidas deste telefone.</item>
+    </plurals>
+    <plurals name="move_to_card_done_kept">
+        <item quantity="one">%1$d chave agora está na chave de segurança. Uma cópia fica neste telefone, que continua a usá-la.</item>
+        <item quantity="many">%1$d chaves agora estão na chave de segurança. Uma cópia fica neste telefone, que continua a usá-la.</item>
+        <item quantity="other">%1$d chaves agora estão na chave de segurança. Uma cópia fica neste telefone, que continua a usá-la.</item>
+    </plurals>
+    <string name="err_card_expiry_primary_missing">A chave principal não está no slot de assinatura desta chave de segurança, então a expiração não pode ser alterada com ela</string>
+    <string name="err_move_to_card_unsupported">Esta chave de segurança não comporta uma das chaves escolhidas. Escolha outra chave ou outro slot.</string>
+    <string name="err_move_to_card_check_failed">A chave de segurança não passou na verificação depois que as chaves foram gravadas, então nada neste telefone foi alterado. Não confie nas chaves que estão na chave de segurança.</string>
 </resources>

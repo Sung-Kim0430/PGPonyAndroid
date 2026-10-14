@@ -810,7 +810,6 @@
     <string name="key_detail_action_certify">认证…</string>
     <string name="certify_sheet_title">认证此密钥</string>
     <string name="certify_sheet_subtitle">认证即表明你已确认此密钥属于所选各用户 ID 中列出的人。请先与密钥所有者核对完整指纹。</string>
-    <string name="certify_no_certifier">你的密钥对都无法在此认证。认证需要主钥私钥位于此设备上的软件密钥对。ML-DSA 密钥和卡上的密钥暂时还不能用于认证。</string>
     <string name="certify_userids_label">要认证的用户 ID</string>
     <string name="certify_certifier_label">认证所用密钥</string>
     <string name="certify_level_label">核实程度</string>
@@ -2959,4 +2958,64 @@
     </plurals>
     <string name="err_replace_secrets_passphrase">该口令未能解锁此文件中 %1$s 的所有私钥。已存储的私钥已保留，未导入任何内容。</string>
     <string name="err_replace_secrets_unproven">无法确认此文件中的私钥就是 %1$s 的私钥。已存储的私钥已保留，未导入任何内容。</string>
+
+    <!-- 4.7.0 RC4 security key work, translated Oct 2026 -->
+    <!-- 4.7.0 RC4 (item 28, #36, #43): the card prompt a mail app opens also takes a key plugged in over USB. -->
+    <string name="provider_cardop_usb_hint">通过 USB 插入的密钥也可使用：输入 PIN，然后轻点「使用 USB 密钥」。</string>
+    <string name="provider_cardop_use_usb">使用 USB 密钥</string>
+    <string name="provider_cardop_wrong_pin_usb">PIN 错误。剩余 %1$d 次尝试。请检查 PIN 后重试。</string>
+    <string name="provider_cardop_usb_lost">密钥已被拔出。请重新插入后重试。</string>
+
+    <!-- 4.7.0 RC4 (item 34, #43): keys whose secret is on a security key (generated on it, or paired with it). -->
+    <string name="key_detail_type_key_pair_on_card">位于硬件密钥上的密钥对</string>
+    <string name="key_detail_primary_on_card">主钥：位于硬件密钥的签名槽位中，在其中进行签名和认证。</string>
+
+    <!-- 4.7.0 RC4 (item 31, card): certifying with a key whose primary is on a security key. -->
+    <string name="certify_no_certifier_card">你的密钥对都无法在此处认证。认证需要一个主钥可以认证的密钥对，且其私钥位于此设备或硬件密钥上。ML-DSA 密钥暂时还不能认证。</string>
+    <string name="certify_card_hint">轻点「认证」后，将硬件密钥贴近手机或将其插入。</string>
+    <string name="err_certify_card_mismatch">此硬件密钥中没有你选择用于认证的密钥</string>
+
+    <!-- 4.7.0 RC4 (item 13, #71): Move to Security Key, like gpg's keytocard. -->
+    <string name="move_to_card_menu">移至硬件密钥</string>
+    <string name="move_to_card_title">移至硬件密钥</string>
+    <string name="move_to_card_intro">将此密钥对中的密钥写入 OpenPGP 硬件密钥的槽位，与 gpg 的 keytocard 做法相同。此后由硬件密钥使用这些密钥进行签名和解密。</string>
+    <string name="move_to_card_nothing">此密钥对中没有可移至硬件密钥的密钥。</string>
+    <string name="move_to_card_slot_signature">签名槽位</string>
+    <string name="move_to_card_slot_decryption">解密槽位</string>
+    <string name="move_to_card_slot_authentication">身份验证槽位</string>
+    <string name="move_to_card_slot_leave">保持此槽位不变</string>
+    <string name="move_to_card_key_primary_format">主钥，%1$s，%2$s</string>
+    <string name="move_to_card_key_subkey_format">子钥，%1$s，%2$s</string>
+    <string name="move_to_card_one_slot_each">请为每个槽位选择不同的密钥。</string>
+    <string name="move_to_card_refused_title">无法移至硬件密钥的密钥：</string>
+    <string name="move_to_card_refused_v6">v6 密钥无法放入 OpenPGP 硬件密钥</string>
+    <string name="move_to_card_refused_rsa_size">只能移动 RSA 2048、3072 和 4096 位密钥</string>
+    <string name="move_to_card_refused_curve">暂不支持此曲线</string>
+    <string name="move_to_card_refused_algorithm">此类密钥无法移动</string>
+    <string name="move_to_card_backup_body">硬件密钥上的密钥无法再从中复制出来。请先存储此密钥对的备份，以免这些密钥随硬件密钥一起丢失。</string>
+    <string name="move_to_card_backup_action">先存储备份</string>
+    <string name="move_to_card_backup_confirm">我已有此密钥对的备份</string>
+    <string name="move_to_card_remove_label">从此手机中移除已移动的密钥</string>
+    <string name="move_to_card_remove_hint">与 gpg 一样，手机只保留一条记录，说明这些密钥位于硬件密钥上，并从此改用硬件密钥。关闭此项可同时在此处保留一份副本。</string>
+    <string name="move_to_card_remove_unavailable">仅当此密钥对的每个密钥都移至硬件密钥时可用。否则此手机上会保留一份副本，手机会继续使用该副本。</string>
+    <string name="move_to_card_wrong_admin_pin">管理员 PIN 错误。剩余 %1$d 次尝试。次数用尽后，必须重置硬件密钥。</string>
+    <string name="move_to_card_wrong_user_pin">用户 PIN 错误。剩余 %1$d 次尝试。未向硬件密钥写入任何内容。</string>
+    <string name="move_to_card_replace_confirm">替换所选槽位中已有的密钥</string>
+    <string name="move_to_card_slots_occupied">硬件密钥在你所选的某个槽位中已存有另一个密钥，因此未写入任何内容。如需覆盖该密钥，请勾选「替换所选槽位中已有的密钥」，然后再次轻点「移动」。</string>
+    <string name="move_to_card_admin_pin">硬件密钥的管理员 PIN</string>
+    <string name="move_to_card_user_pin">硬件密钥的用户 PIN</string>
+    <string name="move_to_card_pins_hint">管理员 PIN 用于写入密钥。之后每个槽位会使用一次用户 PIN，以便在手机上的任何内容发生更改之前，检查硬件密钥能否用这些密钥进行签名和解密。</string>
+    <string name="move_to_card_action">移动</string>
+    <string name="move_to_card_waiting">将硬件密钥贴近手机或将其插入，并保持不动直到操作完成。</string>
+    <string name="move_to_card_failed">无法将密钥移至硬件密钥</string>
+    <string name="move_to_card_done_title">密钥已移动</string>
+    <plurals name="move_to_card_done_removed">
+        <item quantity="other">%1$d 个密钥现已位于硬件密钥上，并已从此手机中移除。</item>
+    </plurals>
+    <plurals name="move_to_card_done_kept">
+        <item quantity="other">%1$d 个密钥现已位于硬件密钥上。此手机上会保留一份副本，手机会继续使用该副本。</item>
+    </plurals>
+    <string name="err_card_expiry_primary_missing">主钥不在此硬件密钥的签名槽位中，因此无法用它更改有效期</string>
+    <string name="err_move_to_card_unsupported">此硬件密钥无法容纳所选密钥中的某一个。请选择其他密钥或槽位。</string>
+    <string name="err_move_to_card_check_failed">写入密钥后，硬件密钥未通过检查，因此此手机上的任何内容均未更改。请勿依赖硬件密钥上的这些密钥。</string>
 </resources>

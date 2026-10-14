@@ -1213,6 +1213,79 @@ class KeyRepository(
     }
 
     /**
+     * 4.7.0 RC4 (item 13, #71): after Move to Security Key wrote and checked
+     * [movedFingerprints] of the key pair [fingerprint] on the card
+     * ([cardInfo], read after the write).
+     *
+     * With [removeFromPhone], and only when the move covered every key whose
+     * secret is on the phone, those secrets become divert-to-card stubs
+     * (gpg's `sec>`/`ssb>`) and the key becomes a key on a card (isKeyPair
+     * false, isCardBacked true), like one generated on a card. Anything else
+     * keeps the key a software key pair, untouched, with the card holding a
+     * copy: a key with some secrets here and some on a card is not a state the
+     * rest of the app routes correctly (expiry, certify and signing would go
+     * to the card for the whole key). Returns the row and whether the secrets
+     * left the phone.
+     *
+     * Either way, other keys linked to this card stop claiming the slots that
+     * were just written.
+     */
+    suspend fun finishKeyToCard(
+        fingerprint: String,
+        cardInfo: CardInfo,
+        movedFingerprints: List<String>,
+        removeFromPhone: Boolean
+    ): Pair<PGPKeyEntity, Boolean> = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+        val entity = dao.getByFingerprint(fingerprint) ?: throw KeyRepoError.NotFound(fingerprint)
+        val moved = movedFingerprints.map { it.uppercase() }.toSet()
+        releaseCardSlots(cardInfo, except = entity.id)
+        if (!removeFromPhone) return@withContext Pair(entity, false)
+        val stored = loadSecretKeyRing(fingerprint) ?: throw KeyRepoError.NotFound(fingerprint)
+        val aid = com.pgpony.android.crypto.card.KeyToCard.hexToBytes(cardInfo.aidHex)
+        var ring = stored
+        for (sk in stored.secretKeys.asSequence().toList()) {
+            val fp = org.bouncycastle.util.encoders.Hex.toHexString(sk.publicKey.fingerprint).uppercase()
+            if (fp !in moved) continue
+            ring = PGPSecretKeyRing.insertSecretKey(ring, com.pgpony.android.crypto.card.KeyToCard.divertToCardStub(sk, aid))
+        }
+        if (!com.pgpony.android.crypto.OfflineStub.allStubs(ring)) return@withContext Pair(entity, false)
+        store.storePrivateKey(fingerprint, ring.encoded)
+        runCatching { com.pgpony.android.session.InAppPassphraseCache.clear(fingerprint) }
+        val updated = entity.copy(
+            isKeyPair = false,
+            isCardBacked = true,
+            cardSerial = cardInfo.serialHex,
+            cardAid = cardInfo.aidHex,
+            cardManufacturer = cardInfo.manufacturerName,
+            cardSigFingerprint = cardInfo.fingerprintFor(com.pgpony.android.crypto.card.CardSlot.SIGNATURE),
+            cardDecFingerprint = cardInfo.fingerprintFor(com.pgpony.android.crypto.card.CardSlot.DECRYPTION),
+            cardAuthFingerprint = cardInfo.fingerprintFor(com.pgpony.android.crypto.card.CardSlot.AUTHENTICATION)
+        )
+        dao.update(updated)
+        Pair(updated, true)
+    }
+
+    /**
+     * Other keys linked to the card in [cardInfo] drop any slot fingerprint
+     * the card no longer reports for that slot (it now holds another key).
+     */
+    private suspend fun releaseCardSlots(cardInfo: CardInfo, except: String) {
+        val sig = cardInfo.fingerprintFor(com.pgpony.android.crypto.card.CardSlot.SIGNATURE)
+        val dec = cardInfo.fingerprintFor(com.pgpony.android.crypto.card.CardSlot.DECRYPTION)
+        val auth = cardInfo.fingerprintFor(com.pgpony.android.crypto.card.CardSlot.AUTHENTICATION)
+        fun still(mine: String?, card: String?) = mine?.takeIf { card != null && it.equals(card, ignoreCase = true) }
+        for (other in dao.getAllKeys()) {
+            if (other.id == except || !other.isCardBacked || other.cardSerial != cardInfo.serialHex) continue
+            val changed = other.copy(
+                cardSigFingerprint = still(other.cardSigFingerprint, sig),
+                cardDecFingerprint = still(other.cardDecFingerprint, dec),
+                cardAuthFingerprint = still(other.cardAuthFingerprint, auth)
+            )
+            if (changed != other) dao.update(changed)
+        }
+    }
+
+    /**
      * Persist a key just generated ON a card (Phase B1). [publicKeyBinary] is the
      * assembled transferable public key from CardKeygenService; [cardInfo] is the
      * post-generation card state (carrying the new fingerprints). The generated
@@ -1868,7 +1941,8 @@ class KeyRepository(
         val certification: com.pgpony.android.crypto.CertificationService.Certification,
         val issuer: PGPKeyEntity?
     ) {
-        val isMine: Boolean get() = issuer?.isKeyPair == true
+        // 4.7.0 RC4 (item 31): a key on a card is yours too.
+        val isMine: Boolean get() = issuer?.isOwnKey == true
     }
 
     /** True when [entity] is a public key this device can certify: not your
@@ -1888,7 +1962,17 @@ class KeyRepository(
                     !it.fingerprint.equals(targetFingerprint, ignoreCase = true)
             }.filter { e ->
                 loadSecretKeyRing(e.fingerprint)?.let { com.pgpony.android.crypto.CertificationService.canCertify(it) } == true
-            }
+            } + cardCertifierChoices(targetFingerprint)
+        }
+
+    /** 4.7.0 RC4 (item 31): your keys whose certifying primary is on a card's signature slot. */
+    private suspend fun cardCertifierChoices(targetFingerprint: String): List<PGPKeyEntity> =
+        getAllKeys().filter {
+            it.isCardBacked && it.primaryOnCard && !it.isRevoked && !it.isExpired &&
+                it.trustLevel != TrustLevel.DONT_USE && !it.algorithm.isCompositeSign &&
+                !it.fingerprint.equals(targetFingerprint, ignoreCase = true)
+        }.filter { e ->
+            loadPublicKeyRing(e.fingerprint)?.let { com.pgpony.android.crypto.CertificationService.canCertifyOnCard(it) } == true
         }
 
     /**
@@ -1919,17 +2003,83 @@ class KeyRepository(
                 if (e.message == CERTIFY_CERTIFIER_MESSAGE) CERTIFY_CERTIFIER_MESSAGE else CERTIFY_TARGET_MESSAGE
             )
         }
+        keepCertifications(target, ring, certifier.publicKey, made, userIds, exportable)
+    }
+
+    /**
+     * 4.7.0 RC4 (item 31): store certifications [made] on the card by the key
+     * [certifierFingerprint] (signed in the card operation), the same way
+     * [certifyKey] stores its own.
+     */
+    suspend fun storeCardCertifications(
+        targetFingerprint: String,
+        certifierFingerprint: String,
+        made: List<com.pgpony.android.crypto.CertificationService.Made>,
+        userIds: List<String>,
+        exportable: Boolean
+    ): Unit = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+        val target = dao.getByFingerprint(targetFingerprint) ?: throw KeyRepoError.NotFound(targetFingerprint)
+        if (!canBeCertified(target)) throw CertificationService.CertifyError(CERTIFY_TARGET_MESSAGE)
+        val ring = loadPublicKeyRing(targetFingerprint) ?: throw CertificationService.CertifyError(CERTIFY_TARGET_MESSAGE)
+        val certifier = loadPublicKeyRing(certifierFingerprint) ?: throw CertificationService.CertifyError(CERTIFY_CERTIFIER_MESSAGE)
+        // The card's slot fingerprint is a label the card stores; each
+        // signature has to verify under the certifier's primary before it is kept.
+        if (!made.all { verifiesBy(it, certifier.publicKey, ring.publicKey) }) {
+            throw CertificationService.CertifyError(CERTIFY_CERTIFIER_MESSAGE)
+        }
+        keepCertifications(target, ring, certifier.publicKey, made, userIds, exportable)
+    }
+
+    private fun verifiesBy(
+        made: com.pgpony.android.crypto.CertificationService.Made,
+        signer: org.bouncycastle.openpgp.PGPPublicKey,
+        target: org.bouncycastle.openpgp.PGPPublicKey
+    ): Boolean = runCatching {
+        made.signature.init(org.bouncycastle.openpgp.operator.bc.BcPGPContentVerifierBuilderProvider(), signer)
+        made.signature.verifyCertification(made.userId, target)
+    }.getOrDefault(false)
+
+    /** An exportable certification goes into the certificate, a local one into its blob. */
+    private suspend fun keepCertifications(
+        target: PGPKeyEntity,
+        ring: PGPPublicKeyRing,
+        certifierPrimary: org.bouncycastle.openpgp.PGPPublicKey,
+        made: List<com.pgpony.android.crypto.CertificationService.Made>,
+        userIds: List<String>,
+        exportable: Boolean
+    ) {
+        val svc = com.pgpony.android.crypto.CertificationService
+        val targetFingerprint = target.fingerprint
         if (exportable) {
             val updated = svc.withSignatures(ring, made)
             store.storePublicKey(targetFingerprint, updated.encoded)
             dao.update(target.copy(armoredPublicKey = armoredAsStored(targetFingerprint, crypto.exportArmoredPublicKey(updated))))
         } else {
-            val mine = certifier.publicKey.fingerprint
+            val mine = certifierPrimary.fingerprint
             val kept = svc.decodeLocal(store.loadLocalCertifications(targetFingerprint)).filterNot { m ->
-                m.userId in userIds && issuedByKey(m.signature, mine, certifier.publicKey.keyID)
+                m.userId in userIds && issuedByKey(m.signature, mine, certifierPrimary.keyID)
             }
             store.storeLocalCertifications(targetFingerprint, svc.encodeLocal(kept + made))
         }
+    }
+
+    /**
+     * 4.7.0 RC4 (item 31): add a certification revocation [made] on the card
+     * (signed in the card operation) to [targetFingerprint]'s certificate.
+     */
+    suspend fun storeCardCertificationRevocation(
+        targetFingerprint: String,
+        certifierFingerprint: String,
+        made: com.pgpony.android.crypto.CertificationService.Made
+    ): Unit = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+        val svc = com.pgpony.android.crypto.CertificationService
+        val target = dao.getByFingerprint(targetFingerprint) ?: throw KeyRepoError.NotFound(targetFingerprint)
+        val ring = loadPublicKeyRing(targetFingerprint) ?: throw CertificationService.CertifyError(CERTIFY_TARGET_MESSAGE)
+        val certifier = loadPublicKeyRing(certifierFingerprint) ?: throw CertificationService.CertifyError(CERTIFY_CERTIFIER_MESSAGE)
+        if (!verifiesBy(made, certifier.publicKey, ring.publicKey)) throw CertificationService.CertifyError(CERTIFY_CERTIFIER_MESSAGE)
+        val updated = svc.withSignatures(ring, listOf(made))
+        store.storePublicKey(targetFingerprint, updated.encoded)
+        dao.update(target.copy(armoredPublicKey = armoredAsStored(targetFingerprint, crypto.exportArmoredPublicKey(updated))))
     }
 
     /**
@@ -1946,14 +2096,17 @@ class KeyRepository(
         localOnly: Boolean
     ): Unit = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
         val svc = com.pgpony.android.crypto.CertificationService
-        val certifier = loadSecretKeyRing(certifierFingerprint) ?: throw CertificationService.CertifyError(CERTIFY_CERTIFIER_MESSAGE)
         if (localOnly) {
+            // Removing a local one signs nothing, so a key on a card (no secret here) can do it too.
+            val certifierPublic = loadPublicKeyRing(certifierFingerprint)?.publicKey
+                ?: throw CertificationService.CertifyError(CERTIFY_CERTIFIER_MESSAGE)
             val kept = svc.decodeLocal(store.loadLocalCertifications(targetFingerprint)).filterNot { m ->
-                m.userId == userId && issuedByKey(m.signature, certifier.publicKey.fingerprint, certifier.publicKey.keyID)
+                m.userId == userId && issuedByKey(m.signature, certifierPublic.fingerprint, certifierPublic.keyID)
             }
             store.storeLocalCertifications(targetFingerprint, svc.encodeLocal(kept))
             return@withContext
         }
+        val certifier = loadSecretKeyRing(certifierFingerprint) ?: throw CertificationService.CertifyError(CERTIFY_CERTIFIER_MESSAGE)
         val target = dao.getByFingerprint(targetFingerprint) ?: throw KeyRepoError.NotFound(targetFingerprint)
         val ring = loadPublicKeyRing(targetFingerprint) ?: throw CertificationService.CertifyError(CERTIFY_TARGET_MESSAGE)
         val made = svc.revoke(certifier, passphrase, ring, userId)

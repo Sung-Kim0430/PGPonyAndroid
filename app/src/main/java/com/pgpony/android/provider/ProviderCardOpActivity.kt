@@ -9,6 +9,14 @@
 // the card present). The result lands in ProviderCardOpStore; the
 // client app retries its identical call and the service serves it.
 //
+// 4.7.0 (item 28, #36, #43): a key plugged in over USB works here too. The
+// dialog watches for a wired OpenPGP reader (UsbCardConnectionManager, the
+// main app's USB path), asks for USB permission from this activity, and offers
+// Use USB key once the PIN is in; whichever of the tap and the button comes
+// first runs the operation, and only one runs at a time. Before this only NFC
+// reader mode was enabled, so a key that works over USB inside PGPony was
+// never seen when a mail app asked for a card decrypt or sign.
+//
 // Launched only via the service's PendingIntent (NOT exported). PIN
 // behavior mirrors the in-app card screens: pre-filled from
 // CardPinCache when a cached PIN is held, remembered after a
@@ -34,6 +42,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -97,6 +106,14 @@ class ProviderCardOpActivity : ComponentActivity() {
 
     private var reader: OpenPgpCardReader? = null
     private var opKey: String = ""
+
+    // 4.7.0 (item 28): wired readers, and one operation at a time across NFC and USB.
+    private val usbTick = mutableStateOf(0)
+    private var usbCards: com.pgpony.android.usb.UsbCardConnectionManager? = null
+    private val inFlight = java.util.concurrent.atomic.AtomicBoolean(false)
+    @Volatile private var lastOpOverUsb = false
+    /** The refusal a second, overlapping operation gets; ignored by [onCardResult]. */
+    private val busyRefusal = OpenPgpCardException.Communication("A card operation is already running")
     private var apiData: Intent? = null
 
     // Mirrors of Compose state readable from the NFC binder thread.
@@ -159,9 +176,22 @@ class ProviderCardOpActivity : ComponentActivity() {
                 val pinState = androidx.compose.runtime.remember {
                     mutableStateOf(cachedPin)
                 }
+                // 4.7.0 (item 50, #59): the PIN field takes focus and the keyboard opens.
+                val pinFocus = rememberProviderAutoFocus()
                 val status by statusText
                 val error by errorText
                 val busy by working
+                // 4.7.0 (item 28): recomputed whenever a reader is plugged in,
+                // removed, or its permission answer arrives.
+                val tick by usbTick
+                val usbDevice = androidx.compose.runtime.remember(tick) { usbCards?.firstReader() }
+                val usbReady = usbDevice != null && usbCards?.hasPermission(usbDevice) == true
+                androidx.compose.runtime.LaunchedEffect(usbDevice) {
+                    val d = usbDevice
+                    if (d != null && usbCards?.hasPermission(d) == false) {
+                        usbCards?.requestPermission(d) { usbTick.value++ }
+                    }
+                }
 
                 AlertDialog(
                     onDismissRequest = { cancel() },
@@ -198,8 +228,19 @@ class ProviderCardOpActivity : ComponentActivity() {
                                     keyboardType = KeyboardType.Password
                                 ),
                                 label = { Text(stringResource(R.string.provider_cardop_pin_hint)) },
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier.fillMaxWidth().focusRequester(pinFocus)
                             )
+                            if (usbCards?.usbHostSupported == true) {
+                                Text(
+                                    stringResource(
+                                        if (usbDevice != null && !usbReady) R.string.card_scan_usb_permission
+                                        else R.string.provider_cardop_usb_hint
+                                    ),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(top = 8.dp)
+                                )
+                            }
                             if (busy) {
                                 CircularProgressIndicator(
                                     modifier = Modifier.padding(top = 12.dp)
@@ -223,7 +264,17 @@ class ProviderCardOpActivity : ComponentActivity() {
                             }
                         }
                     },
-                    confirmButton = {},
+                    confirmButton = {
+                        // 4.7.0 (item 28): only when a wired key is there and usable.
+                        if (usbReady) {
+                            TextButton(
+                                enabled = !busy && pinState.value.isNotEmpty(),
+                                onClick = { runOverUsb() }
+                            ) {
+                                Text(stringResource(R.string.provider_cardop_use_usb))
+                            }
+                        }
+                    },
                     dismissButton = {
                         TextButton(enabled = !busy, onClick = { cancel() }) {
                             Text(stringResource(R.string.common_button_cancel))
@@ -251,8 +302,17 @@ class ProviderCardOpActivity : ComponentActivity() {
                 statusText.value = getString(R.string.provider_cardop_done_remove_card)
             }
         )
+        val usb = com.pgpony.android.usb.UsbCardConnectionManager(this) { usbTick.value++ }
+        usbCards = usb
+        usb.register()
+        usbTick.value++
         if (!started) {
-            errorText.value = getString(R.string.provider_cardop_nfc_unavailable)
+            // 4.7.0 (item 28): without NFC a USB key is still a way in.
+            if (usb.usbHostSupported) {
+                statusText.value = getString(R.string.provider_cardop_waiting)
+            } else {
+                errorText.value = getString(R.string.provider_cardop_nfc_unavailable)
+            }
         } else {
             statusText.value = getString(R.string.provider_cardop_waiting)
         }
@@ -261,7 +321,37 @@ class ProviderCardOpActivity : ComponentActivity() {
     override fun onStop() {
         reader?.stop()
         reader = null
+        usbCards?.unregister()
+        usbCards = null
         super.onStop()
+    }
+
+    /**
+     * 4.7.0 (item 28): run the pending operation on the plugged-in key, the
+     * same [performOperation] a tap runs, on the USB runner's worker thread.
+     */
+    private fun runOverUsb() {
+        val usb = usbCards ?: return
+        val device = usb.firstReader()
+        val manager = getSystemService(android.content.Context.USB_SERVICE) as? android.hardware.usb.UsbManager
+        if (device == null || manager == null) {
+            errorText.value = getString(R.string.card_usb_no_reader)
+            return
+        }
+        if (!usb.hasPermission(device)) {
+            usb.requestPermission(device) { usbTick.value++ }
+            return
+        }
+        // Claimed here, on the main thread, so a second tap on the button (or
+        // a card tap) cannot queue another operation behind this one.
+        if (!inFlight.compareAndSet(false, true)) return
+        working.value = true
+        lastOpOverUsb = true
+        errorText.value = null
+        statusText.value = getString(R.string.card_usb_working)
+        com.pgpony.android.usb.UsbCardOperations.run(manager, device, { session -> performOperation(session, claimed = true) }) { result ->
+            onCardResult(result)
+        }
     }
 
     /**
@@ -273,11 +363,14 @@ class ProviderCardOpActivity : ComponentActivity() {
      * tolerant offline-primary loader, and guard against the WRONG
      * card being tapped before any PIN is spent.
      */
-    private fun performOperation(session: OpenPgpCardSession): ProviderCardOpStore.CompletedOp {
+    private fun performOperation(session: OpenPgpCardSession, claimed: Boolean = false): ProviderCardOpStore.CompletedOp {
         // P2c Fix3: an OutOfMemoryError (or any Throwable) from a huge
         // attachment must surface as a card error, not escape the
         // reader's Exception-only catch and leave the dialog stuck on
         // "Waiting for the card…".
+        // 4.7.0 (item 28): a tap while a USB operation runs (or the reverse)
+        // does not start a second one.
+        if (!claimed && !inFlight.compareAndSet(false, true)) throw busyRefusal
         return try {
             performOperationInner(session)
         } catch (e: OpenPgpCardException) {
@@ -450,7 +543,15 @@ class ProviderCardOpActivity : ComponentActivity() {
 
     /** Back on the main thread with the operation's outcome. */
     private fun onCardResult(result: Result<ProviderCardOpStore.CompletedOp>) {
+        // 4.7.0 (item 28): the refused overlap; the operation already running reports itself.
+        if (result.exceptionOrNull() === busyRefusal) {
+            if (!lastOpOverUsb) reader?.rearm()
+            return
+        }
         working.value = false
+        inFlight.set(false)
+        val overUsb = lastOpOverUsb
+        lastOpOverUsb = false
         result.fold(
             onSuccess = { completedOp ->
                 if (CardPinCache.isEnabled() && currentPin.isNotEmpty()) {
@@ -484,11 +585,14 @@ class ProviderCardOpActivity : ComponentActivity() {
                     is OpenPgpCardException.WrongPin -> {
                         CardPinCache.clear()
                         errorText.value = getString(
-                            R.string.provider_cardop_wrong_pin, e.triesRemaining
+                            if (overUsb) R.string.provider_cardop_wrong_pin_usb else R.string.provider_cardop_wrong_pin,
+                            e.triesRemaining
                         )
                     }
                     is OpenPgpCardException.TagLost ->
-                        errorText.value = getString(R.string.provider_cardop_tag_lost)
+                        errorText.value = getString(
+                            if (overUsb) R.string.provider_cardop_usb_lost else R.string.provider_cardop_tag_lost
+                        )
                     else ->
                         errorText.value = ErrorText.localize(this, e.message)
                             ?: getString(R.string.provider_cardop_generic_error)

@@ -62,6 +62,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Usb
 import androidx.compose.material.icons.filled.IosShare
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Password
@@ -145,12 +146,12 @@ fun KeyDetailScreen(
         val k = state.key ?: return@LaunchedEffect
         val prefs = context.getSharedPreferences("pgpony_prefs", android.content.Context.MODE_PRIVATE)
         val tips = com.pgpony.android.ui.components.TooltipState(prefs)
-        val tipKey = if (k.isKeyPair) "kd_avatar_keypair" else "kd_avatar_public"
+        val tipKey = if (k.isOwnKey) "kd_avatar_keypair" else "kd_avatar_public"
         if (tips.shouldShow(tipKey)) {
             tips.markShown(tipKey)
             snackbarHostState.showSnackbar(
                 context.getString(
-                    if (k.isKeyPair) R.string.kd_avatar_hint_decrypt else R.string.kd_avatar_hint_encrypt
+                    if (k.isOwnKey) R.string.kd_avatar_hint_decrypt else R.string.kd_avatar_hint_encrypt
                 )
             )
         }
@@ -314,6 +315,7 @@ fun KeyDetailScreen(
             // and confirms route through BiometricGate before the Intent.
             KeyDetailActionIds.EXPORT_PRIVATE_KEY -> viewModel.showExportPrivateConfirm()
             KeyDetailActionIds.CHANGE_PASSPHRASE -> viewModel.showChangePassphraseSheet()
+            KeyDetailActionIds.MOVE_TO_CARD -> viewModel.openMoveToCardSheet()
             // Fallback — non-routing IDs (shouldn't happen since the
             // action menu only emits known IDs, but kept for safety).
             // showComingSoon receives the raw ID rather than a localized
@@ -371,6 +373,14 @@ fun KeyDetailScreen(
                                         )
                                     },
                                     onClick = { menuOpen = false; dispatchAction(KeyDetailActionIds.EXPORT_PRIVATE_KEY) }
+                                )
+                            }
+                            // 4.7.0 RC4 (item 13, #71): gpg's keytocard.
+                            if (menuKey.isKeyPair && !menuKey.isV6Key && !menuKey.algorithm.isCompositeSign) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.move_to_card_menu)) },
+                                    leadingIcon = { Icon(Icons.Filled.Usb, null) },
+                                    onClick = { menuOpen = false; dispatchAction(KeyDetailActionIds.MOVE_TO_CARD) }
                                 )
                             }
                             // 4.7.0 (item 31, #79): certify someone else's key.
@@ -872,9 +882,64 @@ fun KeyDetailScreen(
         )
     }
 
+    // ── 4.7.0 RC4 (item 13, #71): Move to Security Key ──────────────────
+    val keyForMove = state.key
+    if (state.showMoveToCardSheet && keyForMove != null) {
+        MoveToCardSheet(
+            candidates = state.moveToCardCandidates,
+            secretCount = state.moveToCardSecretCount,
+            passphraseProtected = state.privateKeyIsProtected,
+            isProcessing = state.moveToCardInFlight,
+            errorMessage = state.moveToCardError,
+            onBackup = {
+                viewModel.dismissMoveToCardSheet()
+                dispatchAction(KeyDetailActionIds.EXPORT_PRIVATE_KEY)
+            },
+            onMove = { choices, passphrase, adminPin, userPin, removeFromPhone, replace ->
+                viewModel.prepareMoveToCard(choices, passphrase) { moves, certificate ->
+                    val admin = adminPin.toByteArray(Charsets.UTF_8)
+                    val user = userPin.toByteArray(Charsets.UTF_8)
+                    val started = activity?.startCardOperation({ session ->
+                        com.pgpony.android.crypto.card.KeyToCardService.transfer(session, admin, user, certificate, moves, replace)
+                    }) { result ->
+                        activity.stopCardScan()
+                        java.util.Arrays.fill(admin, 0)
+                        java.util.Arrays.fill(user, 0)
+                        viewModel.onMoveToCardResult(result, removeFromPhone)
+                    }
+                    if (started != true) {
+                        java.util.Arrays.fill(admin, 0)
+                        java.util.Arrays.fill(user, 0)
+                        viewModel.onMoveToCardNoLink()
+                    }
+                }
+            },
+            onDismiss = { viewModel.dismissMoveToCardSheet() }
+        )
+    }
+    state.moveToCardDone?.let { done ->
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissMoveToCardDone() },
+            title = { Text(stringResource(R.string.move_to_card_done_title)) },
+            text = {
+                Text(
+                    androidx.compose.ui.res.pluralStringResource(
+                        if (done.removedFromPhone) R.plurals.move_to_card_done_removed else R.plurals.move_to_card_done_kept,
+                        done.moved, done.moved
+                    )
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { viewModel.dismissMoveToCardDone() }) { Text(stringResource(R.string.common_button_ok)) }
+            }
+        )
+    }
+
     // ── 4.7.0 (item 31, #79): certify, done, and withdraw ───────────────
     val keyForCertify = state.key
     if (state.showCertifySheet && keyForCertify != null) {
+        val certifyPairFirst = stringResource(R.string.card_sign_pair_first)
+        val certifyNoLink = stringResource(R.string.card_scan_nfc_unavailable)
         CertifySheet(
             formattedFingerprint = keyForCertify.formattedFingerprint,
             userIds = state.userIds,
@@ -882,7 +947,38 @@ fun KeyDetailScreen(
             isProcessing = state.certifyInFlight,
             errorMessage = state.certifyError,
             onApply = { certifierFp, passphrase, uids, level, expirySeconds, exportable ->
-                viewModel.certify(certifierFp, passphrase, uids, level, expirySeconds, exportable)
+                val certifierEntity = state.certifierChoices.firstOrNull { it.fingerprint == certifierFp }
+                if (certifierEntity?.isCardBacked == true) {
+                    // 4.7.0 RC4 (item 31): sign on the card, NFC or USB; [passphrase] is the card PIN.
+                    val targetFp = keyForCertify.fingerprint
+                    val pin = (passphrase ?: "").toByteArray(Charsets.UTF_8)
+                    viewModel.onCardCertifyStarted()
+                    val started = activity?.startCardOperation({ session ->
+                        session.select()
+                        val ard = session.getApplicationRelatedData()
+                        val repo = PGPonyApp.instance.keyRepository
+                        val certifierRing = repo.loadPublicKeyRing(certifierFp)
+                            ?: throw OpenPgpCardException.Malformed(certifyPairFirst)
+                        val targetRing = repo.loadPublicKeyRing(targetFp)
+                            ?: throw OpenPgpCardException.Malformed(certifyPairFirst)
+                        com.pgpony.android.crypto.CertificationService.certifyOnCard(
+                            session, ard.sigFingerprint, pin, certifierRing, targetRing,
+                            uids, level, expirySeconds, exportable
+                        )
+                    }) { result ->
+                        activity.stopCardScan()
+                        java.util.Arrays.fill(pin, 0)
+                        result
+                            .onSuccess { made -> viewModel.onCardCertified(certifierFp, made, uids, exportable) }
+                            .onFailure { e -> viewModel.onCardCertifyFailure(e) }
+                    }
+                    if (started != true) {
+                        java.util.Arrays.fill(pin, 0)
+                        viewModel.onCardCertifyFailure(IllegalStateException(certifyNoLink))
+                    }
+                } else {
+                    viewModel.certify(certifierFp, passphrase, uids, level, expirySeconds, exportable)
+                }
             },
             onDismiss = { viewModel.dismissCertifySheet() }
         )
@@ -923,6 +1019,10 @@ fun KeyDetailScreen(
     state.certRevokeRequest?.let { row ->
         var certRevokePass by remember(row) { mutableStateOf("") }
         val local = !row.certification.exportable
+        // 4.7.0 RC4 (item 31): a certification made on a card is withdrawn on it.
+        val onCard = !local && row.issuer?.isCardBacked == true
+        val revokePairFirst = stringResource(R.string.card_sign_pair_first)
+        val revokeNoLink = stringResource(R.string.card_scan_nfc_unavailable)
         AlertDialog(
             onDismissRequest = { if (!state.certRevokeInFlight) viewModel.dismissRevokeCertification() },
             title = { Text(stringResource(R.string.key_detail_cert_revoke_title)) },
@@ -938,11 +1038,25 @@ fun KeyDetailScreen(
                         OutlinedTextField(
                             value = certRevokePass,
                             onValueChange = { certRevokePass = it },
-                            label = { Text(stringResource(R.string.key_detail_userid_action_passphrase_label)) },
+                            label = {
+                                Text(
+                                    stringResource(
+                                        if (onCard) R.string.provider_cardop_pin_hint
+                                        else R.string.key_detail_userid_action_passphrase_label
+                                    )
+                                )
+                            },
                             visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
                             singleLine = true,
                             enabled = !state.certRevokeInFlight
                         )
+                        if (onCard) {
+                            Text(
+                                stringResource(R.string.certify_card_hint),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                     state.certRevokeError?.let {
                         Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
@@ -951,8 +1065,39 @@ fun KeyDetailScreen(
             },
             confirmButton = {
                 TextButton(
-                    onClick = { viewModel.confirmRevokeCertification(certRevokePass.ifBlank { null }) },
-                    enabled = !state.certRevokeInFlight
+                    onClick = {
+                        val issuer = row.issuer
+                        val target = state.key
+                        if (onCard && issuer != null && target != null) {
+                            val pin = certRevokePass.toByteArray(Charsets.UTF_8)
+                            viewModel.onCardRevokeStarted()
+                            val started = activity?.startCardOperation({ session ->
+                                session.select()
+                                val ard = session.getApplicationRelatedData()
+                                val repo = PGPonyApp.instance.keyRepository
+                                val certifierRing = repo.loadPublicKeyRing(issuer.fingerprint)
+                                    ?: throw OpenPgpCardException.Malformed(revokePairFirst)
+                                val targetRing = repo.loadPublicKeyRing(target.fingerprint)
+                                    ?: throw OpenPgpCardException.Malformed(revokePairFirst)
+                                com.pgpony.android.crypto.CertificationService.revokeOnCard(
+                                    session, ard.sigFingerprint, pin, certifierRing, targetRing, row.certification.userId
+                                )
+                            }) { result ->
+                                activity.stopCardScan()
+                                java.util.Arrays.fill(pin, 0)
+                                result
+                                    .onSuccess { made -> viewModel.onCardRevoked(issuer.fingerprint, made) }
+                                    .onFailure { e -> viewModel.onCardRevokeFailure(e) }
+                            }
+                            if (started != true) {
+                                java.util.Arrays.fill(pin, 0)
+                                viewModel.onCardRevokeFailure(IllegalStateException(revokeNoLink))
+                            }
+                        } else {
+                            viewModel.confirmRevokeCertification(certRevokePass.ifBlank { null })
+                        }
+                    },
+                    enabled = !state.certRevokeInFlight && (!onCard || certRevokePass.isNotEmpty())
                 ) {
                     Text(stringResource(R.string.key_detail_userids_revoke), color = MaterialTheme.colorScheme.error)
                 }
@@ -1631,7 +1776,8 @@ private fun LoadedBody(
             KeyHeaderSection(
                 key = key,
                 onCopyEmail = onCopyEmail,
-                onAvatarClick = { if (key.isKeyPair) onDecryptWithKey(key.fingerprint) else onEncryptToKey(key.fingerprint) },
+                // 4.7.0 (item 34, #43): a key on a card decrypts too.
+                onAvatarClick = { if (key.isOwnKey) onDecryptWithKey(key.fingerprint) else onEncryptToKey(key.fingerprint) },
                 onEditLabel = {
                     onComingSoon(if (key.notes.isNullOrBlank()) KeyDetailActionIds.ADD_NOTES else KeyDetailActionIds.EDIT_NOTES)
                 }
@@ -1712,7 +1858,7 @@ private fun LoadedBody(
         // flow, public-only keys have no private material to sign
         // the binding with).
         val canAddSubkey = key.isKeyPair && !key.isCardBacked && state.primaryStub == null
-        if (state.subkeys.isNotEmpty() || canAddSubkey) {
+        if (state.subkeys.isNotEmpty() || canAddSubkey || key.primaryOnCard) {
             item {
                 SubkeysSection(
                     subkeys = state.subkeys,
@@ -1720,7 +1866,8 @@ private fun LoadedBody(
                     onAddSubkey = onAddSubkey,
                     canManageSubkeys = canAddSubkey,
                     onRevokeSubkey = onRevokeSubkey,
-                    onRemoveSubkey = if (hideDestructiveActions) null else onRemoveSubkey
+                    onRemoveSubkey = if (hideDestructiveActions) null else onRemoveSubkey,
+                    primaryOnCard = key.primaryOnCard
                 )
             }
         }
