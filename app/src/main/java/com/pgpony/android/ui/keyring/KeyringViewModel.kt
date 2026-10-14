@@ -50,7 +50,9 @@ enum class ImportMethod(val displayName: String) {
     QR_CODE("QR Code"),
     KEY_SERVER("Key Server"),
     /** 4.6.0 (item 2): fetch a public key from a link. */
-    URL("Link")
+    URL("Link"),
+    /** 4.7.0 (item 42, #81): fetch the OpenPGP keys of a GitHub user. */
+    GITHUB("GitHub")
 }
 
 /**
@@ -151,6 +153,11 @@ data class KeyringUiState(
     val importUrl: String = "",
     val isFetchingUrl: Boolean = false,
     val importSourceUrl: String? = null,
+    /** 4.7.0 (item 42, #81): the username typed on the GitHub tab and whether
+     *  its lookup is running. A found key shows its github.com link as the
+     *  preview's source (importSourceUrl). */
+    val importGitHubUser: String = "",
+    val isFetchingGitHub: Boolean = false,
     /** Populated by previewArmoredKey when the parse succeeds.
      *  Triggers the inline preview section + Import confirm button.
      *  Cleared by [clearImportPreview] when the user backs out or
@@ -738,6 +745,8 @@ class KeyringViewModel(private val repo: KeyRepository) : ViewModel() {
     //                  onScanned callback feeds previewArmoredKey
     //   • KEY_SERVER → searchKeyServerForImport queries WKD → Hagrid,
     //                  populates preview if a key is returned
+    //   • GITHUB     → fetchKeysFromGitHub reads github.com/<user>.gpg
+    //                  (4.7.0 item 42), populates preview with every key
 
     fun showImport() {
         _state.value = _state.value.copy(
@@ -750,6 +759,8 @@ class KeyringViewModel(private val repo: KeyRepository) : ViewModel() {
             importUrl = "",
             importSourceUrl = null,
             isFetchingUrl = false,
+            importGitHubUser = "",
+            isFetchingGitHub = false,
             importPreview = null,
             isSearchingKeyServer = false,
             isPreviewing = false,
@@ -819,6 +830,55 @@ class KeyringViewModel(private val repo: KeyRepository) : ViewModel() {
                 is com.pgpony.android.network.UrlKeyFetcher.Result.Failed ->
                     _state.value = _state.value.copy(errorMessage = app.getString(R.string.import_url_error_failed_format, ErrorText.localize(result.message) ?: result.message))
             }
+        }
+    }
+
+    fun updateImportGitHubUser(user: String) {
+        _state.value = _state.value.copy(importGitHubUser = user)
+    }
+
+    /**
+     * 4.7.0 (item 42, #81): fetch github.com/<user>.gpg through the
+     * proxy-aware client (GitHubKeyFetcher). Every key found goes to the
+     * preview card, which lists them all, and nothing is stored until the
+     * user confirms. Failures other than "no keys" and "no such user" use the
+     * key server search messages.
+     */
+    fun fetchKeysFromGitHub() {
+        val input = _state.value.importGitHubUser.trim()
+        if (input.isBlank() || _state.value.isFetchingGitHub) return
+        viewModelScope.launch {
+            _state.value = _state.value.copy(isFetchingGitHub = true, errorMessage = null, importPreview = null)
+            val app = PGPonyApp.instance
+            val result = com.pgpony.android.network.GitHubKeyFetcher.fetch(input)
+            _state.value = _state.value.copy(isFetchingGitHub = false)
+            val error: String? = when (result) {
+                is com.pgpony.android.network.GitHubKeyFetcher.Result.Keys -> {
+                    previewArmoredKey(result.armored, sourceUrl = result.url)
+                    null
+                }
+                is com.pgpony.android.network.GitHubKeyFetcher.Result.NoKeys ->
+                    app.getString(R.string.import_github_error_no_keys_format, result.username)
+                is com.pgpony.android.network.GitHubKeyFetcher.Result.NotFound ->
+                    app.getString(R.string.import_github_error_not_found_format, result.username)
+                is com.pgpony.android.network.GitHubKeyFetcher.Result.Unreadable ->
+                    app.getString(R.string.import_github_error_unreadable_format, result.username)
+                com.pgpony.android.network.GitHubKeyFetcher.Result.InvalidUsername ->
+                    app.getString(R.string.import_github_error_invalid)
+                com.pgpony.android.network.GitHubKeyFetcher.Result.Offline ->
+                    app.getString(
+                        R.string.keyring_error_search_failed_format,
+                        ErrorText.detail(com.pgpony.android.network.OfflineModeException().message) ?: ""
+                    )
+                is com.pgpony.android.network.GitHubKeyFetcher.Result.HttpError ->
+                    app.getString(
+                        R.string.keyring_error_search_failed_format,
+                        app.getString(R.string.import_url_error_http_format, result.status)
+                    )
+                is com.pgpony.android.network.GitHubKeyFetcher.Result.Failed ->
+                    app.getString(R.string.keyring_error_search_failed_format, ErrorText.detail(result.message) ?: "")
+            }
+            if (error != null) _state.value = _state.value.copy(errorMessage = error)
         }
     }
 

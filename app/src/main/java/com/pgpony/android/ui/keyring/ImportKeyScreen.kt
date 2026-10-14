@@ -134,6 +134,10 @@ fun ImportKeyScreen(state: KeyringUiState, viewModel: KeyringViewModel) {
                     if (!com.pgpony.android.network.OfflineMode.enabled) {
                         UrlSection(state, viewModel)
                     }
+                ImportMethod.GITHUB ->
+                    if (!com.pgpony.android.network.OfflineMode.enabled) {
+                        GitHubSection(state, viewModel)
+                    }
             }
 
             // ── Error banner ──────────────────────────────────────────
@@ -243,7 +247,9 @@ private fun ImportMethodPicker(
 ) {
     val methods = ImportMethod.entries.filterNot {
         // RC1 offline switch: no keyserver import method while offline.
-        (it == ImportMethod.KEY_SERVER || it == ImportMethod.URL) && com.pgpony.android.network.OfflineMode.enabled
+        // 4.7.0 (item 42): the GitHub lookup is a network method too.
+        (it == ImportMethod.KEY_SERVER || it == ImportMethod.URL || it == ImportMethod.GITHUB) &&
+            com.pgpony.android.network.OfflineMode.enabled
     }
     FlowRow(
         modifier = Modifier.fillMaxWidth(),
@@ -268,6 +274,7 @@ private fun ImportMethodPicker(
                             ImportMethod.QR_CODE -> stringResource(R.string.import_method_qr_code)
                             ImportMethod.KEY_SERVER -> stringResource(R.string.import_method_key_server)
                             ImportMethod.URL -> stringResource(R.string.import_method_url)
+                            ImportMethod.GITHUB -> stringResource(R.string.import_method_github)
                         },
                         maxLines = 1
                     )
@@ -283,6 +290,7 @@ private fun iconForMethod(method: ImportMethod) = when (method) {
     ImportMethod.QR_CODE    -> Icons.Filled.QrCodeScanner
     ImportMethod.KEY_SERVER -> Icons.Filled.Public
     ImportMethod.URL        -> Icons.Filled.Link
+    ImportMethod.GITHUB     -> Icons.Filled.Code
 }
 
 // ── Per-method sections ────────────────────────────────────────────────
@@ -583,6 +591,51 @@ private fun UrlSection(state: KeyringUiState, viewModel: KeyringViewModel) {
         }
         Text(
             stringResource(R.string.import_url_help),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+/**
+ * 4.7.0 (item 42, #81): fetch the OpenPGP keys a GitHub user added to their
+ * account, then check them below. Same layout as the Link tab.
+ */
+@Composable
+private fun GitHubSection(state: KeyringUiState, viewModel: KeyringViewModel) {
+    val keyboard = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        OutlinedTextField(
+            value = state.importGitHubUser,
+            onValueChange = { viewModel.updateImportGitHubUser(it) },
+            label = { Text(stringResource(R.string.import_github_label)) },
+            placeholder = { Text(stringResource(R.string.import_github_placeholder)) },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                keyboardType = androidx.compose.ui.text.input.KeyboardType.Uri
+            ),
+            leadingIcon = { Icon(Icons.Filled.Person, null, modifier = Modifier.size(18.dp)) },
+            trailingIcon = {
+                if (state.isFetchingGitHub) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp).padding(end = 4.dp),
+                        strokeWidth = 2.dp
+                    )
+                }
+            }
+        )
+        Button(
+            onClick = { keyboard?.hide(); viewModel.fetchKeysFromGitHub() },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !state.isFetchingGitHub && !state.isPreviewing && state.importGitHubUser.isNotBlank()
+        ) {
+            Icon(Icons.Filled.Download, null, modifier = Modifier.size(18.dp))
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(stringResource(R.string.import_github_fetch_button))
+        }
+        Text(
+            stringResource(R.string.import_github_help),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

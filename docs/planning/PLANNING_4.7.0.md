@@ -1113,6 +1113,20 @@ is used and the send succeeds; cancel leaves the draft.
 
 ## 42. Look up a GitHub user's OpenPGP keys (#81)
 
+**Status:** RC3. A GitHub chip (Code icon) joins the Import method picker after Link, hidden while offline
+like Server and Link. It takes a username, "@name" or a pasted github.com profile or .gpg link, checks it
+(1 to 39 letters, digits or single hyphens, no hyphen at either end) and fetches https://github.com/<user>.gpg on
+the shared HttpClientFactory client, so offline mode, Tor and a custom proxy apply with the key server timeouts.
+The body is capped at 2 MB. network/GitHubKeyFetcher.kt classifies the answer: key blocks are validated by
+KeyResponse into one public key block and go to the normal preview, which lists every key (4.6.0 item 17.9),
+with the .gpg link as the source; GitHub's no-keys answer (an armored block holding only a "Note:" header) and a
+plain note both say the user has no OpenPGP keys on GitHub; 404 says there is no such user; other failures use
+the key server search messages. KeyringViewModel.fetchKeysFromGitHub, ImportKeyScreen GitHubSection. Tests:
+GitHubKeyFetcherTest (normalization, validation, the link, one and two keys, no keys, 404, other statuses, HTML
+and private key answers, offline and invalid input refused before any request). Classification was also run
+against GitHub's real answers for a user with keys, one without, and an unknown name. No network security
+config change was needed (only the first-party onion is listed there). New strings are English only for now. On device (Oct 13): green.
+
 Priority: low-medium (feature). Origin: #81 (Oct 13): when a commit is signed by someone whose key you don't
 have, fetch that GitHub user's keys and import them.
 

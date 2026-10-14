@@ -2902,4 +2902,14 @@
     <string name="provider_review_no_keys">No keys in PGPony to choose from. Import the recipient\'s public key in PGPony first.</string>
     <string name="provider_review_confirm">Encrypt to selected</string>
     <string name="err_provider_review_key_unusable">A key chosen for this message cannot be used: %1$s. Send the message again and choose the recipients in PGPony.</string>
+    <!-- 4.7.0 (item 42): look up a GitHub user's OpenPGP keys on the Import screen. -->
+    <string name="import_method_github">GitHub</string>
+    <string name="import_github_label">GitHub user</string>
+    <string name="import_github_placeholder">username</string>
+    <string name="import_github_fetch_button">Fetch keys</string>
+    <string name="import_github_help">PGPony fetches the OpenPGP keys this user added to their GitHub account (github.com/username.gpg) through your proxy setting. Nothing is added until you check each fingerprint and tap Import.</string>
+    <string name="import_github_error_invalid">That is not a GitHub username. A username has 1 to 39 letters, digits or single hyphens, and does not start or end with a hyphen.</string>
+    <string name="import_github_error_no_keys_format">%1$s has no OpenPGP keys on GitHub.</string>
+    <string name="import_github_error_not_found_format">There is no GitHub user named %1$s.</string>
+    <string name="import_github_error_unreadable_format">GitHub answered for %1$s, but with no public key PGPony can read.</string>
 </resources>
