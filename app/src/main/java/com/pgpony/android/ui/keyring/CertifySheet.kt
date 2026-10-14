@@ -19,6 +19,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import com.pgpony.android.R
 import com.pgpony.android.crypto.CertificationService
@@ -68,21 +69,18 @@ fun CertifySheet(
     val canApply = !isProcessing && certifier != null && picked.isNotEmpty() && compared &&
         (!onCard || passphrase.isNotEmpty())
 
-    // Same as MoveToCardSheet: no swipe to dismiss while filling in the form.
     ModalBottomSheet(
         onDismissRequest = { if (!isProcessing) onDismiss() },
-        sheetState = sheetState,
-        sheetGesturesEnabled = false,
-        dragHandle = null
+        sheetState = sheetState
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .nestedScroll(rememberSheetFormScrollGuard())
                 .verticalScroll(rememberScrollState())
                 .imePadding()
                 .navigationBarsPadding()
                 .padding(horizontal = 24.dp)
-                .padding(top = 24.dp)
                 .padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {

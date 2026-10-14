@@ -21,6 +21,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import com.pgpony.android.R
 import com.pgpony.android.crypto.card.CardSlot
@@ -36,6 +41,21 @@ internal fun defaultMoveChoice(candidates: List<MoveToCardCandidate>, slot: Card
     return candidates.filter { it.fits(slot) }
         .sortedWith(compareBy<MoveToCardCandidate>({ it.isPrimary }, { -it.createdAt }))
         .firstOrNull()
+}
+
+/**
+ * 4.7.0 RC4: a sheet holding a passphrase or PINs should not close because a
+ * scroll of its form ran past the top. The form's scroll hands its leftover to
+ * the sheet, which drags it down and dismisses it; this takes the leftover
+ * first, so only the drag handle, Cancel, Back or a tap outside close it.
+ * Put it before verticalScroll in the modifier chain.
+ */
+@Composable
+internal fun rememberSheetFormScrollGuard(): NestedScrollConnection = remember {
+    object : NestedScrollConnection {
+        override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset = available
+        override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity = available
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -81,22 +101,15 @@ fun MoveToCardSheet(
     val canMove = !isProcessing && picked.isNotEmpty() && distinct && haveBackup &&
         adminPin.isNotEmpty() && userPin.isNotEmpty() && (!passphraseProtected || passphrase.isNotEmpty())
 
-    // A long form holding a passphrase and two PINs: no swipe to dismiss (it
-    // fired while scrolling). Cancel, Back or a tap outside still close it.
-    ModalBottomSheet(
-        onDismissRequest = { if (!isProcessing) onDismiss() },
-        sheetState = sheetState,
-        sheetGesturesEnabled = false,
-        dragHandle = null
-    ) {
+    ModalBottomSheet(onDismissRequest = { if (!isProcessing) onDismiss() }, sheetState = sheetState) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .nestedScroll(rememberSheetFormScrollGuard())
                 .verticalScroll(rememberScrollState())
                 .imePadding()
                 .navigationBarsPadding()
                 .padding(horizontal = 24.dp)
-                .padding(top = 24.dp)
                 .padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
