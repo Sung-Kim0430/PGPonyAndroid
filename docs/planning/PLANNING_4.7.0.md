@@ -1304,6 +1304,77 @@ Castle, since gpg will not make one now): before, the subkey is left out; after 
 signs, and its new binding verifies in gpg and Sequoia. Same for a user ID self-certification. A public-only import
 of the same key gets no offer.
 
+## 52. Publishing refuses a key whose first User ID is revoked
+
+**Status:** Next RC, code in, not yet on device. New UserIdService.shownUserId: the live User ID whose newest
+self-certification carries the primary flag (the newest such one when several do), else the first live User
+ID, else the first. Import takes it for the key's shown identity (PGPCryptoService, the four import paths)
+instead of the first User ID in ring order. KeyRepository.reconcileShownUserId corrects a key imported before
+when Key Details opens (like reconcilePrimaryExpiry), and persistUserIdChange moves the shown identity off a
+User ID that was just revoked. Key Details' PRIMARY badge uses the same pick, so another flagged User ID keeps
+Make primary. publishPayload no longer refuses when the one flagged User ID differs only from a shown one that
+is revoked or gone (the Exchange upload passes the list's cached identity). No new strings. Tests:
+ShownUserIdTest (revoked first User ID, no flag, a revoked flagged one, two flagged, a single one), run on the
+JVM against Bouncy Castle 1.85.
+
+Priority: medium-high (bug, blocks publishing). Origin: a tester by email (Oct 15): a key imported with a
+revoked first User ID and the primary flag on another one listed the revoked name, and Publish refused with
+the repair hint ("tap Make primary on the one you want"), which cannot be followed because Make primary is
+hidden on the User ID that is already primary. Workaround on 4.6.4 and RC4: Make primary on another live
+User ID, then on the wanted one again.
+
+## 53. Changing the primary key's expiry brought expired subkeys back (#86)
+
+**Status:** Next RC, code in, not yet on device. KeyExpirationService edits now have a Target: Primary (each
+live User ID's self-certification; a revoked User ID is skipped, so its revocation stands) with an opt-in
+"Also set it on subkeys that are still valid" (only subkeys bound, not revoked and not expired now, the v4
+ML-KEM bindings included), or Subkey (that subkey's binding alone, with a new back-signature for a signing
+subkey). Before, every subkey got the primary's date, expired ones included. Key Details: the subkey menu has
+Edit expiration on software key pairs (a signing subkey only when its secret is on the phone); the entity's
+expiry changes only with the primary. Self-signatures now carry every hashed subpacket of the old one forward
+(the old copy kept a short list, which dropped the SEIPDv2 feature, AEAD and key server preferences from User
+IDs and everything but key flags from subkey bindings). selfCertFor no longer picks a User ID revocation as
+the certification to replace. 5 new strings (in English; locales in the RC5 translation pass), and the sheet
+subtitle reworded. Tests: KeyExpirationTargetTest (primary leaves bindings byte for byte, current-subkeys
+skips an expired subkey and re-signs the signing one with a back-signature that verifies, subkey target
+touches nothing else, features and preferences kept, revoked User ID stays revoked), run on the JVM against
+Bouncy Castle 1.85; KeyExpirationEditTest now asks for current subkeys.
+
+Left out: per-subkey expiry on keys whose subkeys are listed from the certificate (composite ML-KEM), and on
+card-backed keys. A confirm step before the change (asked on #86): the edit now only touches what the sheet
+names, and it asks for the passphrase unless it is cached.
+
+Priority: high (bug, changes a published key). Origin: #86 (Oct 15): Never to Never on the primary revived
+the tester's expired subkeys; they removed the key before publishing. Also asked: expiry per subkey.
+
+## 54. A security key scanned before its public key is imported never pairs (#71)
+
+**Status:** Next RC, code in, not yet on device. A card scanned with no matching key makes a placeholder row
+keyed by the Signature slot's fingerprint. Importing the public key afterwards paired onto it only when that
+was the primary's fingerprint; with a subkey in the Signature slot (Move to security key's default when the
+primary only certifies) the import made a separate public key row, and the placeholder stayed unusable
+(signing and decrypting need the certificate). Import now pairs onto a placeholder whose slots hold any key
+of the imported certificate (KeyRepository.cardPlaceholderFor) and gives the row the real primary
+fingerprint. A scan that links a card to a key now deletes that card's leftover placeholders. Key Details on
+a placeholder says what is missing (CardNeedsPublicKeyBanner: the card holds the private keys, not the User
+IDs and signatures; import the public key and it pairs). 2 new strings (English; locales in the RC5 pass).
+
+Priority: high (bug, hardware keys). Origin: #71 (Oct 15, YubiKey 5C NFC): after a move, the key removed and
+the card scanned showed On card but could not sign or decrypt; a key generated in PGPony, moved, removed and
+scanned back did the same.
+
+## 55. Move only some keys to a security key and remove those from the phone (#71)
+
+**Status:** Planned, needs design first. Remove from this phone is offered only when every key with a secret
+moves (RC4 review). gpg's usual layout is the primary kept (sec) and the subkeys on the card (ssb>), and a
+key with a certify-only primary and three subkeys cannot move whole into three slots. Making the partial
+case work means routing per subkey everywhere a software key pair is used: signing (item 39 and 46 picks)
+and decrypting go to the card for a subkey with a divert-to-card stub and to the phone otherwise; expiry,
+certify, Add Subkey and User ID edits keep using the primary on the phone; Key Details shows each subkey's
+place (item 40's secret locations already do). Also the import of such a key from gpg.
+
+Priority: medium-high (feature gap). Origin: #71 (Oct 15).
+
 RC3 translation pass (Oct 13): every string missing from a locale went into all 10 (about 125 each; Korean 322,
 including 184 strings and 10 plurals that had fallen behind since 4.6.3, still no err_ strings), and strings that
 were English copies (key_count_summary, clipboard_will_clear_in and a few per locale) were translated. One

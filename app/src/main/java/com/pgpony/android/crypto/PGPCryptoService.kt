@@ -792,7 +792,7 @@ class PGPCryptoService private constructor() {
             KeyPolicy.requireAcceptableProtection(secretRing)
             val masterKey = secretRing.publicKey
             val fingerprint = fingerprintHex(masterKey)
-            val userID = masterKey.userIDs.asSequence().firstOrNull() ?: "Unknown"
+            val userID = UserIdService.shared.shownUserId(masterKey) ?: "Unknown" // 4.7.0 (item 52)
             val publicRing = PGPPublicKeyRing(
                 secretRing.publicKeys.asSequence().map { it }.toList()
             )
@@ -842,7 +842,7 @@ class PGPCryptoService private constructor() {
             )
             val masterKey = publicRing.publicKey
             val fingerprint = fingerprintHex(masterKey)
-            val userID = masterKey.userIDs.asSequence().firstOrNull() ?: "Unknown"
+            val userID = UserIdService.shared.shownUserId(masterKey) ?: "Unknown" // 4.7.0 (item 52)
             val algorithm = detectAlgorithm(masterKey, publicRing)
 
             return ImportResult(
@@ -881,7 +881,7 @@ class PGPCryptoService private constructor() {
             )
             return ImportResult(
                 fingerprint = fingerprintHex(masterKey),
-                userID = masterKey.userIDs.asSequence().firstOrNull() ?: "Unknown",
+                userID = UserIdService.shared.shownUserId(masterKey) ?: "Unknown", // 4.7.0 (item 52)
                 algorithm = detectAlgorithm(masterKey, publicRing),
                 hasPrivateKey = true,
                 creationDate = masterKey.creationTime,
@@ -899,7 +899,7 @@ class PGPCryptoService private constructor() {
             val masterKey = publicRing.publicKey
             return ImportResult(
                 fingerprint = fingerprintHex(masterKey),
-                userID = masterKey.userIDs.asSequence().firstOrNull() ?: "Unknown",
+                userID = UserIdService.shared.shownUserId(masterKey) ?: "Unknown", // 4.7.0 (item 52)
                 algorithm = detectAlgorithm(masterKey, publicRing),
                 hasPrivateKey = false,
                 creationDate = masterKey.creationTime,

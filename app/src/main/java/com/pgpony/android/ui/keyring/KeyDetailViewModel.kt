@@ -124,7 +124,10 @@ data class SubkeyDisplayInfo(
      *  key, which shows only why a subkey is not usable. */
     val secretLocation: com.pgpony.android.crypto.SubkeyAdmission.SecretLocation? = null,
     /** 4.7.0 (item 40, #82): why this subkey is not usable now; null when it is. */
-    val issue: com.pgpony.android.crypto.SubkeyAdmission.Issue? = null
+    val issue: com.pgpony.android.crypto.SubkeyAdmission.Issue? = null,
+    /** 4.7.0 (item 53, #86): its binding is one KeyExpirationService can
+     *  re-sign (a Bouncy Castle subkey; not the hand-built ML-KEM ones). */
+    val expiryEditable: Boolean = false
 )
 
 /**
@@ -237,6 +240,9 @@ data class KeyDetailUiState(
     val comingSoonLabel: String? = null,
     // HW Phase 3 / expiration editing — drives EditExpirationSheet.
     val showExpirySheet: Boolean = false,
+    /** 4.7.0 (item 53, #86): the subkey whose expiry the sheet edits; null
+     *  for the primary key. */
+    val expirySubkey: SubkeyDisplayInfo? = null,
     val expiryInFlight: Boolean = false,
     val expiryError: String? = null,
     // RC3 §17.2 H — add subkey, drives AddSubkeySheet.
@@ -457,7 +463,9 @@ class KeyDetailViewModel(
             _state.value = _state.value.copy(isLoading = true, errorMessage = null)
             // item 24 (#55, lukascomer): reconcile the primary expiry live
             // from the ring so a stale stored "Never" self-corrects on open.
-            val loaded = repo.getByFingerprint(fingerprint)?.let { repo.reconcilePrimaryExpiry(it) }
+            val loaded = repo.getByFingerprint(fingerprint)
+                ?.let { repo.reconcilePrimaryExpiry(it) }
+                ?.let { repo.reconcileShownUserId(it) } // 4.7.0 (item 52)
             _state.value = _state.value.copy(
                 key = loaded,
                 isLoading = false,
@@ -1093,7 +1101,10 @@ class KeyDetailViewModel(
         // entity's cached userID column, which could disagree with the
         // real primary flag (e.g. right after an import, or once
         // workstream I's add/promote/revoke actions start mutating it).
-        val primaryUid = primaryPub?.let { UserIdService.shared.currentPrimaryUserId(it) }
+        // 4.7.0 (item 52): the same pick as the shown identity (newest primary
+        // flag among live User IDs), so the PRIMARY badge and the publish
+        // check agree and any other flagged User ID keeps Make primary.
+        val primaryUid = primaryPub?.let { UserIdService.shared.shownUserId(it) }
         val primaryIndex = fromRing.indexOfFirst { it.raw == primaryUid }
             .let { if (it >= 0) it else 0 }
         return fromRing.mapIndexed { index, uid ->
@@ -1211,7 +1222,8 @@ class KeyDetailViewModel(
                     createdAt = pubKey.creationTime.time,
                     expiresAt = expiresAtMs,
                     isRevoked = pubKey.hasRevocation(),
-                    isCardBacked = entity.isCardBacked
+                    isCardBacked = entity.isCardBacked,
+                    expiryEditable = true
                 )
             } catch (e: Exception) {
                 null
@@ -1492,29 +1504,44 @@ PGPonyApp.instance.getString(R.string.kd_vm_upload_verify_skipped)
     // ── Expiration editing ──────────────────────────────────────────────
 
     fun showExpirySheet() {
-        _state.value = _state.value.copy(showExpirySheet = true, expiryError = null)
+        _state.value = _state.value.copy(showExpirySheet = true, expirySubkey = null, expiryError = null)
+    }
+
+    /** 4.7.0 (item 53, #86): change one subkey's expiry. */
+    fun showSubkeyExpirySheet(sub: SubkeyDisplayInfo) {
+        _state.value = _state.value.copy(showExpirySheet = true, expirySubkey = sub, expiryError = null)
     }
 
     fun dismissExpirySheet() {
         if (_state.value.expiryInFlight) return
-        _state.value = _state.value.copy(showExpirySheet = false, expiryError = null)
+        _state.value = _state.value.copy(showExpirySheet = false, expirySubkey = null, expiryError = null)
     }
+
+    /** What the open sheet changes: the chosen subkey, or the primary (and,
+     *  when asked, the subkeys valid now). */
+    fun expiryTarget(alsoCurrentSubkeys: Boolean): KeyExpirationService.Target =
+        _state.value.expirySubkey?.let { sub ->
+            KeyExpirationService.Target.Subkey(java.lang.Long.parseUnsignedLong(sub.fingerprint.takeLast(16), 16))
+        } ?: KeyExpirationService.Target.Primary(alsoCurrentSubkeys)
 
     /**
      * Software key pair: re-sign with the new expiry and persist. Mirrors
      * applyRevocation's error handling. [expiresAtEpochSeconds] null = never.
      */
-    fun applyExpirationSoftware(expiresAtEpochSeconds: Long?, passphrase: String?) {
+    fun applyExpirationSoftware(expiresAtEpochSeconds: Long?, passphrase: String?, alsoCurrentSubkeys: Boolean = false) {
         val key = _state.value.key ?: return
+        val target = expiryTarget(alsoCurrentSubkeys)
         _state.value = _state.value.copy(expiryInFlight = true, expiryError = null)
         viewModelScope.launch {
             try {
-                repo.setKeyExpirationSoftware(key.fingerprint, expiresAtEpochSeconds, passphrase)
+                repo.setKeyExpirationSoftware(key.fingerprint, expiresAtEpochSeconds, passphrase, target)
                 val reloaded = repo.getByFingerprint(key.fingerprint)
                 _state.value = _state.value.copy(
                     key = reloaded ?: key,
+                    subkeys = reloaded?.let { deriveSubkeys(it) } ?: _state.value.subkeys,
                     expiryInFlight = false,
-                    showExpirySheet = false
+                    showExpirySheet = false,
+                    expirySubkey = null
                 )
                 refreshSigningSubkeys() // 4.7.0 (item 46): expiry decides which keys may sign
             } catch (e: KeyExpirationService.ExpirationError.PassphraseRequired) {
@@ -1554,17 +1581,20 @@ PGPonyApp.instance.getString(R.string.kd_vm_upload_verify_skipped)
     /** Persist the card-updated public ring and refresh. */
     fun persistCardExpiry(
         updatedPublicRing: org.bouncycastle.openpgp.PGPPublicKeyRing,
-        expiresAtEpochSeconds: Long?
+        expiresAtEpochSeconds: Long?,
+        target: KeyExpirationService.Target = KeyExpirationService.Target.Primary()
     ) {
         val key = _state.value.key ?: return
         viewModelScope.launch {
             try {
-                repo.persistCardExpiration(key.fingerprint, updatedPublicRing, expiresAtEpochSeconds)
+                repo.persistCardExpiration(key.fingerprint, updatedPublicRing, expiresAtEpochSeconds, target)
                 val reloaded = repo.getByFingerprint(key.fingerprint)
                 _state.value = _state.value.copy(
                     key = reloaded ?: key,
+                    subkeys = reloaded?.let { deriveSubkeys(it) } ?: _state.value.subkeys,
                     expiryInFlight = false,
-                    showExpirySheet = false
+                    showExpirySheet = false,
+                    expirySubkey = null
                 )
                 refreshSigningSubkeys() // 4.7.0 (item 46): expiry decides which keys may sign
             } catch (e: Exception) {

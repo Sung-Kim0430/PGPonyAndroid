@@ -1821,7 +1821,7 @@
     <!-- Key expiration editing -->
     <string name="key_detail_expiry_edit">Edit expiration</string>
     <string name="key_detail_expiry_sheet_title">Edit expiration</string>
-    <string name="key_detail_expiry_sheet_subtitle">Set a new expiration for %1$s. This re-signs the key and its subkeys; the fingerprint stays the same.</string>
+    <string name="key_detail_expiry_sheet_subtitle">Set a new expiration for %1$s. This re-signs the primary key. Subkeys keep their own dates, and the fingerprint stays the same.</string>
     <string name="key_detail_expiry_custom">Custom date</string>
     <string name="key_detail_expiry_pick_date">Pick a date</string>
     <string name="key_detail_expiry_passphrase_label">Key passphrase (if set)</string>
@@ -3056,4 +3056,13 @@
     <string name="err_card_expiry_primary_missing">The primary key is not in this security key\'s signature slot, so the expiry cannot be changed with it</string>
     <string name="err_move_to_card_unsupported">This security key cannot hold one of the chosen keys. Choose another key or slot.</string>
     <string name="err_move_to_card_check_failed">The security key did not pass the check after the keys were written, so nothing on this phone was changed. Do not rely on the keys on the security key.</string>
+    <!-- 4.7.0 RC5: expiry per key (item 53, #86) -->
+    <string name="key_detail_expiry_sheet_title_subkey">Edit subkey expiration</string>
+    <string name="key_detail_expiry_sheet_subtitle_subkey">Set a new expiration for subkey %1$s. The primary key and the other subkeys keep their dates.</string>
+    <string name="key_detail_expiry_also_subkeys">Also set it on subkeys that are still valid</string>
+    <string name="key_detail_expiry_also_subkeys_hint">Expired and revoked subkeys keep their dates.</string>
+    <string name="key_detail_subkey_change_expiry">Edit expiration…</string>
+    <!-- 4.7.0 RC5: a scanned security key without its public key (item 54, #71) -->
+    <string name="key_detail_card_no_cert_title">Public key needed</string>
+    <string name="key_detail_card_no_cert_body">This security key holds the private keys, but not the rest of the key: its User IDs and signatures. Import the matching public key (an export, a backup or a key server copy) and PGPony pairs it with this security key, so you can sign and decrypt with it.</string>
 </resources>

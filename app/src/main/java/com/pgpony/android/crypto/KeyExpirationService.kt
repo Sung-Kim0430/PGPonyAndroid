@@ -24,6 +24,11 @@
 //   • Existing capability subpackets (key flags, preferred algorithms,
 //     features, primary-UID) are copied forward so renewing doesn't strip
 //     capabilities; only the expiry subpacket is overridden.
+//   • 4.7.0 (item 53, #86): an edit has a [Target]. The primary's expiry
+//     re-signs only its live User IDs (a revoked one keeps its revocation),
+//     and touches subkeys only when asked, and then only the ones valid now.
+//     A subkey's expiry re-signs that subkey's binding alone. Before, every
+//     subkey got the primary's date, which brought expired subkeys back.
 //   • Sign-capable SUBKEYS (v6 keys have one): the software path rebuilds
 //     their binding with the required embedded primary-key back-signature
 //     (0x19) made BY the subkey, so the new expiry lands on the signing subkey
@@ -35,7 +40,7 @@ package com.pgpony.android.crypto
 import com.pgpony.android.crypto.card.CardPGPContentSignerBuilder
 import com.pgpony.android.crypto.card.OpenPgpCardSession
 import org.bouncycastle.bcpg.HashAlgorithmTags
-import org.bouncycastle.bcpg.sig.Features
+import org.bouncycastle.bcpg.SignatureSubpacketTags
 import org.bouncycastle.openpgp.PGPException
 import org.bouncycastle.openpgp.PGPKeyFlags
 import org.bouncycastle.openpgp.PGPPrivateKey
@@ -61,6 +66,21 @@ class KeyExpirationService private constructor() {
         class Failed(reason: String) : ExpirationError(reason)
     }
 
+    /** 4.7.0 (item 53, #86): what an expiration edit changes. */
+    sealed class Target {
+        /** The primary key: every live User ID's self-certification. With
+         *  [currentSubkeys], also the binding of each subkey that is valid
+         *  now (bound, not revoked, not expired); never the others. */
+        data class Primary(val currentSubkeys: Boolean = false) : Target()
+        /** One subkey's binding, and nothing else. */
+        data class Subkey(val keyId: Long) : Target()
+    }
+
+    /** A signing subkey's binding needs a back-signature made by the subkey,
+     *  which the card path cannot make. */
+    val CARD_SIGNING_SUBKEY_MESSAGE = "A signing subkey's expiry cannot be changed with the security key"
+    val SUBKEY_NOT_FOUND_MESSAGE = "That subkey is not on this key"
+
     /** Result of an expiration edit. secretRing is null for card-backed keys. */
     data class UpdatedRings(
         val publicRing: PGPPublicKeyRing,
@@ -77,7 +97,8 @@ class KeyExpirationService private constructor() {
         secretRing: PGPSecretKeyRing,
         publicRing: PGPPublicKeyRing,
         expiresAtEpochSeconds: Long?,
-        passphrase: String?
+        passphrase: String?,
+        target: Target = Target.Primary()
     ): UpdatedRings {
         val primarySecret = secretRing.secretKey
         val privateKey = extractPrivate(primarySecret, passphrase)
@@ -86,7 +107,7 @@ class KeyExpirationService private constructor() {
             HashAlgorithmTags.SHA256
         )
         val newPublic = try {
-            rebuildExpiration(publicRing, expiresAtEpochSeconds, secretRing, passphrase) { type ->
+            rebuildExpiration(publicRing, expiresAtEpochSeconds, secretRing, passphrase, target) { type ->
                 PGPSignatureGenerator(signerBuilder, primarySecret.publicKey).apply { init(type, privateKey) }
             }
         } catch (e: ExpirationError) {
@@ -110,7 +131,8 @@ class KeyExpirationService private constructor() {
         session: OpenPgpCardSession,
         publicRing: PGPPublicKeyRing,
         expiresAtEpochSeconds: Long?,
-        pin: ByteArray
+        pin: ByteArray,
+        target: Target = Target.Primary()
     ): UpdatedRings {
         val primaryPublic = publicRing.publicKey
         // 4.7.0 RC4 (item 13 review): every signature here is the primary's,
@@ -123,7 +145,7 @@ class KeyExpirationService private constructor() {
             throw com.pgpony.android.crypto.card.OpenPgpCardException.Malformed(CARD_PRIMARY_MISSING_MESSAGE)
         }
         val newPublic = try {
-            rebuildExpiration(publicRing, expiresAtEpochSeconds, null, null) { type ->
+            rebuildExpiration(publicRing, expiresAtEpochSeconds, null, null, target) { type ->
                 PGPSignatureGenerator(CardPGPContentSignerBuilder(session, pin, primaryPublic), primaryPublic).apply {
                     init(type, PGPPrivateKey(primaryPublic.keyID, primaryPublic.publicKeyPacket, null))
                 }
@@ -145,15 +167,18 @@ class KeyExpirationService private constructor() {
         expiresAtEpochSeconds: Long?,
         secretRing: PGPSecretKeyRing?,
         passphrase: String?,
+        target: Target,
         makeGenerator: (Int) -> PGPSignatureGenerator
     ): PGPPublicKeyRing {
         var primary = publicRing.publicKey
-        val primaryExpiry = relativeExpirySeconds(expiresAtEpochSeconds, primary)
 
-        // 1. Rebuild every user-ID self-certification on the primary.
+        // 1. The primary: rebuild each live user-ID self-certification. A
+        //    revoked User ID is left as it is, so its revocation stands.
         val userIDs = mutableListOf<String>()
-        primary.userIDs.forEach { userIDs.add(it) }
+        if (target is Target.Primary) primary.userIDs.forEach { userIDs.add(it) }
+        val primaryExpiry = if (target is Target.Primary) relativeExpirySeconds(expiresAtEpochSeconds, primary) else null
         for (uid in userIDs) {
+            if (UserIdService.shared.isRevoked(primary, uid)) continue
             val existing = selfCertFor(primary, uid)
             val gen = makeGenerator(PGPSignature.POSITIVE_CERTIFICATION)
             val sub = PGPSignatureSubpacketGenerator()
@@ -168,9 +193,21 @@ class KeyExpirationService private constructor() {
 
         var newRing = PGPPublicKeyRing.insertPublicKey(publicRing, primary)
 
-        // 2. Rebuild each (non-signing) subkey binding signature.
+        // 2. Subkey bindings: the one asked for, or with Primary(currentSubkeys)
+        //    each subkey valid now. Expired and revoked subkeys are never touched.
+        val nowMs = System.currentTimeMillis()
         val subkeyIds = mutableListOf<Long>()
-        publicRing.publicKeys.forEach { if (!it.isMasterKey) subkeyIds.add(it.keyID) }
+        publicRing.publicKeys.forEach { sub ->
+            if (sub.isMasterKey) return@forEach
+            val wanted = when (target) {
+                is Target.Subkey -> sub.keyID == target.keyId
+                is Target.Primary -> target.currentSubkeys && isCurrent(sub, nowMs)
+            }
+            if (wanted) subkeyIds.add(sub.keyID)
+        }
+        if (target is Target.Subkey && subkeyIds.isEmpty()) {
+            throw ExpirationError.UnsupportedKey(SUBKEY_NOT_FOUND_MESSAGE)
+        }
         for (id in subkeyIds) {
             var subkey = newRing.getPublicKey(id) ?: continue
             val oldBinding = subkeyBindingFor(subkey)
@@ -182,7 +219,10 @@ class KeyExpirationService private constructor() {
                 // 0x19 primary-key back-signature made BY the subkey. Only the
                 // software path holds the subkey's secret to make it; the card
                 // path cannot, so it leaves the signing subkey untouched.
-                if (secretRing == null) continue
+                if (secretRing == null) {
+                    if (target is Target.Subkey) throw ExpirationError.UnsupportedKey(CARD_SIGNING_SUBKEY_MESSAGE)
+                    continue
+                }
                 buildSigningSubkeyBinding(primary, subkey, oldBinding, subExpiry, secretRing, passphrase, makeGenerator)
             } else {
                 val gen = makeGenerator(PGPSignature.SUBKEY_BINDING)
@@ -215,10 +255,21 @@ class KeyExpirationService private constructor() {
         return rel
     }
 
+    /** Bound, not revoked and not expired at [nowMs]. */
+    private fun isCurrent(sub: PGPPublicKey, nowMs: Long): Boolean {
+        if (sub.hasRevocation()) return false
+        if (subkeyBindingFor(sub) == null) return false
+        val secs = sub.validSeconds
+        return secs <= 0L || sub.creationTime.time + secs * 1000L > nowMs
+    }
+
+    /** The newest self-certification (0x10 to 0x13) on [userID]; a revocation
+     *  is not one (4.7.0 item 53: it was picked and then removed). */
     private fun selfCertFor(primary: PGPPublicKey, userID: String): PGPSignature? {
         var latest: PGPSignature? = null
         primary.getSignaturesForID(userID).forEach { sig ->
-            if (sig.keyID == primary.keyID) {
+            if (sig.keyID == primary.keyID &&
+                sig.signatureType in PGPSignature.DEFAULT_CERTIFICATION..PGPSignature.POSITIVE_CERTIFICATION) {
                 if (latest == null || sig.creationTime.after(latest!!.creationTime)) latest = sig
             }
         }
@@ -240,37 +291,46 @@ class KeyExpirationService private constructor() {
         return (vector.keyFlags and PGPKeyFlags.CAN_SIGN) != 0
     }
 
-    private fun copyUserIdSubpackets(
+    /** Subpackets a new self-signature sets itself; everything else on the
+     *  old one is carried forward as it was, critical bit included. */
+    private val RESET_TAGS = setOf(
+        SignatureSubpacketTags.CREATION_TIME,
+        SignatureSubpacketTags.KEY_EXPIRE_TIME,
+        SignatureSubpacketTags.ISSUER_KEY_ID,
+        SignatureSubpacketTags.ISSUER_FINGERPRINT,
+        SignatureSubpacketTags.EMBEDDED_SIGNATURE
+    )
+
+    /**
+     * 4.7.0 (item 53): carry every hashed subpacket of the old self-signature
+     * forward (preferences, features, key server preferences, notations, the
+     * primary User ID flag), then set the new expiry. The old copy kept a short
+     * list and dropped the rest, so an expiry change took a v6 key's SEIPDv2
+     * feature and AEAD preferences off its User IDs and left a subkey binding
+     * with key flags only.
+     */
+    private fun carryForward(
         old: PGPSignatureSubpacketVector?,
         expirySeconds: Long?,
         gen: PGPSignatureSubpacketGenerator
     ) {
-        if (old != null) {
-            if (old.keyFlags != 0) gen.setKeyFlags(false, old.keyFlags)
-            old.preferredSymmetricAlgorithms?.takeIf { it.isNotEmpty() }
-                ?.let { gen.setPreferredSymmetricAlgorithms(false, it) }
-            old.preferredHashAlgorithms?.takeIf { it.isNotEmpty() }
-                ?.let { gen.setPreferredHashAlgorithms(false, it) }
-            old.preferredCompressionAlgorithms?.takeIf { it.isNotEmpty() }
-                ?.let { gen.setPreferredCompressionAlgorithms(false, it) }
-            if (old.isPrimaryUserID) gen.setPrimaryUserID(false, true)
-            old.features?.let { f ->
-                if (f.supportsModificationDetection()) {
-                    gen.setFeature(false, Features.FEATURE_MODIFICATION_DETECTION)
-                }
-            }
+        old?.toArray()?.forEach { packet ->
+            if (packet.type !in RESET_TAGS) gen.addCustomSubpacket(packet)
         }
         if (expirySeconds != null) gen.setKeyExpirationTime(false, expirySeconds)
     }
+
+    private fun copyUserIdSubpackets(
+        old: PGPSignatureSubpacketVector?,
+        expirySeconds: Long?,
+        gen: PGPSignatureSubpacketGenerator
+    ) = carryForward(old, expirySeconds, gen)
 
     private fun copySubkeySubpackets(
         old: PGPSignatureSubpacketVector?,
         expirySeconds: Long?,
         gen: PGPSignatureSubpacketGenerator
-    ) {
-        if (old != null && old.keyFlags != 0) gen.setKeyFlags(false, old.keyFlags)
-        if (expirySeconds != null) gen.setKeyExpirationTime(false, expirySeconds)
-    }
+    ) = carryForward(old, expirySeconds, gen)
 
     /**
      * issue #4: rebuild a signing subkey's binding signature carrying the new

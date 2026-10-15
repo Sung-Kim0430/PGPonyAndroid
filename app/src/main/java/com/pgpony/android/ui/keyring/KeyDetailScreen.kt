@@ -504,6 +504,7 @@ fun KeyDetailScreen(
                 onAddSubkey = { viewModel.showAddSubkeySheet() },
                 onRevokeSubkey = { viewModel.showSubkeyRevokeSheet(it) },
                 onRemoveSubkey = { viewModel.requestSubkeyRemove(it) },
+                onChangeSubkeyExpiry = { viewModel.showSubkeyExpirySheet(it) },
                 onAddUserId = { viewModel.showAddUserIdSheet() },
                 onMakePrimaryUserId = { uid -> viewModel.requestUserIdAction(uid, UserIdActionRequest.Kind.MAKE_PRIMARY) },
                 onRevokeUserId = { uid -> viewModel.requestUserIdAction(uid, UserIdActionRequest.Kind.REVOKE) },
@@ -833,28 +834,33 @@ fun KeyDetailScreen(
         val cardNfcUnavail = stringResource(R.string.card_scan_nfc_unavailable)
         val cardPairFirst = stringResource(R.string.card_sign_pair_first)
         val cardExpiryFailed = stringResource(R.string.key_detail_expiry_failed)
+        val expirySubkey = state.expirySubkey
+        val nowMs = System.currentTimeMillis()
         EditExpirationSheet(
             keyOwnerLabel = ownerLabel,
             isCardBacked = keyForExpiry.isCardBacked,
             isProcessing = state.expiryInFlight,
             errorMessage = state.expiryError,
-            onApplySoftware = { expiresAt, passphrase ->
-                viewModel.applyExpirationSoftware(expiresAt, passphrase)
+            subkeyLabel = expirySubkey?.keyId,
+            offerCurrentSubkeys = state.subkeys.any { !it.isRevoked && (it.expiresAt == null || it.expiresAt > nowMs) },
+            onApplySoftware = { expiresAt, passphrase, alsoSubkeys ->
+                viewModel.applyExpirationSoftware(expiresAt, passphrase, alsoSubkeys)
             },
-            onApplyCard = { expiresAt, pin ->
+            onApplyCard = { expiresAt, pin, alsoSubkeys ->
                 val fp = keyForExpiry.fingerprint
+                val target = viewModel.expiryTarget(alsoSubkeys)
                 viewModel.onCardExpiryStarted()
                 val started = activity?.startCardOperation({ session ->
                     session.select()
                     val ring = PGPonyApp.instance.keyRepository.loadPublicKeyRing(fp)
                         ?: throw OpenPgpCardException.Malformed(cardPairFirst)
                     KeyExpirationService.shared.setExpirationCard(
-                        session, ring, expiresAt, pin.toByteArray(Charsets.UTF_8)
+                        session, ring, expiresAt, pin.toByteArray(Charsets.UTF_8), target
                     )
                 }) { result ->
                     activity.stopCardScan()
                     result
-                        .onSuccess { viewModel.persistCardExpiry(it.publicRing, expiresAt) }
+                        .onSuccess { viewModel.persistCardExpiry(it.publicRing, expiresAt, target) }
                         .onFailure { e -> viewModel.onCardExpiryFailure(e.message ?: cardExpiryFailed) }
                 }
                 if (started != true) viewModel.onCardExpiryFailure(cardNfcUnavail)
@@ -1747,6 +1753,7 @@ private fun LoadedBody(
     onAddSubkey: () -> Unit,
     onRevokeSubkey: (SubkeyDisplayInfo) -> Unit,
     onRemoveSubkey: (SubkeyDisplayInfo) -> Unit,
+    onChangeSubkeyExpiry: (SubkeyDisplayInfo) -> Unit,
     onAddUserId: () -> Unit,
     onMakePrimaryUserId: (String) -> Unit,
     onRevokeUserId: (String) -> Unit,
@@ -1788,6 +1795,10 @@ private fun LoadedBody(
         // to scroll to Danger Zone. RevokedBanner internally no-ops when
         // !key.isRevoked, so unconditional inclusion is safe.
         item { RevokedBanner(key = key) }
+        // 4.7.0 (item 54, #71): a scanned security key with no certificate yet.
+        if (key.isCardBacked && key.armoredPublicKey == null) {
+            item { CardNeedsPublicKeyBanner() }
+        }
         // 4.7.0 (item 22): the primary's secret is not on this device, so the
         // edits that need it are hidden below; this says why.
         state.primaryStub?.let { kind ->
@@ -1867,6 +1878,7 @@ private fun LoadedBody(
                     canManageSubkeys = canAddSubkey,
                     onRevokeSubkey = onRevokeSubkey,
                     onRemoveSubkey = if (hideDestructiveActions) null else onRemoveSubkey,
+                    onChangeSubkeyExpiry = onChangeSubkeyExpiry,
                     primaryOnCard = key.primaryOnCard
                 )
             }

@@ -11,6 +11,7 @@ package com.pgpony.android.ui.keyring
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -31,8 +32,14 @@ fun EditExpirationSheet(
     isCardBacked: Boolean,
     isProcessing: Boolean = false,
     errorMessage: String? = null,
-    onApplySoftware: (expiresAtEpochSeconds: Long?, passphrase: String?) -> Unit,
-    onApplyCard: (expiresAtEpochSeconds: Long?, pin: String) -> Unit,
+    /** 4.7.0 (item 53, #86): the subkey being edited (its key ID), or null for
+     *  the primary key. */
+    subkeyLabel: String? = null,
+    /** Offer "Also set it on subkeys that are still valid" (primary only, and
+     *  only when the key has any). */
+    offerCurrentSubkeys: Boolean = false,
+    onApplySoftware: (expiresAtEpochSeconds: Long?, passphrase: String?, alsoCurrentSubkeys: Boolean) -> Unit,
+    onApplyCard: (expiresAtEpochSeconds: Long?, pin: String, alsoCurrentSubkeys: Boolean) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -43,6 +50,7 @@ fun EditExpirationSheet(
     var showDatePicker by remember { mutableStateOf(false) }
     var passphrase by remember { mutableStateOf("") }
     var pin by remember { mutableStateOf("") }
+    var alsoCurrentSubkeys by remember { mutableStateOf(false) }
 
     fun computeExpiresAtEpochSeconds(): Long? {
         val preset = selectedPreset
@@ -73,11 +81,15 @@ fun EditExpirationSheet(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = stringResource(R.string.key_detail_expiry_sheet_title),
+                text = stringResource(
+                    if (subkeyLabel != null) R.string.key_detail_expiry_sheet_title_subkey
+                    else R.string.key_detail_expiry_sheet_title
+                ),
                 style = MaterialTheme.typography.headlineSmall
             )
             Text(
-                text = stringResource(R.string.key_detail_expiry_sheet_subtitle, keyOwnerLabel),
+                text = if (subkeyLabel != null) stringResource(R.string.key_detail_expiry_sheet_subtitle_subkey, subkeyLabel)
+                else stringResource(R.string.key_detail_expiry_sheet_subtitle, keyOwnerLabel),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -100,6 +112,31 @@ fun EditExpirationSheet(
                     onClick = { showDatePicker = true },
                     modifier = Modifier.fillMaxWidth()
                 ) { Text(label) }
+            }
+
+            if (subkeyLabel == null && offerCurrentSubkeys) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .toggleable(
+                            value = alsoCurrentSubkeys,
+                            enabled = !isProcessing,
+                            role = androidx.compose.ui.semantics.Role.Checkbox,
+                            onValueChange = { alsoCurrentSubkeys = it }
+                        )
+                ) {
+                    Checkbox(checked = alsoCurrentSubkeys, onCheckedChange = null, enabled = !isProcessing)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Column {
+                        Text(stringResource(R.string.key_detail_expiry_also_subkeys), style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            stringResource(R.string.key_detail_expiry_also_subkeys_hint),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
             }
 
             if (isCardBacked) {
@@ -151,8 +188,9 @@ fun EditExpirationSheet(
                 Button(
                     onClick = {
                         val expiry = computeExpiresAtEpochSeconds()
-                        if (isCardBacked) onApplyCard(expiry, pin)
-                        else onApplySoftware(expiry, passphrase.ifBlank { null })
+                        val also = subkeyLabel == null && offerCurrentSubkeys && alsoCurrentSubkeys
+                        if (isCardBacked) onApplyCard(expiry, pin, also)
+                        else onApplySoftware(expiry, passphrase.ifBlank { null }, also)
                     },
                     enabled = canApply,
                     modifier = Modifier.weight(1f)

@@ -1170,6 +1170,8 @@ fun SubkeysSection(
     canManageSubkeys: Boolean = false,
     onRevokeSubkey: ((SubkeyDisplayInfo) -> Unit)? = null,
     onRemoveSubkey: ((SubkeyDisplayInfo) -> Unit)? = null,
+    // 4.7.0 (item 53, #86): change one subkey's expiry.
+    onChangeSubkeyExpiry: ((SubkeyDisplayInfo) -> Unit)? = null,
     // 4.7.0 (item 34, #43): on a key generated on a card the signing key is the
     // primary itself, so the list of subkeys alone showed only the encryption
     // key; this line says where the primary is.
@@ -1205,8 +1207,13 @@ fun SubkeysSection(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    // A signing subkey's new binding needs a back-signature made
+                    // by the subkey, so its secret has to be on this phone.
+                    val canChangeExpiry = onChangeSubkeyExpiry != null && sub.expiryEditable && !sub.isRevoked &&
+                        ((sub.capabilities and 0x02) == 0 ||
+                            sub.secretLocation == com.pgpony.android.crypto.SubkeyAdmission.SecretLocation.ON_DEVICE)
                     if (canManageSubkeys && !sub.isCardBacked &&
-                        (onRemoveSubkey != null || (onRevokeSubkey != null && !sub.isRevoked))
+                        (onRemoveSubkey != null || (onRevokeSubkey != null && !sub.isRevoked) || canChangeExpiry)
                     ) {
                         Spacer(modifier = Modifier.weight(1f))
                         var menuOpen by remember { mutableStateOf(false) }
@@ -1221,6 +1228,15 @@ fun SubkeysSection(
                                 expanded = menuOpen,
                                 onDismissRequest = { menuOpen = false }
                             ) {
+                                if (canChangeExpiry) {
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.key_detail_subkey_change_expiry)) },
+                                        onClick = {
+                                            menuOpen = false
+                                            onChangeSubkeyExpiry?.invoke(sub)
+                                        }
+                                    )
+                                }
                                 if (onRevokeSubkey != null && !sub.isRevoked) {
                                     DropdownMenuItem(
                                         text = { Text(stringResource(R.string.key_detail_subkey_revoke_action)) },
@@ -1428,6 +1444,49 @@ fun DangerZoneSection(
  * primary (User IDs, subkeys, expiry, revoking the key) are hidden, and this
  * says where to make them instead.
  */
+/**
+ * 4.7.0 (item 54, #71): a security key scanned with no matching key in the
+ * keyring. A card holds the private keys but not the certificate (User IDs and
+ * self-signatures), so nothing can sign or decrypt with it until the public key
+ * is imported; the import pairs it with this row.
+ */
+@Composable
+fun CardNeedsPublicKeyBanner() {
+    Surface(
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.secondaryContainer,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Key,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.key_detail_card_no_cert_title),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+                Text(
+                    text = stringResource(R.string.key_detail_card_no_cert_body),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+            }
+        }
+    }
+}
+
 @Composable
 fun OfflinePrimaryBanner(onCard: Boolean) {
     Surface(
