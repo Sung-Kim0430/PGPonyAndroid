@@ -2944,7 +2944,7 @@ Opcionalmente, bloqueie o app com sua impressão digital ou rosto para mais tran
     <string name="move_to_card_backup_confirm">Tenho um backup deste par de chaves</string>
     <string name="move_to_card_remove_label">Remover deste telefone as chaves movidas</string>
     <string name="move_to_card_remove_hint">Como no gpg, o telefone guarda só uma anotação de que as chaves estão na chave de segurança e passa a usar a chave de segurança a partir daí. Desative isto para manter uma cópia aqui também.</string>
-    <string name="move_to_card_remove_unavailable">Só quando todas as chaves deste par de chaves vão para a chave de segurança. Caso contrário, uma cópia fica neste telefone, que continua a usá-la.</string>
+    <string name="move_to_card_remove_unavailable">Só quando todas as subchaves deste par de chaves vão para a chave de segurança. A chave principal pode ficar neste telefone, como no gpg. Caso contrário, uma cópia fica aqui e o telefone continua a usá-la.</string>
     <string name="move_to_card_wrong_admin_pin">PIN de administrador incorreto. Tentativas restantes: %1$d. Quando não restar nenhuma, a chave de segurança terá de ser restaurada de fábrica.</string>
     <string name="move_to_card_wrong_user_pin">PIN de usuário incorreto. Tentativas restantes: %1$d. Nada foi gravado na chave de segurança.</string>
     <string name="move_to_card_replace_confirm">Substituir as chaves que já estão nos slots escolhidos</string>
@@ -2977,4 +2977,48 @@ Opcionalmente, bloqueie o app com sua impressão digital ou rosto para mais tran
     <string name="key_detail_subkey_change_expiry">Editar validade…</string>
     <string name="key_detail_card_no_cert_title">Chave pública necessária</string>
     <string name="key_detail_card_no_cert_body">Esta chave de segurança contém as chaves privadas, mas não o restante da chave: seus IDs de usuário e assinaturas. Importe a chave pública correspondente (uma exportação, um backup ou uma cópia de um servidor de chaves) e o PGPony vai pareá-la com esta chave de segurança para que você possa assinar e decifrar com ela.</string>
+    <!-- 4.7.0 RC5 batch 2, translated Oct 2026 -->
+    <string name="key_detail_key_id_copied">ID da chave copiado</string>
+    <string name="key_detail_copy_key_id_cd">Copiar ID da chave</string>
+    <string name="key_detail_detail_usage">Uso</string>
+    <string name="key_detail_cert_trust_full">introdutor confiável, profundidade %1$d</string>
+    <string name="key_detail_cert_trust_partial">introdutor parcialmente confiável, profundidade %1$d</string>
+    <string name="key_detail_cert_trust_amount">confiança %1$d, profundidade %2$d</string>
+    <string name="key_detail_cert_trust_limited">limitada a alguns IDs de usuário</string>
+    <string name="key_detail_last_checked_found_format">%1$s, encontrada em %2$s</string>
+    <string name="key_detail_last_checked_not_found_format">%1$s, não encontrada em %2$s</string>
+    <string name="kd_vm_check_found_on">Esta chave está publicada em %1$s.</string>
+    <string name="kd_vm_check_not_found_on">Esta chave não foi encontrada em %1$s.</string>
+    <string name="key_detail_cert_look_up">Procurar</string>
+    <string name="certifier_lookup_title">Procurar certificador</string>
+    <string name="certifier_lookup_found_body">Importar adiciona esta chave ao seu chaveiro, para que a certificação feita por ela possa ser verificada. Isso não valida a identidade da chave: apenas a matemática é verificada. Confirme a quem ela pertence antes de confiar nela.</string>
+    <string name="certifier_lookup_not_found_title">Certificador não encontrado</string>
+    <string name="certifier_lookup_not_found_body_format">Nenhuma chave para %1$s foi encontrada nos servidores de chaves configurados. O certificador pode não ter publicado a própria chave.</string>
+    <string name="certifier_lookup_imported_body">As certificações que ela fez nesta chave serão verificadas novamente.</string>
+    <string name="key_detail_refresh_sigs_menu">Renovar autoassinaturas</string>
+    <string name="key_detail_refresh_sigs_title">Renovar autoassinaturas</string>
+    <string name="key_detail_refresh_sigs_body">Assina novamente os IDs de usuário e os vínculos de subchave desta chave com SHA-256. Todas as datas de validade continuam como estão. Uma subchave que ficou de fora porque seu vínculo usava SHA-1 volta, desde que a chave privada dela esteja neste telefone. Depois, publique a chave para que outras pessoas recebam as novas assinaturas.</string>
+    <string name="key_detail_refresh_sigs_action">Renovar</string>
+    <string name="key_detail_refresh_sigs_done">Autoassinaturas renovadas.</string>
+    <plurals name="key_detail_refresh_sigs_done_restored">
+        <item quantity="one">Autoassinaturas renovadas. %1$d subchave foi restaurada.</item>
+        <item quantity="many">Autoassinaturas renovadas. %1$d subchaves foram restauradas.</item>
+        <item quantity="other">Autoassinaturas renovadas. %1$d subchaves foram restauradas.</item>
+    </plurals>
+    <!-- 4.7.0 RC5 batch 3, translated Oct 2026 -->
+    <string name="keyring_select_menu">Selecionar chaves</string>
+    <string name="keyring_select_done_cd">Parar de selecionar</string>
+    <string name="keyring_select_all_cd">Selecionar todas</string>
+    <string name="keyring_export_selected_cd">Exportar chaves públicas</string>
+    <string name="keyring_export_selected_copied">Chaves públicas copiadas</string>
+    <plurals name="keyring_selected_count">
+        <item quantity="one">%1$d selecionada</item>
+        <item quantity="many">%1$d selecionadas</item>
+        <item quantity="other">%1$d selecionadas</item>
+    </plurals>
+    <plurals name="keyring_export_selected_label">
+        <item quantity="one">%1$d chave pública</item>
+        <item quantity="many">%1$d chaves públicas</item>
+        <item quantity="other">%1$d chaves públicas</item>
+    </plurals>
 </resources>

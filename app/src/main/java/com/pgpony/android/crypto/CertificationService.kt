@@ -75,7 +75,14 @@ object CertificationService {
         val expiresMs: Long?,
         val exportable: Boolean,
         val status: Status,
-        val revoked: Boolean
+        val revoked: Boolean,
+        /** 4.7.0 (item 59, #79): a trust signature (gpg tsign, RFC 9580
+         *  5.2.3.21): the depth and the trust amount (60 partial, 120 full in
+         *  gpg), null when the certification carries none. */
+        val trustDepth: Int? = null,
+        val trustAmount: Int? = null,
+        /** True when a Regular Expression subpacket limits the trust. */
+        val trustLimited: Boolean = false
     ) {
         fun expiredAt(nowMs: Long): Boolean = expiresMs != null && nowMs >= expiresMs
     }
@@ -340,7 +347,12 @@ object CertificationService {
                         expiresMs = if (expSeconds > 0) cert.creationTime.time + expSeconds * 1000L else null,
                         exportable = isExportable(cert),
                         status = status,
-                        revoked = revoked
+                        revoked = revoked,
+                        trustDepth = cert.hashedSubPackets?.trust?.depth,
+                        trustAmount = cert.hashedSubPackets?.trust?.trustAmount,
+                        trustLimited = cert.hashedSubPackets?.hasSubpacket(
+                            org.bouncycastle.bcpg.SignatureSubpacketTags.REG_EXP
+                        ) == true
                     )
                 )
             }

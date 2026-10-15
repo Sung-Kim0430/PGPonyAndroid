@@ -3054,7 +3054,7 @@
     <string name="move_to_card_backup_confirm">У мене є резервна копія цієї пари ключів</string>
     <string name="move_to_card_remove_label">Вилучити перенесені ключі з цього телефона</string>
     <string name="move_to_card_remove_hint">Як і gpg, телефон зберігає лише позначку про те, що ключі зберігаються на ключі безпеки, і відтоді використовує ключ безпеки. Вимкніть цей параметр, щоб також залишити копію тут.</string>
-    <string name="move_to_card_remove_unavailable">Лише якщо на ключ безпеки переноситься кожен ключ цієї пари ключів. Інакше копія залишається на цьому телефоні, і він і далі її використовує.</string>
+    <string name="move_to_card_remove_unavailable">Лише якщо на ключ безпеки переноситься кожен підключ цієї пари ключів. Основний ключ може залишитися на цьому телефоні, як у gpg. Інакше копія залишається тут, і телефон і далі її використовує.</string>
     <string name="move_to_card_wrong_admin_pin">Неправильний PIN адміністратора. Залишилось спроб: %1$d. Коли їх не залишиться, ключ безпеки доведеться скинути.</string>
     <string name="move_to_card_wrong_user_pin">Неправильний PIN користувача. Залишилось спроб: %1$d. На ключ безпеки нічого не записано.</string>
     <string name="move_to_card_replace_confirm">Замінити ключі, які вже є у вибраних слотах</string>
@@ -3089,4 +3089,51 @@
     <string name="key_detail_subkey_change_expiry">Змінити термін дії…</string>
     <string name="key_detail_card_no_cert_title">Потрібен відкритий ключ</string>
     <string name="key_detail_card_no_cert_body">Цей ключ безпеки містить закриті ключі, але не решту ключа: його ідентифікатори користувача й підписи. Імпортуйте відповідний відкритий ключ (експорт, резервну копію або копію із сервера ключів), і PGPony пов’яже його з цим ключем безпеки, щоб ви могли підписувати й розшифровувати ним.</string>
+    <!-- 4.7.0 RC5 batch 2, translated Oct 2026 -->
+    <string name="key_detail_key_id_copied">Ідентифікатор ключа скопійовано</string>
+    <string name="key_detail_copy_key_id_cd">Копіювати ідентифікатор ключа</string>
+    <string name="key_detail_detail_usage">Призначення</string>
+    <string name="key_detail_cert_trust_full">довірений посередник, глибина %1$d</string>
+    <string name="key_detail_cert_trust_partial">частково довірений посередник, глибина %1$d</string>
+    <string name="key_detail_cert_trust_amount">довіра %1$d, глибина %2$d</string>
+    <string name="key_detail_cert_trust_limited">лише для деяких ідентифікаторів користувача</string>
+    <string name="key_detail_last_checked_found_format">%1$s, знайдено на %2$s</string>
+    <string name="key_detail_last_checked_not_found_format">%1$s, немає на %2$s</string>
+    <string name="kd_vm_check_found_on">Цей ключ опубліковано на %1$s.</string>
+    <string name="kd_vm_check_not_found_on">Цього ключа немає на %1$s.</string>
+    <string name="key_detail_cert_look_up">Знайти</string>
+    <string name="certifier_lookup_title">Знайти автора сертифікації</string>
+    <string name="certifier_lookup_found_body">Імпорт цього ключа додасть його до вашої зв’язки ключів, щоб можна було перевірити його сертифікацію. Це не підтверджує особу власника ключа: перевіряється лише математика. З’ясуйте, кому належить ключ, перш ніж на нього покладатися.</string>
+    <string name="certifier_lookup_not_found_title">Автора сертифікації не знайдено</string>
+    <string name="certifier_lookup_not_found_body_format">На жодному з налаштованих вами серверів ключів не знайдено ключа для %1$s. Можливо, автор сертифікації не опублікував свій ключ.</string>
+    <string name="certifier_lookup_imported_body">Його сертифікації на цьому ключі буде перевірено повторно.</string>
+    <string name="key_detail_refresh_sigs_menu">Оновити самопідписи</string>
+    <string name="key_detail_refresh_sigs_title">Оновити самопідписи</string>
+    <string name="key_detail_refresh_sigs_body">Повторно підписує ідентифікатори користувача та прив’язки підключів цього ключа за допомогою SHA-256. Усі терміни дії залишаються без змін. Підключ, пропущений через те, що його прив’язка використовувала SHA-1, повернеться, якщо його закритий ключ є на цьому телефоні. Після цього опублікуйте ключ, щоб інші отримали нові підписи.</string>
+    <string name="key_detail_refresh_sigs_action">Оновити</string>
+    <string name="key_detail_refresh_sigs_done">Самопідписи оновлено.</string>
+    <plurals name="key_detail_refresh_sigs_done_restored">
+        <item quantity="one">Самопідписи оновлено. %1$d підключ повернувся.</item>
+        <item quantity="few">Самопідписи оновлено. %1$d підключі повернулися.</item>
+        <item quantity="many">Самопідписи оновлено. %1$d підключів повернулося.</item>
+        <item quantity="other">Самопідписи оновлено. %1$d підключа повернулося.</item>
+    </plurals>
+    <!-- 4.7.0 RC5 batch 3, translated Oct 2026 -->
+    <string name="keyring_select_menu">Вибрати ключі</string>
+    <string name="keyring_select_done_cd">Завершити вибір</string>
+    <string name="keyring_select_all_cd">Вибрати всі</string>
+    <string name="keyring_export_selected_cd">Експортувати відкриті ключі</string>
+    <string name="keyring_export_selected_copied">Відкриті ключі скопійовано</string>
+    <plurals name="keyring_selected_count">
+        <item quantity="one">Вибрано: %1$d</item>
+        <item quantity="few">Вибрано: %1$d</item>
+        <item quantity="many">Вибрано: %1$d</item>
+        <item quantity="other">Вибрано: %1$d</item>
+    </plurals>
+    <plurals name="keyring_export_selected_label">
+        <item quantity="one">%1$d відкритий ключ</item>
+        <item quantity="few">%1$d відкриті ключі</item>
+        <item quantity="many">%1$d відкритих ключів</item>
+        <item quantity="other">%1$d відкритого ключа</item>
+    </plurals>
 </resources>

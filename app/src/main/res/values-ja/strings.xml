@@ -2921,7 +2921,7 @@ PGPony は、古い OpenPGP 実装との相互運用性のために従来の RSA
     <string name="move_to_card_backup_confirm">この鍵ペアのバックアップがあります</string>
     <string name="move_to_card_remove_label">移動した鍵をこのスマートフォンから削除</string>
     <string name="move_to_card_remove_hint">gpg と同じく、スマートフォンには鍵がセキュリティキー上にあるという記録だけが残り、以後はセキュリティキーを使用します。ここにもコピーを残すには、これをオフにしてください。</string>
-    <string name="move_to_card_remove_unavailable">この鍵ペアのすべての鍵をセキュリティキーに移す場合のみ利用できます。それ以外の場合はこのスマートフォンにコピーが残り、引き続きそのコピーが使われます。</string>
+    <string name="move_to_card_remove_unavailable">この鍵ペアのすべてのサブキーをセキュリティキーに移す場合のみ利用できます。gpg と同じく、主鍵はこのスマートフォンに残してもかまいません。それ以外の場合はこのスマートフォンにコピーが残り、引き続きそのコピーが使われます。</string>
     <string name="move_to_card_wrong_admin_pin">管理者 PIN が違います。残り %1$d 回です。残り回数がなくなると、セキュリティキーを初期化する必要があります。</string>
     <string name="move_to_card_wrong_user_pin">ユーザー PIN が違います。残り %1$d 回です。セキュリティキーには何も書き込まれていません。</string>
     <string name="move_to_card_replace_confirm">選択したスロットにすでにある鍵を置き換える</string>
@@ -2951,4 +2951,43 @@ PGPony は、古い OpenPGP 実装との相互運用性のために従来の RSA
     <string name="key_detail_subkey_change_expiry">有効期限を編集…</string>
     <string name="key_detail_card_no_cert_title">公開鍵が必要です</string>
     <string name="key_detail_card_no_cert_body">このセキュリティキーには秘密鍵が入っていますが、鍵のそれ以外の部分、つまりユーザー ID と署名は入っていません。対応する公開鍵（エクスポートしたもの、バックアップ、または鍵サーバー上のコピー）をインポートすると、PGPony がそれをこのセキュリティキーとペアリングし、署名と復号に使えるようになります。</string>
+
+    <!-- 4.7.0 RC5 batch 2, translated Oct 2026 -->
+    <string name="key_detail_key_id_copied">鍵 ID をコピーしました</string>
+    <string name="key_detail_copy_key_id_cd">鍵 ID をコピー</string>
+    <string name="key_detail_detail_usage">用途</string>
+    <string name="key_detail_cert_trust_full">信頼された紹介者、深さ %1$d</string>
+    <string name="key_detail_cert_trust_partial">部分的に信頼された紹介者、深さ %1$d</string>
+    <string name="key_detail_cert_trust_amount">信頼度 %1$d、深さ %2$d</string>
+    <string name="key_detail_cert_trust_limited">一部のユーザー ID に限定</string>
+    <string name="key_detail_last_checked_found_format">%1$s、%2$s で見つかりました</string>
+    <string name="key_detail_last_checked_not_found_format">%1$s、%2$s にはありません</string>
+    <string name="kd_vm_check_found_on">この鍵は %1$s に公開されています。</string>
+    <string name="kd_vm_check_not_found_on">この鍵は %1$s で見つかりませんでした。</string>
+    <string name="key_detail_cert_look_up">検索</string>
+    <string name="certifier_lookup_title">認証者を検索</string>
+    <string name="certifier_lookup_found_body">インポートすると、この鍵が鍵束に追加され、その認証を検証できるようになります。ただし、これで確認されるのは数学的な正当性だけで、鍵の身元は確認されません。この鍵に頼る前に、誰の鍵なのかを確認してください。</string>
+    <string name="certifier_lookup_not_found_title">認証者が見つかりません</string>
+    <string name="certifier_lookup_not_found_body_format">設定済みのどの鍵サーバーでも %1$s の鍵は見つかりませんでした。認証者が鍵を公開していない可能性があります。</string>
+    <string name="certifier_lookup_imported_body">インポートした鍵がこの鍵に付けた認証が再検証されます。</string>
+    <string name="key_detail_refresh_sigs_menu">自己署名を更新</string>
+    <string name="key_detail_refresh_sigs_title">自己署名を更新</string>
+    <string name="key_detail_refresh_sigs_body">この鍵のユーザー ID とサブキーのバインディングを SHA-256 で署名し直します。有効期限はすべてそのままです。バインディングに SHA-1 が使われていたために除外されたサブキーは、その秘密鍵がこのスマートフォンにあれば復活します。他の人が新しい署名を受け取れるよう、終わったら鍵を公開してください。</string>
+    <string name="key_detail_refresh_sigs_action">更新</string>
+    <string name="key_detail_refresh_sigs_done">自己署名を更新しました。</string>
+    <plurals name="key_detail_refresh_sigs_done_restored">
+        <item quantity="other">自己署名を更新しました。%1$d 個のサブキーが復活しました。</item>
+    </plurals>
+    <!-- 4.7.0 RC5 batch 3, translated Oct 2026 -->
+    <string name="keyring_select_menu">鍵を選択</string>
+    <string name="keyring_select_done_cd">選択を終了</string>
+    <string name="keyring_select_all_cd">すべて選択</string>
+    <string name="keyring_export_selected_cd">公開鍵をエクスポート</string>
+    <string name="keyring_export_selected_copied">公開鍵をコピーしました</string>
+    <plurals name="keyring_selected_count">
+        <item quantity="other">%1$d 件選択中</item>
+    </plurals>
+    <plurals name="keyring_export_selected_label">
+        <item quantity="other">公開鍵 %1$d 件</item>
+    </plurals>
 </resources>

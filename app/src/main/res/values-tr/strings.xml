@@ -3016,7 +3016,7 @@
     <string name="move_to_card_backup_confirm">Bu anahtar çiftinin bir yedeği bende var</string>
     <string name="move_to_card_remove_label">Taşınan anahtarları bu telefondan kaldır</string>
     <string name="move_to_card_remove_hint">gpg\'de olduğu gibi telefon yalnızca anahtarların güvenlik anahtarında olduğuna dair bir not tutar ve bundan sonra güvenlik anahtarını kullanır. Burada da bir kopya tutmak için bunu kapatın.</string>
-    <string name="move_to_card_remove_unavailable">Yalnızca bu anahtar çiftinin her anahtarı güvenlik anahtarına gittiğinde. Aksi hâlde bu telefonda bir kopya kalır ve telefon onu kullanmaya devam eder.</string>
+    <string name="move_to_card_remove_unavailable">Yalnızca bu anahtar çiftinin her alt anahtarı güvenlik anahtarına gittiğinde. Birincil anahtar, gpg\'de olduğu gibi bu telefonda kalabilir. Aksi hâlde burada bir kopya kalır ve telefon onu kullanmaya devam eder.</string>
     <string name="move_to_card_wrong_admin_pin">Yanlış yönetici PIN\'i. %1$d deneme hakkı kaldı. Hiç kalmadığında güvenlik anahtarının sıfırlanması gerekir.</string>
     <string name="move_to_card_wrong_user_pin">Yanlış kullanıcı PIN\'i. %1$d deneme hakkı kaldı. Güvenlik anahtarına hiçbir şey yazılmadı.</string>
     <string name="move_to_card_replace_confirm">Seçilen yuvalarda zaten bulunan anahtarları değiştir</string>
@@ -3047,4 +3047,45 @@
     <string name="key_detail_subkey_change_expiry">Son kullanma tarihini düzenle…</string>
     <string name="key_detail_card_no_cert_title">Açık anahtar gerekli</string>
     <string name="key_detail_card_no_cert_body">Bu güvenlik anahtarı gizli anahtarları tutuyor, ancak anahtarın geri kalanını, yani Kullanıcı Kimliklerini ve imzalarını tutmuyor. Eşleşen açık anahtarı (bir dışa aktarım, bir yedek veya anahtar sunucusundaki bir kopya) içe aktarın; PGPony onu bu güvenlik anahtarıyla eşleştirir, böylece onunla imzalayabilir ve şifre çözebilirsiniz.</string>
+    <!-- 4.7.0 RC5 batch 2, translated Oct 2026 -->
+    <string name="key_detail_key_id_copied">Anahtar kimliği kopyalandı</string>
+    <string name="key_detail_copy_key_id_cd">Anahtar kimliğini kopyala</string>
+    <string name="key_detail_detail_usage">Kullanım</string>
+    <string name="key_detail_cert_trust_full">güvenilir tanıtıcı, derinlik %1$d</string>
+    <string name="key_detail_cert_trust_partial">kısmen güvenilir tanıtıcı, derinlik %1$d</string>
+    <string name="key_detail_cert_trust_amount">güven %1$d, derinlik %2$d</string>
+    <string name="key_detail_cert_trust_limited">bazı Kullanıcı Kimlikleriyle sınırlı</string>
+    <string name="key_detail_last_checked_found_format">%1$s, %2$s üzerinde bulundu</string>
+    <string name="key_detail_last_checked_not_found_format">%1$s, %2$s üzerinde yok</string>
+    <string name="kd_vm_check_found_on">Bu anahtar, %1$s üzerinde yayımlanmış.</string>
+    <string name="kd_vm_check_not_found_on">Bu anahtar, %1$s üzerinde bulunamadı.</string>
+    <string name="key_detail_cert_look_up">Ara</string>
+    <string name="certifier_lookup_title">Onaylayanı ara</string>
+    <string name="certifier_lookup_found_body">Bu anahtarı içe aktarmak onu anahtarlığınıza ekler, böylece onayı doğrulanabilir. Bu işlem anahtarın kimliğini teyit etmez, yalnızca matematiksel doğruluğu denetler. Bu anahtara güvenmeden önce kime ait olduğunu kontrol edin.</string>
+    <string name="certifier_lookup_not_found_title">Onaylayan bulunamadı</string>
+    <string name="certifier_lookup_not_found_body_format">Yapılandırdığınız anahtar sunucularının hiçbirinde %1$s için anahtar bulunamadı. Onaylayan, anahtarını yayımlamamış olabilir.</string>
+    <string name="certifier_lookup_imported_body">Onaylayanın bu anahtardaki onayları yeniden doğrulanır.</string>
+    <string name="key_detail_refresh_sigs_menu">Öz imzaları yenile</string>
+    <string name="key_detail_refresh_sigs_title">Öz imzaları yenile</string>
+    <string name="key_detail_refresh_sigs_body">Bu anahtarın Kullanıcı Kimliklerini ve alt anahtar bağlamalarını SHA-256 ile yeniden imzalar. Tüm son kullanma tarihleri olduğu gibi kalır. Bağlaması SHA-1 kullandığı için dışarıda kalmış bir alt anahtar, gizli anahtarı bu telefondaysa geri gelir. Başkalarının yeni imzaları alması için ardından anahtarı yayımlayın.</string>
+    <string name="key_detail_refresh_sigs_action">Yenile</string>
+    <string name="key_detail_refresh_sigs_done">Öz imzalar yenilendi.</string>
+    <plurals name="key_detail_refresh_sigs_done_restored">
+        <item quantity="one">Öz imzalar yenilendi. %1$d alt anahtar geri geldi.</item>
+        <item quantity="other">Öz imzalar yenilendi. %1$d alt anahtar geri geldi.</item>
+    </plurals>
+    <!-- 4.7.0 RC5 batch 3, translated Oct 2026 -->
+    <string name="keyring_select_menu">Anahtarları seç</string>
+    <string name="keyring_select_done_cd">Seçimi bitir</string>
+    <string name="keyring_select_all_cd">Tümünü seç</string>
+    <string name="keyring_export_selected_cd">Açık anahtarları dışa aktar</string>
+    <string name="keyring_export_selected_copied">Açık anahtarlar kopyalandı</string>
+    <plurals name="keyring_selected_count">
+        <item quantity="one">%1$d seçili</item>
+        <item quantity="other">%1$d seçili</item>
+    </plurals>
+    <plurals name="keyring_export_selected_label">
+        <item quantity="one">%1$d açık anahtar</item>
+        <item quantity="other">%1$d açık anahtar</item>
+    </plurals>
 </resources>

@@ -2940,7 +2940,7 @@ Optional kannst du die App hinter deinem Fingerabdruck oder Gesicht sperren, um 
     <string name="move_to_card_backup_confirm">Ich habe ein Backup dieses Schlüsselpaars</string>
     <string name="move_to_card_remove_label">Die verschobenen Schlüssel von diesem Telefon entfernen</string>
     <string name="move_to_card_remove_hint">Wie bei gpg behält das Telefon nur einen Vermerk, dass die Schlüssel auf dem Sicherheitsschlüssel liegen, und verwendet ab dann den Sicherheitsschlüssel. Schalte dies aus, um zusätzlich eine Kopie hier zu behalten.</string>
-    <string name="move_to_card_remove_unavailable">Nur wenn jeder Schlüssel dieses Schlüsselpaars auf den Sicherheitsschlüssel verschoben wird. Andernfalls bleibt eine Kopie auf diesem Telefon, das sie weiterhin verwendet.</string>
+    <string name="move_to_card_remove_unavailable">Nur wenn jeder Unterschlüssel dieses Schlüsselpaars auf den Sicherheitsschlüssel verschoben wird. Der Hauptschlüssel darf wie bei gpg auf diesem Telefon bleiben. Andernfalls bleibt hier eine Kopie, und das Telefon verwendet sie weiterhin.</string>
     <string name="move_to_card_wrong_admin_pin">Falsche Admin-PIN. Verbleibende Versuche: %1$d. Wenn keine mehr übrig sind, muss der Sicherheitsschlüssel zurückgesetzt werden.</string>
     <string name="move_to_card_wrong_user_pin">Falsche Benutzer-PIN. Verbleibende Versuche: %1$d. Es wurde nichts auf den Sicherheitsschlüssel geschrieben.</string>
     <string name="move_to_card_replace_confirm">Bereits vorhandene Schlüssel in den gewählten Slots ersetzen</string>
@@ -2971,4 +2971,45 @@ Optional kannst du die App hinter deinem Fingerabdruck oder Gesicht sperren, um 
     <string name="key_detail_subkey_change_expiry">Ablaufdatum bearbeiten…</string>
     <string name="key_detail_card_no_cert_title">Öffentlicher Schlüssel benötigt</string>
     <string name="key_detail_card_no_cert_body">Auf diesem Sicherheitsschlüssel liegen die privaten Schlüssel, aber nicht der Rest des Schlüssels: seine Benutzer-IDs und Signaturen. Importiere den passenden öffentlichen Schlüssel (einen Export, eine Sicherung oder eine Kopie vom Schlüsselserver), dann koppelt PGPony ihn mit diesem Sicherheitsschlüssel, sodass du damit signieren und entschlüsseln kannst.</string>
+    <!-- 4.7.0 RC5 batch 2, translated Oct 2026 -->
+    <string name="key_detail_key_id_copied">Schlüssel-ID kopiert</string>
+    <string name="key_detail_copy_key_id_cd">Schlüssel-ID kopieren</string>
+    <string name="key_detail_detail_usage">Verwendung</string>
+    <string name="key_detail_cert_trust_full">vertrauenswürdiger Vermittler, Tiefe %1$d</string>
+    <string name="key_detail_cert_trust_partial">teilweise vertrauenswürdiger Vermittler, Tiefe %1$d</string>
+    <string name="key_detail_cert_trust_amount">Vertrauen %1$d, Tiefe %2$d</string>
+    <string name="key_detail_cert_trust_limited">auf bestimmte Benutzer-IDs beschränkt</string>
+    <string name="key_detail_last_checked_found_format">%1$s, auf %2$s gefunden</string>
+    <string name="key_detail_last_checked_not_found_format">%1$s, nicht auf %2$s</string>
+    <string name="kd_vm_check_found_on">Dieser Schlüssel ist auf %1$s veröffentlicht.</string>
+    <string name="kd_vm_check_not_found_on">Dieser Schlüssel wurde auf %1$s nicht gefunden.</string>
+    <string name="key_detail_cert_look_up">Nachschlagen</string>
+    <string name="certifier_lookup_title">Beglaubiger nachschlagen</string>
+    <string name="certifier_lookup_found_body">Beim Importieren wird der Schlüssel zu deinem Schlüsselbund hinzugefügt, damit seine Beglaubigung geprüft werden kann. Seine Identität wird dadurch nicht überprüft, nur die mathematische Korrektheit. Prüfe, wem er gehört, bevor du dich auf ihn verlässt.</string>
+    <string name="certifier_lookup_not_found_title">Beglaubiger nicht gefunden</string>
+    <string name="certifier_lookup_not_found_body_format">Für %1$s wurde auf keinem deiner eingerichteten Schlüsselserver ein Schlüssel gefunden. Der Beglaubiger hat seinen Schlüssel möglicherweise nicht veröffentlicht.</string>
+    <string name="certifier_lookup_imported_body">Seine Beglaubigungen für diesen Schlüssel werden erneut geprüft.</string>
+    <string name="key_detail_refresh_sigs_menu">Selbstsignaturen erneuern</string>
+    <string name="key_detail_refresh_sigs_title">Selbstsignaturen erneuern</string>
+    <string name="key_detail_refresh_sigs_body">Signiert die Benutzer-IDs und Unterschlüssel-Bindungen dieses Schlüssels erneut mit SHA-256. Alle Ablaufdaten bleiben unverändert. Ein Unterschlüssel, der wegen einer SHA-1-Bindung ausgelassen wurde, ist wieder da, wenn sein geheimer Schlüssel auf diesem Telefon liegt. Veröffentliche den Schlüssel danach, damit andere die neuen Signaturen erhalten.</string>
+    <string name="key_detail_refresh_sigs_action">Erneuern</string>
+    <string name="key_detail_refresh_sigs_done">Selbstsignaturen erneuert.</string>
+    <plurals name="key_detail_refresh_sigs_done_restored">
+        <item quantity="one">Selbstsignaturen erneuert. %1$d Unterschlüssel ist wieder da.</item>
+        <item quantity="other">Selbstsignaturen erneuert. %1$d Unterschlüssel sind wieder da.</item>
+    </plurals>
+    <!-- 4.7.0 RC5 batch 3, translated Oct 2026 -->
+    <string name="keyring_select_menu">Schlüssel auswählen</string>
+    <string name="keyring_select_done_cd">Auswahl beenden</string>
+    <string name="keyring_select_all_cd">Alle auswählen</string>
+    <string name="keyring_export_selected_cd">Öffentliche Schlüssel exportieren</string>
+    <string name="keyring_export_selected_copied">Öffentliche Schlüssel kopiert</string>
+    <plurals name="keyring_selected_count">
+        <item quantity="one">%1$d ausgewählt</item>
+        <item quantity="other">%1$d ausgewählt</item>
+    </plurals>
+    <plurals name="keyring_export_selected_label">
+        <item quantity="one">%1$d öffentlicher Schlüssel</item>
+        <item quantity="other">%1$d öffentliche Schlüssel</item>
+    </plurals>
 </resources>

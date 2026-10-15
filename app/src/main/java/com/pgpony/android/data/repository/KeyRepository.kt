@@ -1226,12 +1226,12 @@ class KeyRepository(
      * With [removeFromPhone], and only when the move covered every key whose
      * secret is on the phone, those secrets become divert-to-card stubs
      * (gpg's `sec>`/`ssb>`) and the key becomes a key on a card (isKeyPair
-     * false, isCardBacked true), like one generated on a card. Anything else
-     * keeps the key a software key pair, untouched, with the card holding a
-     * copy: a key with some secrets here and some on a card is not a state the
-     * rest of the app routes correctly (expiry, certify and signing would go
-     * to the card for the whole key). Returns the row and whether the secrets
-     * left the phone.
+     * false, isCardBacked true), like one generated on a card. 4.7.0 (item 55):
+     * when every subkey moved and the primary stayed, the key stays a key pair
+     * linked to the card (gpg's `sec` + `ssb>`): signing and decrypting go to
+     * the card, and the primary here certifies and edits the key. Anything
+     * else keeps the key a software key pair, untouched, with the card holding
+     * a copy. Returns the row and whether the secrets left the phone.
      *
      * Either way, other keys linked to this card stop claiming the slots that
      * were just written.
@@ -1254,11 +1254,19 @@ class KeyRepository(
             if (fp !in moved) continue
             ring = PGPSecretKeyRing.insertSecretKey(ring, com.pgpony.android.crypto.card.KeyToCard.divertToCardStub(sk, aid))
         }
-        if (!com.pgpony.android.crypto.OfflineStub.allStubs(ring)) return@withContext Pair(entity, false)
+        // 4.7.0 (item 55, #71): every subkey moved and the primary stayed (gpg's
+        // sec + ssb>): the key stays a key pair, linked to the card, which signs
+        // and decrypts; the primary here certifies and edits the key.
+        val primaryStays = ring.secretKeys.asSequence().all { sk ->
+            if (sk.isMasterKey) !com.pgpony.android.crypto.OfflineStub.isStub(sk)
+            else com.pgpony.android.crypto.OfflineStub.isStub(sk)
+        }
+        val allMoved = com.pgpony.android.crypto.OfflineStub.allStubs(ring)
+        if (!allMoved && !primaryStays) return@withContext Pair(entity, false)
         store.storePrivateKey(fingerprint, ring.encoded)
         runCatching { com.pgpony.android.session.InAppPassphraseCache.clear(fingerprint) }
         val updated = entity.copy(
-            isKeyPair = false,
+            isKeyPair = !allMoved,
             isCardBacked = true,
             cardSerial = cardInfo.serialHex,
             cardAid = cardInfo.aidHex,
@@ -1650,6 +1658,23 @@ class KeyRepository(
 
     // ── Export ──────────────────────────────────────────────────────────
 
+    /**
+     * 4.7.0 (item 63, #93): several public keys in one armored block, as
+     * `gpg --export --armor` writes them (the keys' binary certificates one
+     * after another). Keys that cannot be exported are left out; null when
+     * none can.
+     */
+    fun exportPublicKeysArmored(fingerprints: List<String>): String? {
+        val out = java.io.ByteArrayOutputStream()
+        fingerprints.distinct().forEach { fp -> exportPublicKeyBytes(fp)?.let { out.write(it) } }
+        if (out.size() == 0) return null
+        return CompositeSigPacket.armor(
+            "-----BEGIN PGP PUBLIC KEY BLOCK-----",
+            "-----END PGP PUBLIC KEY BLOCK-----",
+            out.toByteArray()
+        )
+    }
+
     fun exportArmoredPublicKey(fingerprint: String): String? {
         // Composite keys must use the raw-bytes path: BouncyCastle either
         // rejects the algo-30/31 signatures or returns a partial ring, so try
@@ -1982,19 +2007,22 @@ class KeyRepository(
      *  primary's secret here and the Certify capability. */
     suspend fun certifierChoices(targetFingerprint: String): List<PGPKeyEntity> =
         kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
-            getAllKeys().filter {
-                it.isKeyPair && !it.isCardBacked && !it.isRevoked && !it.isExpired &&
+            // 4.7.0 (item 55): a key pair whose subkeys are on a card certifies
+            // with the primary here (canCertify refuses a stub primary).
+            val software = getAllKeys().filter {
+                it.isKeyPair && !it.isRevoked && !it.isExpired &&
                     it.trustLevel != TrustLevel.DONT_USE && !it.algorithm.isCompositeSign &&
                     !it.fingerprint.equals(targetFingerprint, ignoreCase = true)
             }.filter { e ->
                 loadSecretKeyRing(e.fingerprint)?.let { com.pgpony.android.crypto.CertificationService.canCertify(it) } == true
-            } + cardCertifierChoices(targetFingerprint)
+            }
+            software + cardCertifierChoices(targetFingerprint).filter { c -> software.none { it.id == c.id } }
         }
 
     /** 4.7.0 RC4 (item 31): your keys whose certifying primary is on a card's signature slot. */
     private suspend fun cardCertifierChoices(targetFingerprint: String): List<PGPKeyEntity> =
         getAllKeys().filter {
-            it.isCardBacked && it.primaryOnCard && !it.isRevoked && !it.isExpired &&
+            it.isCardBacked && !it.isKeyPair && it.primaryOnCard && !it.isRevoked && !it.isExpired &&
                 it.trustLevel != TrustLevel.DONT_USE && !it.algorithm.isCompositeSign &&
                 !it.fingerprint.equals(targetFingerprint, ignoreCase = true)
         }.filter { e ->
@@ -2252,6 +2280,7 @@ class KeyRepository(
     suspend fun purgeKey(entity: PGPKeyEntity) {
         com.pgpony.android.data.RemovedUserIdStore.clear(entity.fingerprint)
         com.pgpony.android.data.KeyPublicationStore.clear(entity.fingerprint)
+        com.pgpony.android.data.KeyServerCheckStore.clear(entity.fingerprint) // 4.7.0 (item 60)
         store.deleteKeys(entity.fingerprint)
         fallbackDao?.deleteAllReferencing(entity.fingerprint)
         signingDefaultsDao?.deleteFor(entity.fingerprint)
@@ -2651,7 +2680,9 @@ class KeyRepository(
         if (!entity.isKeyPair) {
             throw KeyRepoError.InvalidSubkey("Cannot revoke a subkey on a public-only key")
         }
-        if (entity.isCardBacked) {
+        // 4.7.0 (item 55, #71): a key pair whose subkeys are on a card keeps its
+        // primary here (gpg sec + ssb>), and the primary signs this edit.
+        if (entity.isCardBacked && !entity.isKeyPair) {
             throw KeyRepoError.InvalidSubkey("Subkeys can't be revoked on a card-backed key from here")
         }
         val targetHex = subkeyFingerprint.uppercase()
@@ -2748,7 +2779,9 @@ class KeyRepository(
         if (!entity.isKeyPair) {
             throw KeyRepoError.InvalidSubkey("Cannot remove a subkey from a public-only key")
         }
-        if (entity.isCardBacked) {
+        // 4.7.0 (item 55, #71): a key pair whose subkeys are on a card keeps its
+        // primary here (gpg sec + ssb>), and the primary signs this edit.
+        if (entity.isCardBacked && !entity.isKeyPair) {
             throw KeyRepoError.InvalidSubkey("Subkeys can't be removed from a card-backed key from here")
         }
         val targetHex = subkeyFingerprint.uppercase()
@@ -2866,7 +2899,9 @@ class KeyRepository(
                 "Cannot edit expiration on a public-only key — the private key is required to re-sign."
             )
         }
-        if (entity.isCardBacked) {
+        // 4.7.0 (item 55, #71): a key pair whose subkeys are on a card keeps its
+        // primary here (gpg sec + ssb>), and the primary signs this edit.
+        if (entity.isCardBacked && !entity.isKeyPair) {
             throw KeyExpirationService.ExpirationError.UnsupportedKey(
                 "This key lives on a hardware key — use the card flow to edit its expiration."
             )
@@ -2902,6 +2937,30 @@ class KeyRepository(
             }
         }
     }
+
+    /**
+     * 4.7.0 (item 51, #86): re-sign a software key pair's self-signatures with
+     * SHA-256, each keeping its expiry, and bring back subkeys left out only
+     * for a weak-hash binding whose secret is stored (KeyExpirationService
+     * .refreshSelfSignatures). Returns how many subkeys came back.
+     */
+    suspend fun refreshSelfSignatures(fingerprint: String, passphrase: String?): Int =
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+            val entity = dao.getByFingerprint(fingerprint) ?: throw KeyRepoError.NotFound(fingerprint)
+            if (!entity.isKeyPair) {
+                throw KeyExpirationService.ExpirationError.UnsupportedKey(
+                    "Self-signatures can be refreshed only on a key pair whose primary key is on this phone"
+                )
+            }
+            val secRing = loadSecretKeyRing(fingerprint)
+                ?: throw KeyExpirationService.ExpirationError.UnsupportedKey("Secret key ring could not be loaded for $fingerprint")
+            val pubRing = loadPublicKeyRing(fingerprint)
+                ?: throw KeyExpirationService.ExpirationError.UnsupportedKey("Public key ring could not be loaded for $fingerprint")
+            val out = keyExpiration.refreshSelfSignatures(secRing, pubRing, passphrase)
+            persistExpiration(entity, out.rings.publicRing, out.rings.secretRing, null, KeyExpirationService.Target.Refresh)
+            stampLocalEdit(fingerprint)
+            out.restoredSubkeys.size
+        }
 
     /** 4.6.0 (item 19 follow-up): the primary's private key for a hand-built
      *  v4 ML-KEM signature, or the same passphrase errors the caller's flow uses.
@@ -3090,7 +3149,9 @@ class KeyRepository(
                 "Cannot add a subkey to a public-only key — the private key is required to sign the binding"
             )
         }
-        if (entity.isCardBacked) {
+        // 4.7.0 (item 55, #71): a key pair whose subkeys are on a card keeps its
+        // primary here (gpg sec + ssb>), and the primary signs this edit.
+        if (entity.isCardBacked && !entity.isKeyPair) {
             throw ClassicalSubkeyGen.SubkeyAddError(
                 "This key lives on a hardware key — subkeys can't be added to a card-backed key from here"
             )
@@ -3188,7 +3249,9 @@ class KeyRepository(
                 "Cannot add a subkey to a public-only key — the private key is required to sign the binding"
             )
         }
-        if (entity.isCardBacked) {
+        // 4.7.0 (item 55, #71): a key pair whose subkeys are on a card keeps its
+        // primary here (gpg sec + ssb>), and the primary signs this edit.
+        if (entity.isCardBacked && !entity.isKeyPair) {
             throw ClassicalSubkeyGen.SubkeyAddError(
                 "This key lives on a hardware key — subkeys can't be added to a card-backed key from here"
             )
@@ -3298,7 +3361,9 @@ class KeyRepository(
                 "Cannot add a subkey to a public-only key — the private key is required to sign the binding"
             )
         }
-        if (entity.isCardBacked) {
+        // 4.7.0 (item 55, #71): a key pair whose subkeys are on a card keeps its
+        // primary here (gpg sec + ssb>), and the primary signs this edit.
+        if (entity.isCardBacked && !entity.isKeyPair) {
             throw ClassicalSubkeyGen.SubkeyAddError(
                 "This key lives on a hardware key — subkeys can't be added to a card-backed key from here"
             )
@@ -3378,7 +3443,9 @@ class KeyRepository(
                 "Cannot add a User ID to a public-only key — the private key is required to sign it"
             )
         }
-        if (entity.isCardBacked) {
+        // 4.7.0 (item 55, #71): a key pair whose subkeys are on a card keeps its
+        // primary here (gpg sec + ssb>), and the primary signs this edit.
+        if (entity.isCardBacked && !entity.isKeyPair) {
             throw UserIdService.UserIdError.UnsupportedKey(
                 "This key lives on a hardware key — User IDs can't be edited on a card-backed key from here"
             )
@@ -3448,7 +3515,9 @@ class KeyRepository(
                 "Cannot edit notations on a public-only key — the private key is required to sign them"
             )
         }
-        if (entity.isCardBacked) {
+        // 4.7.0 (item 55, #71): a key pair whose subkeys are on a card keeps its
+        // primary here (gpg sec + ssb>), and the primary signs this edit.
+        if (entity.isCardBacked && !entity.isKeyPair) {
             throw UserIdService.UserIdError.UnsupportedKey(
                 "Notations can't be edited on a card-backed key from here"
             )
@@ -3483,7 +3552,9 @@ class KeyRepository(
                 "Cannot revoke a User ID on a public-only key — the private key is required to sign the revocation"
             )
         }
-        if (entity.isCardBacked) {
+        // 4.7.0 (item 55, #71): a key pair whose subkeys are on a card keeps its
+        // primary here (gpg sec + ssb>), and the primary signs this edit.
+        if (entity.isCardBacked && !entity.isKeyPair) {
             throw UserIdService.UserIdError.UnsupportedKey(
                 "This key lives on a hardware key — User IDs can't be edited on a card-backed key from here"
             )
@@ -3516,7 +3587,9 @@ class KeyRepository(
                 "Removing a User ID is only supported on your own key pairs"
             )
         }
-        if (entity.isCardBacked) {
+        // 4.7.0 (item 55, #71): a key pair whose subkeys are on a card keeps its
+        // primary here (gpg sec + ssb>), and the primary signs this edit.
+        if (entity.isCardBacked && !entity.isKeyPair) {
             throw UserIdService.UserIdError.UnsupportedKey(
                 "This key lives on a hardware key, so User IDs cannot be edited on a card-backed key from here"
             )
@@ -3580,7 +3653,9 @@ class KeyRepository(
                 "Cannot change the primary User ID on a public-only key — the private key is required to sign it"
             )
         }
-        if (entity.isCardBacked) {
+        // 4.7.0 (item 55, #71): a key pair whose subkeys are on a card keeps its
+        // primary here (gpg sec + ssb>), and the primary signs this edit.
+        if (entity.isCardBacked && !entity.isKeyPair) {
             throw UserIdService.UserIdError.UnsupportedKey(
                 "This key lives on a hardware key — User IDs can't be edited on a card-backed key from here"
             )

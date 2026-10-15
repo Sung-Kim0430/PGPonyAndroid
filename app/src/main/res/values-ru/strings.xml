@@ -3039,7 +3039,7 @@
     <string name="move_to_card_backup_confirm">У меня есть резервная копия этой пары ключей</string>
     <string name="move_to_card_remove_label">Удалить перенесённые ключи с этого телефона</string>
     <string name="move_to_card_remove_hint">Как и в gpg, на телефоне остаётся только отметка о том, что ключи находятся на ключе безопасности, и с этого момента используется ключ безопасности. Выключите этот параметр, чтобы сохранить копию и здесь.</string>
-    <string name="move_to_card_remove_unavailable">Только если на ключ безопасности переносятся все ключи этой пары ключей. Иначе копия остаётся на этом телефоне, и он продолжает её использовать.</string>
+    <string name="move_to_card_remove_unavailable">Только если на ключ безопасности переносятся все подключи этой пары ключей. Основной ключ может остаться на этом телефоне, как и в gpg. Иначе копия остаётся здесь, и телефон продолжает её использовать.</string>
     <string name="move_to_card_wrong_admin_pin">Неверный PIN администратора. Осталось попыток: %1$d. Когда попыток не останется, ключ безопасности придётся сбросить.</string>
     <string name="move_to_card_wrong_user_pin">Неверный PIN пользователя. Осталось попыток: %1$d. На ключ безопасности ничего не записано.</string>
     <string name="move_to_card_replace_confirm">Заменить ключи, уже находящиеся в выбранных слотах</string>
@@ -3074,4 +3074,51 @@
     <string name="key_detail_subkey_change_expiry">Изменить срок действия…</string>
     <string name="key_detail_card_no_cert_title">Нужен открытый ключ</string>
     <string name="key_detail_card_no_cert_body">На этом ключе безопасности хранятся закрытые ключи, но не остальная часть ключа: его идентификаторы пользователя и подписи. Импортируйте соответствующий открытый ключ (из экспорта, резервной копии или с сервера ключей), и PGPony свяжет его с этим ключом безопасности, чтобы вы могли подписывать и расшифровывать с его помощью.</string>
+    <!-- 4.7.0 RC5 batch 2, translated Oct 2026 -->
+    <string name="key_detail_key_id_copied">ID ключа скопирован</string>
+    <string name="key_detail_copy_key_id_cd">Скопировать ID ключа</string>
+    <string name="key_detail_detail_usage">Назначение</string>
+    <string name="key_detail_cert_trust_full">доверенный посредник, глубина %1$d</string>
+    <string name="key_detail_cert_trust_partial">частично доверенный посредник, глубина %1$d</string>
+    <string name="key_detail_cert_trust_amount">доверие %1$d, глубина %2$d</string>
+    <string name="key_detail_cert_trust_limited">только для некоторых идентификаторов пользователя</string>
+    <string name="key_detail_last_checked_found_format">%1$s, найден на %2$s</string>
+    <string name="key_detail_last_checked_not_found_format">%1$s, нет на %2$s</string>
+    <string name="kd_vm_check_found_on">Этот ключ опубликован на %1$s.</string>
+    <string name="kd_vm_check_not_found_on">Этот ключ не найден на %1$s.</string>
+    <string name="key_detail_cert_look_up">Найти</string>
+    <string name="certifier_lookup_title">Найти автора сертификации</string>
+    <string name="certifier_lookup_found_body">Импорт этого ключа добавит его в вашу связку ключей, чтобы можно было проверить его сертификацию. Личность владельца ключа при этом не проверяется: проверяется только математика. Прежде чем полагаться на этот ключ, убедитесь, кому он принадлежит.</string>
+    <string name="certifier_lookup_not_found_title">Автор сертификации не найден</string>
+    <string name="certifier_lookup_not_found_body_format">Ключ для %1$s не найден ни на одном из настроенных вами серверов ключей. Возможно, автор сертификации не опубликовал свой ключ.</string>
+    <string name="certifier_lookup_imported_body">Сертификации этого ключа, сделанные им, будут проверены повторно.</string>
+    <string name="key_detail_refresh_sigs_menu">Обновить самоподписи</string>
+    <string name="key_detail_refresh_sigs_title">Обновить самоподписи</string>
+    <string name="key_detail_refresh_sigs_body">Заново подписывает идентификаторы пользователя и привязки подключей этого ключа с использованием SHA-256. Все сроки действия остаются прежними. Подключ, пропущенный из-за того, что его привязка использовала SHA-1, вернётся, если его закрытый ключ есть на этом телефоне. После этого опубликуйте ключ, чтобы другие получили новые подписи.</string>
+    <string name="key_detail_refresh_sigs_action">Обновить</string>
+    <string name="key_detail_refresh_sigs_done">Самоподписи обновлены.</string>
+    <plurals name="key_detail_refresh_sigs_done_restored">
+        <item quantity="one">Самоподписи обновлены. Возвращён %1$d подключ.</item>
+        <item quantity="few">Самоподписи обновлены. Возвращено %1$d подключа.</item>
+        <item quantity="many">Самоподписи обновлены. Возвращено %1$d подключей.</item>
+        <item quantity="other">Самоподписи обновлены. Возвращено %1$d подключа.</item>
+    </plurals>
+    <!-- 4.7.0 RC5 batch 3, translated Oct 2026 -->
+    <string name="keyring_select_menu">Выбрать ключи</string>
+    <string name="keyring_select_done_cd">Завершить выбор</string>
+    <string name="keyring_select_all_cd">Выбрать все</string>
+    <string name="keyring_export_selected_cd">Экспортировать открытые ключи</string>
+    <string name="keyring_export_selected_copied">Открытые ключи скопированы</string>
+    <plurals name="keyring_selected_count">
+        <item quantity="one">Выбрано: %1$d</item>
+        <item quantity="few">Выбрано: %1$d</item>
+        <item quantity="many">Выбрано: %1$d</item>
+        <item quantity="other">Выбрано: %1$d</item>
+    </plurals>
+    <plurals name="keyring_export_selected_label">
+        <item quantity="one">%1$d открытый ключ</item>
+        <item quantity="few">%1$d открытых ключа</item>
+        <item quantity="many">%1$d открытых ключей</item>
+        <item quantity="other">%1$d открытого ключа</item>
+    </plurals>
 </resources>

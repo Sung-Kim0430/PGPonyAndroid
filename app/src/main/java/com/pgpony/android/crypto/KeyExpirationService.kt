@@ -74,6 +74,51 @@ class KeyExpirationService private constructor() {
         data class Primary(val currentSubkeys: Boolean = false) : Target()
         /** One subkey's binding, and nothing else. */
         data class Subkey(val keyId: Long) : Target()
+        /** 4.7.0 (item 51, #86): re-sign every live User ID and every
+         *  subkey binding that is not revoked with a current hash, each
+         *  keeping its own expiry. Nothing expires or comes back to life. */
+        object Refresh : Target()
+    }
+
+    /**
+     * 4.7.0 (item 51, #86): [refreshSelfSignatures]'s result: the rings and
+     * the subkeys it brought back (left out of the certificate only because
+     * their binding or back-signature used SHA-1 after the cutoff, and whose
+     * secret is in [secretRing]).
+     */
+    class Refreshed(val rings: UpdatedRings, val restoredSubkeys: List<String>)
+
+    /**
+     * 4.7.0 (item 51, #86): Refresh self-signatures on a software key pair.
+     * A subkey the stored certificate lacks but [secretRing] still carries,
+     * whose only problem is a weak-hash binding (SubkeyAdmission WEAK_HASH,
+     * verified apart from the hash), is put back first; holding its secret is
+     * what makes that safe, since the SHA-1 risk is a binding forged over a
+     * subkey someone else controls. Then every live User ID and every subkey
+     * binding not revoked is re-signed with SHA-256, keeping each expiry.
+     */
+    fun refreshSelfSignatures(
+        secretRing: PGPSecretKeyRing,
+        publicRing: PGPPublicKeyRing,
+        passphrase: String?
+    ): Refreshed {
+        var base = publicRing
+        val restored = mutableListOf<String>()
+        val fromSecret = PGPPublicKeyRing(secretRing.publicKeys.asSequence().toList())
+        val weak = SubkeyAdmission.leftOut(fromSecret.encoded)
+            .filter { it.issue == SubkeyAdmission.Issue.WEAK_HASH }
+            .map { it.subkey.fingerprintHex.uppercase() }.toSet()
+        for (pub in fromSecret.publicKeys) {
+            if (pub.isMasterKey) continue
+            val fp = org.bouncycastle.util.encoders.Hex.toHexString(pub.fingerprint).uppercase()
+            if (fp !in weak || base.getPublicKey(pub.fingerprint) != null) continue
+            val sec = secretRing.getSecretKey(pub.keyID) ?: continue
+            if (OfflineStub.isStub(sec)) continue
+            base = PGPPublicKeyRing.insertPublicKey(base, pub)
+            restored += fp
+        }
+        val rings = setExpirationSoftware(secretRing, base, null, passphrase, Target.Refresh)
+        return Refreshed(rings, restored)
     }
 
     /** A signing subkey's binding needs a back-signature made by the subkey,
@@ -175,14 +220,16 @@ class KeyExpirationService private constructor() {
         // 1. The primary: rebuild each live user-ID self-certification. A
         //    revoked User ID is left as it is, so its revocation stands.
         val userIDs = mutableListOf<String>()
-        if (target is Target.Primary) primary.userIDs.forEach { userIDs.add(it) }
+        if (target is Target.Primary || target is Target.Refresh) primary.userIDs.forEach { userIDs.add(it) }
         val primaryExpiry = if (target is Target.Primary) relativeExpirySeconds(expiresAtEpochSeconds, primary) else null
         for (uid in userIDs) {
             if (UserIdService.shared.isRevoked(primary, uid)) continue
             val existing = selfCertFor(primary, uid)
+            // Refresh keeps each User ID's own expiry.
+            val uidExpiry = if (target is Target.Refresh) existing?.hashedSubPackets?.keyExpirationTime?.takeIf { it > 0 } else primaryExpiry
             val gen = makeGenerator(PGPSignature.POSITIVE_CERTIFICATION)
             val sub = PGPSignatureSubpacketGenerator()
-            copyUserIdSubpackets(existing?.hashedSubPackets, primaryExpiry, sub)
+            copyUserIdSubpackets(existing?.hashedSubPackets, uidExpiry, sub)
             gen.setHashedSubpackets(sub.generate())
             val newCert = gen.generateCertification(uid, primary)
             if (existing != null) {
@@ -202,6 +249,8 @@ class KeyExpirationService private constructor() {
             val wanted = when (target) {
                 is Target.Subkey -> sub.keyID == target.keyId
                 is Target.Primary -> target.currentSubkeys && isCurrent(sub, nowMs)
+                // Expiry is kept, so an expired subkey stays expired.
+                Target.Refresh -> !sub.hasRevocation() && subkeyBindingFor(sub) != null
             }
             if (wanted) subkeyIds.add(sub.keyID)
         }
@@ -211,7 +260,9 @@ class KeyExpirationService private constructor() {
         for (id in subkeyIds) {
             var subkey = newRing.getPublicKey(id) ?: continue
             val oldBinding = subkeyBindingFor(subkey)
-            val subExpiry = relativeExpirySeconds(expiresAtEpochSeconds, subkey)
+            val subExpiry = if (target is Target.Refresh)
+                oldBinding?.hashedSubPackets?.keyExpirationTime?.takeIf { it > 0 }
+            else relativeExpirySeconds(expiresAtEpochSeconds, subkey)
             val signCapable = oldBinding != null && hasSignFlag(oldBinding.hashedSubPackets)
 
             val newBinding = if (signCapable) {
@@ -222,6 +273,13 @@ class KeyExpirationService private constructor() {
                 if (secretRing == null) {
                     if (target is Target.Subkey) throw ExpirationError.UnsupportedKey(CARD_SIGNING_SUBKEY_MESSAGE)
                     continue
+                }
+                // A signing subkey whose secret is not here (a stub, or on a
+                // card, item 55) cannot make its back-signature; Refresh and
+                // "also current subkeys" pass over it instead of failing.
+                if (target !is Target.Subkey) {
+                    val subSecret = secretRing.getSecretKey(subkey.keyID)
+                    if (subSecret == null || OfflineStub.isStub(subSecret)) continue
                 }
                 buildSigningSubkeyBinding(primary, subkey, oldBinding, subExpiry, secretRing, passphrase, makeGenerator)
             } else {

@@ -1267,7 +1267,17 @@ Priority: low (UI, regression of a promise). Origin: #59 (Oct 14, reopened on 4.
 
 ## 51. Re-sign a key's self-signatures with a current hash (#86)
 
-**Status:** Planned, after RC4 (one RC at a time). Not started.
+**Status:** Next RC, code in, not yet on device. Key Details > Refresh self-signatures (software key pairs whose
+primary is on the phone): KeyExpirationService.refreshSelfSignatures re-signs every live User ID and every
+subkey binding not revoked with SHA-256 (Target.Refresh), each keeping its own expiry, carrying the old
+subpackets forward; a signing subkey whose secret is not here is passed over. First it puts back a subkey the
+stored certificate lacks but the stored secret ring still carries, when its only problem is a weak-hash
+binding or back-signature (SubkeyAdmission WEAK_HASH); a subkey whose secret is not held is never put back.
+The import case is covered by the same action: the secret ring is stored as imported, so after importing your
+own key pair, Refresh brings the subkeys back. The weak-hash mark on User IDs goes away after a refresh.
+Tests: RefreshSelfSignaturesTest (three weak subkeys back, SHA-256 bindings and back-signature that verify,
+expiry kept, the expired one still expired, no secret no restore), JVM, Bouncy Castle 1.85. Left out: the
+SHA-512 choice for large RSA keys (SHA-256 everywhere, as the other self-signatures).
 
 Priority: medium (feature, interop). Origin: #86 (Oct 14): gpg appears to have no way to remake a key's
 cross-certifications with a newer hash, so a subkey bound or back-signed with SHA-1 after the Feb 2023 cutoff
@@ -1365,7 +1375,19 @@ scanned back did the same.
 
 ## 55. Move only some keys to a security key and remove those from the phone (#71)
 
-**Status:** Planned, needs design first. Remove from this phone is offered only when every key with a secret
+**Status:** Next RC, code in, not yet on device. Remove from this phone is now also offered when every subkey
+moves and the primary stays (picked = keys with a secret here minus the primary). finishKeyToCard stubs the
+moved subkeys and keeps the key a key pair linked to the card (isKeyPair and isCardBacked both set, the state a
+card scan already made when it linked onto a key pair): signing and decrypting go to the card, in the app and
+for mail apps, as they already did for that state. The edits signed by the primary now accept it: expiry (the
+software path), User ID add/revoke/remove/primary, notations, subkey revoke/remove, certify (software list,
+deduped against the card list; the sheet asks for the passphrase), Refresh self-signatures. Add Subkey stays
+off for it: a new subkey would stay on the phone and receive mail the card cannot open (add subkeys first,
+then move them). Use for signing and fallbacks stay off (the card signs). Expiry with "also current subkeys"
+and Refresh pass over a signing subkey whose secret is on the card.
+
+Previously planned scope, still out: routing each operation per subkey, so a key can have some working subkeys
+on the phone and others on a card. Remove from this phone is offered only when every key with a secret
 moves (RC4 review). gpg's usual layout is the primary kept (sec) and the subkeys on the card (ssb>), and a
 key with a certify-only primary and three subkeys cannot move whole into three slots. Making the partial
 case work means routing per subkey everywhere a software key pair is used: signing (item 39 and 46 picks)
@@ -1388,6 +1410,58 @@ provider's cache (clear-all) and on device lock. No new strings. Tests: Recipien
 
 Priority: medium (bug, provider). Origin: #25 (Oct 15, FairEmail): the review opened on Encrypt and again on
 Send (three times when the draft was saved first), and the keys picked were not remembered.
+
+## 57. Copy a subkey's key ID (#91)
+
+**Status:** Next RC, code in. Each subkey's key ID row is tappable with a copy icon; a snackbar confirms. 2 new
+strings. Origin: #91 (Oct 15).
+
+## 58. The primary key's usage in Details (#89)
+
+**Status:** Next RC, code in. Details shows Usage for the primary (Certify, Sign, Encrypt, Authenticate) from the
+key flags on its newest self-signature made by the primary (KeyDetailViewModel.primaryUsageOf), in the same
+wording as the subkey rows (SubkeyCapability.displayString, English like them). 1 new string. Origin: #89
+(Oct 15, coming from OpenKeychain's usage icons).
+
+## 59. Trust signatures on certifications (#79)
+
+**Status:** Next RC, code in. A certification carrying a Trust Signature subpacket (gpg tsign) now says so after
+its level: trusted introducer (amount 120 or more), partly trusted introducer (60 or more), or the amount, with
+the depth, and "limited to some User IDs" when a Regular Expression subpacket is present. The level label
+"No claim" is right for gpg's default tsign (0x10). 4 new strings. Origin: #79 (Oct 15).
+
+## 60. Key server check result stays in Details (#90)
+
+**Status:** Next RC, code in. Check Key Server now uses fetchByFingerprint, so a network failure is reported as an
+error instead of "not found"; the answer is kept per key (KeyServerCheckStore: server, found, time) and Last
+checked reads "<date>, found on keys.openpgp.org" or "not on". The message names the server. The record goes
+with the key on purge. 4 new strings. Origin: #90 (Oct 15).
+
+## 61. Look up a certifier's key (#88)
+
+**Status:** Next RC, code in. A certification by a key not in the keyring gets Look up, which searches the
+configured key servers by the issuer fingerprint (keys.pgpony.app and the others first, then keys.openpgp.org),
+or by key ID when the certification has no fingerprint, and shows the key before importing it (the signer
+lookup sheet in a certifier wording). After import the certifications are read again, so the certifier shows by
+name and its signature is checked. Hidden in offline mode. 6 new strings. Origin: #88 (Oct 15).
+
+## 62. Import and Exchange overlap (#92)
+
+**Status:** Decision for NorseHorse, not built. The requester proposes that Import keep Paste, File and Link and
+point to Exchange for QR, Server and GitHub (GitHub joining Exchange), since Exchange has room to explain.
+Recommendation: keep every method in Import (it is where people look to add a key, and the Keyring's + leads
+there) and make Exchange the place for meeting in person and publishing: add GitHub to Exchange's key server
+tab so the two lists agree, and give Import's QR, Server and GitHub rows a one-line explanation each. Origin:
+#92 (Oct 15).
+
+## 63. Export several public keys as one file (#93)
+
+**Status:** Next RC, code in. Keyring > overflow > Select keys: a tap ticks a key (a checkbox on each card), the
+bar shows how many are picked, Select all, and Export, which puts the picked keys' public keys in one armored
+block (KeyRepository.exportPublicKeysArmored: the binary certificates one after another, as gpg --export
+--armor writes them) and opens the public key sheet (Copy, Save as .asc, Share). Back or the close icon ends
+selecting. A card placeholder without its certificate is left out. 5 strings and 2 plurals. Origin: #93 (Oct 15:
+the requester reconstructed old keys and wants them in one .asc).
 
 RC3 translation pass (Oct 13): every string missing from a locale went into all 10 (about 125 each; Korean 322,
 including 184 strings and 10 plurals that had fallen behind since 4.6.3, still no err_ strings), and strings that

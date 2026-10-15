@@ -2997,7 +2997,7 @@
     <string name="move_to_card_backup_confirm">我已有此密钥对的备份</string>
     <string name="move_to_card_remove_label">从此手机中移除已移动的密钥</string>
     <string name="move_to_card_remove_hint">与 gpg 一样，手机只保留一条记录，说明这些密钥位于硬件密钥上，并从此改用硬件密钥。关闭此项可同时在此处保留一份副本。</string>
-    <string name="move_to_card_remove_unavailable">仅当此密钥对的每个密钥都移至硬件密钥时可用。否则此手机上会保留一份副本，手机会继续使用该副本。</string>
+    <string name="move_to_card_remove_unavailable">仅当此密钥对的每个子钥都移至硬件密钥时可用。主钥可以留在此手机上，与 gpg 的做法相同。否则此手机上会保留一份副本，手机会继续使用该副本。</string>
     <string name="move_to_card_wrong_admin_pin">管理员 PIN 错误。剩余 %1$d 次尝试。次数用尽后，必须重置硬件密钥。</string>
     <string name="move_to_card_wrong_user_pin">用户 PIN 错误。剩余 %1$d 次尝试。未向硬件密钥写入任何内容。</string>
     <string name="move_to_card_replace_confirm">替换所选槽位中已有的密钥</string>
@@ -3026,4 +3026,42 @@
     <string name="key_detail_subkey_change_expiry">编辑有效期…</string>
     <string name="key_detail_card_no_cert_title">需要公钥</string>
     <string name="key_detail_card_no_cert_body">此硬件密钥存有私钥，但没有密钥的其余部分，即它的用户 ID 和签名。导入匹配的公钥（导出文件、备份或密钥服务器上的副本），PGPony 就会将其与此硬件密钥配对，以便你用它签名和解密。</string>
+    <!-- 4.7.0 RC5 batch 2, translated Oct 2026 -->
+    <string name="key_detail_key_id_copied">密钥 ID 已复制</string>
+    <string name="key_detail_copy_key_id_cd">复制密钥 ID</string>
+    <string name="key_detail_detail_usage">用途</string>
+    <string name="key_detail_cert_trust_full">深度为 %1$d 的可信介绍人</string>
+    <string name="key_detail_cert_trust_partial">深度为 %1$d 的部分可信介绍人</string>
+    <string name="key_detail_cert_trust_amount">信任值 %1$d、深度 %2$d</string>
+    <string name="key_detail_cert_trust_limited">仅限部分用户 ID</string>
+    <string name="key_detail_last_checked_found_format">%1$s，已在 %2$s 上找到</string>
+    <string name="key_detail_last_checked_not_found_format">%1$s，在 %2$s 上未找到</string>
+    <string name="kd_vm_check_found_on">此密钥已发布到 %1$s。</string>
+    <string name="kd_vm_check_not_found_on">在 %1$s 上未找到此密钥。</string>
+    <string name="key_detail_cert_look_up">查找</string>
+    <string name="certifier_lookup_title">查找认证者</string>
+    <string name="certifier_lookup_found_body">导入此密钥会将其添加到你的密钥环，以便检查它所做的认证。该密钥的身份并未因此得到核实，这里只检查数学上的有效性。在依赖它之前，请先确认它属于谁。</string>
+    <string name="certifier_lookup_not_found_title">未找到认证者</string>
+    <string name="certifier_lookup_not_found_body_format">在你配置的所有密钥服务器上均未找到 %1$s 的密钥。认证者可能尚未发布其密钥。</string>
+    <string name="certifier_lookup_imported_body">它对此密钥所做的认证将重新检查。</string>
+    <string name="key_detail_refresh_sigs_menu">刷新自签名</string>
+    <string name="key_detail_refresh_sigs_title">刷新自签名</string>
+    <string name="key_detail_refresh_sigs_body">使用 SHA-256 重新签名此密钥的用户 ID 和子钥绑定。所有有效期保持不变。因绑定使用 SHA-1 而被排除的子钥，如果其私钥在此手机上，将会恢复。完成后请发布此密钥，以便其他人获得新的签名。</string>
+    <string name="key_detail_refresh_sigs_action">刷新</string>
+    <string name="key_detail_refresh_sigs_done">自签名已刷新。</string>
+    <plurals name="key_detail_refresh_sigs_done_restored">
+        <item quantity="other">自签名已刷新。%1$d 个子钥已恢复。</item>
+    </plurals>
+    <!-- 4.7.0 RC5 batch 3, translated Oct 2026 -->
+    <string name="keyring_select_menu">选择密钥</string>
+    <string name="keyring_select_done_cd">退出选择</string>
+    <string name="keyring_select_all_cd">全选</string>
+    <string name="keyring_export_selected_cd">导出公钥</string>
+    <string name="keyring_export_selected_copied">公钥已复制</string>
+    <plurals name="keyring_selected_count">
+        <item quantity="other">已选择 %1$d 个</item>
+    </plurals>
+    <plurals name="keyring_export_selected_label">
+        <item quantity="other">%1$d 个公钥</item>
+    </plurals>
 </resources>

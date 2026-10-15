@@ -65,7 +65,7 @@ fun CertifySheet(
     var passphrase by remember { mutableStateOf("") }
 
     // 4.7.0 RC4 (item 31): a certifier on a card asks for its PIN, not a passphrase.
-    val onCard = certifier?.isCardBacked == true
+    val onCard = certifier?.let { it.isCardBacked && !it.isKeyPair } == true // 4.7.0 (item 55)
     val canApply = !isProcessing && certifier != null && picked.isNotEmpty() && compared &&
         (!onCard || passphrase.isNotEmpty())
 

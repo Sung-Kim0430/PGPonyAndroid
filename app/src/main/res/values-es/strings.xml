@@ -2944,7 +2944,7 @@ Opcionalmente, bloquea la app con tu huella digital o cara para mayor tranquilid
     <string name="move_to_card_backup_confirm">Tengo una copia de seguridad de este par de claves</string>
     <string name="move_to_card_remove_label">Quitar de este teléfono las claves movidas</string>
     <string name="move_to_card_remove_hint">Como gpg, el teléfono conserva solo una nota de que las claves están en la llave de seguridad y, a partir de entonces, usa la llave de seguridad. Desactívalo para conservar también una copia aquí.</string>
-    <string name="move_to_card_remove_unavailable">Solo cuando todas las claves de este par de claves vayan a la llave de seguridad. De lo contrario, queda una copia en este teléfono, que la sigue usando.</string>
+    <string name="move_to_card_remove_unavailable">Solo cuando todas las subclaves de este par de claves vayan a la llave de seguridad. La clave principal puede quedarse en este teléfono, como en gpg. De lo contrario, queda una copia aquí y el teléfono la sigue usando.</string>
     <string name="move_to_card_wrong_admin_pin">PIN de administrador incorrecto. Intentos restantes: %1$d. Cuando no quede ninguno, habrá que restablecer la llave de seguridad.</string>
     <string name="move_to_card_wrong_user_pin">PIN de usuario incorrecto. Intentos restantes: %1$d. No se escribió nada en la llave de seguridad.</string>
     <string name="move_to_card_replace_confirm">Reemplazar las claves que ya haya en las ranuras elegidas</string>
@@ -2977,4 +2977,48 @@ Opcionalmente, bloquea la app con tu huella digital o cara para mayor tranquilid
     <string name="key_detail_subkey_change_expiry">Editar caducidad…</string>
     <string name="key_detail_card_no_cert_title">Se necesita la clave pública</string>
     <string name="key_detail_card_no_cert_body">Esta llave de seguridad contiene las claves privadas, pero no el resto de la clave: sus ID de usuario y firmas. Importa la clave pública correspondiente (de una exportación, una copia de seguridad o un servidor de claves) y PGPony la emparejará con esta llave de seguridad para que puedas firmar y descifrar con ella.</string>
+    <!-- 4.7.0 RC5 batch 2, translated Oct 2026 -->
+    <string name="key_detail_key_id_copied">ID de clave copiado</string>
+    <string name="key_detail_copy_key_id_cd">Copiar el ID de clave</string>
+    <string name="key_detail_detail_usage">Uso</string>
+    <string name="key_detail_cert_trust_full">introductor de confianza, profundidad %1$d</string>
+    <string name="key_detail_cert_trust_partial">introductor de confianza parcial, profundidad %1$d</string>
+    <string name="key_detail_cert_trust_amount">confianza %1$d, profundidad %2$d</string>
+    <string name="key_detail_cert_trust_limited">limitada a algunos ID de usuario</string>
+    <string name="key_detail_last_checked_found_format">%1$s, encontrada en %2$s</string>
+    <string name="key_detail_last_checked_not_found_format">%1$s, no está en %2$s</string>
+    <string name="kd_vm_check_found_on">Esta clave está publicada en %1$s.</string>
+    <string name="kd_vm_check_not_found_on">Esta clave no está en %1$s.</string>
+    <string name="key_detail_cert_look_up">Buscar</string>
+    <string name="certifier_lookup_title">Buscar certificador</string>
+    <string name="certifier_lookup_found_body">Al importarla, la clave se añade a tu llavero para que se pueda comprobar su certificación. Esto no valida su identidad: solo se comprueba la matemática. Comprueba a quién pertenece antes de fiarte de ella.</string>
+    <string name="certifier_lookup_not_found_title">Certificador no encontrado</string>
+    <string name="certifier_lookup_not_found_body_format">No se encontró ninguna clave para %1$s en los servidores de claves que tienes configurados. Es posible que el certificador no haya publicado su clave.</string>
+    <string name="certifier_lookup_imported_body">Se vuelven a comprobar las certificaciones que hizo sobre esta clave.</string>
+    <string name="key_detail_refresh_sigs_menu">Renovar autofirmas</string>
+    <string name="key_detail_refresh_sigs_title">Renovar autofirmas</string>
+    <string name="key_detail_refresh_sigs_body">Vuelve a firmar con SHA-256 los ID de usuario y las vinculaciones de subclaves de esta clave. Todas las fechas de caducidad se mantienen. Una subclave que se omitió porque su vinculación usaba SHA-1 se recupera si su secreto está en este teléfono. Después, publica la clave para que otros reciban las nuevas firmas.</string>
+    <string name="key_detail_refresh_sigs_action">Renovar</string>
+    <string name="key_detail_refresh_sigs_done">Autofirmas renovadas.</string>
+    <plurals name="key_detail_refresh_sigs_done_restored">
+        <item quantity="one">Autofirmas renovadas. Se ha recuperado %1$d subclave.</item>
+        <item quantity="many">Autofirmas renovadas. Se han recuperado %1$d subclaves.</item>
+        <item quantity="other">Autofirmas renovadas. Se han recuperado %1$d subclaves.</item>
+    </plurals>
+    <!-- 4.7.0 RC5 batch 3, translated Oct 2026 -->
+    <string name="keyring_select_menu">Seleccionar claves</string>
+    <string name="keyring_select_done_cd">Dejar de seleccionar</string>
+    <string name="keyring_select_all_cd">Seleccionar todo</string>
+    <string name="keyring_export_selected_cd">Exportar claves públicas</string>
+    <string name="keyring_export_selected_copied">Claves públicas copiadas</string>
+    <plurals name="keyring_selected_count">
+        <item quantity="one">%1$d seleccionada</item>
+        <item quantity="many">%1$d seleccionadas</item>
+        <item quantity="other">%1$d seleccionadas</item>
+    </plurals>
+    <plurals name="keyring_export_selected_label">
+        <item quantity="one">%1$d clave pública</item>
+        <item quantity="many">%1$d claves públicas</item>
+        <item quantity="other">%1$d claves públicas</item>
+    </plurals>
 </resources>

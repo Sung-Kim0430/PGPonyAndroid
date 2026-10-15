@@ -94,8 +94,14 @@ fun MoveToCardSheet(
     val picked = choices.filterValues { it != null }.mapValues { it.value!! }
     val distinct = picked.values.toSet().size == picked.size
     // The moved keys leave the phone only when every key with a secret here
-    // moves; otherwise the phone keeps working with its copy.
-    val removeAllowed = distinct && picked.size == secretCount
+    // moves, or (4.7.0 item 55, #71) every one but the primary, which stays
+    // here for certifying and editing the key, as gpg's sec + ssb> does.
+    // Otherwise the phone keeps working with its copy.
+    val primaryFp = candidates.firstOrNull { it.isPrimary }?.fingerprint
+    val removeAllowed = distinct && (
+        picked.size == secretCount ||
+            (picked.size == secretCount - 1 && primaryFp != null && primaryFp !in picked.values)
+        )
     // Replacing is not a gate: the card is read before any PIN is sent, and a
     // chosen slot holding a different key stops the move unless this is on.
     val canMove = !isProcessing && picked.isNotEmpty() && distinct && haveBackup &&

@@ -2944,7 +2944,7 @@ Vous pouvez aussi verrouiller l\'application derrière votre empreinte digitale 
     <string name="move_to_card_backup_confirm">J\'ai une sauvegarde de cette paire de clés</string>
     <string name="move_to_card_remove_label">Supprimer de ce téléphone les clés déplacées</string>
     <string name="move_to_card_remove_hint">Comme avec gpg, le téléphone ne garde qu\'une note indiquant que les clés sont sur la clé de sécurité, et utilise la clé de sécurité à partir de ce moment. Désactivez cette option pour en garder aussi une copie ici.</string>
-    <string name="move_to_card_remove_unavailable">Uniquement quand toutes les clés de cette paire de clés vont sur la clé de sécurité. Sinon, une copie reste sur ce téléphone, qui continue de l\'utiliser.</string>
+    <string name="move_to_card_remove_unavailable">Uniquement quand toutes les sous-clés de cette paire de clés vont sur la clé de sécurité. La clé principale peut rester sur ce téléphone, comme avec gpg. Sinon, une copie reste ici et le téléphone continue de l\'utiliser.</string>
     <string name="move_to_card_wrong_admin_pin">PIN admin incorrect. Essais restants : %1$d. Quand il n\'en reste plus aucun, la clé de sécurité doit être réinitialisée.</string>
     <string name="move_to_card_wrong_user_pin">PIN utilisateur incorrect. Essais restants : %1$d. Rien n\'a été écrit sur la clé de sécurité.</string>
     <string name="move_to_card_replace_confirm">Remplacer les clés déjà présentes dans les emplacements choisis</string>
@@ -2977,4 +2977,48 @@ Vous pouvez aussi verrouiller l\'application derrière votre empreinte digitale 
     <string name="key_detail_subkey_change_expiry">Modifier l\'expiration…</string>
     <string name="key_detail_card_no_cert_title">Clé publique requise</string>
     <string name="key_detail_card_no_cert_body">Cette clé de sécurité contient les clés privées, mais pas le reste de la clé : ses ID utilisateur et ses signatures. Importez la clé publique correspondante (une exportation, une sauvegarde ou une copie d\'un serveur de clés) et PGPony l\'associe à cette clé de sécurité, pour que vous puissiez signer et déchiffrer avec elle.</string>
+    <!-- 4.7.0 RC5 batch 2, translated Oct 2026 -->
+    <string name="key_detail_key_id_copied">ID de clé copié</string>
+    <string name="key_detail_copy_key_id_cd">Copier l\'ID de clé</string>
+    <string name="key_detail_detail_usage">Utilisation</string>
+    <string name="key_detail_cert_trust_full">introducteur de confiance, profondeur %1$d</string>
+    <string name="key_detail_cert_trust_partial">introducteur de confiance partielle, profondeur %1$d</string>
+    <string name="key_detail_cert_trust_amount">confiance %1$d, profondeur %2$d</string>
+    <string name="key_detail_cert_trust_limited">limitée à certains ID utilisateur</string>
+    <string name="key_detail_last_checked_found_format">%1$s, trouvée sur %2$s</string>
+    <string name="key_detail_last_checked_not_found_format">%1$s, absente de %2$s</string>
+    <string name="kd_vm_check_found_on">Cette clé est publiée sur %1$s.</string>
+    <string name="kd_vm_check_not_found_on">Cette clé est introuvable sur %1$s.</string>
+    <string name="key_detail_cert_look_up">Rechercher</string>
+    <string name="certifier_lookup_title">Rechercher le certificateur</string>
+    <string name="certifier_lookup_found_body">L\'importation ajoute cette clé à votre trousseau, pour que sa certification puisse être vérifiée. Cela ne valide pas son identité : seules les mathématiques sont vérifiées. Vérifiez à qui elle appartient avant de vous y fier.</string>
+    <string name="certifier_lookup_not_found_title">Certificateur introuvable</string>
+    <string name="certifier_lookup_not_found_body_format">Aucune clé n\'a été trouvée pour %1$s sur vos serveurs de clés configurés. Le certificateur n\'a peut-être pas publié sa clé.</string>
+    <string name="certifier_lookup_imported_body">Ses certifications sur cette clé sont revérifiées.</string>
+    <string name="key_detail_refresh_sigs_menu">Actualiser les autosignatures</string>
+    <string name="key_detail_refresh_sigs_title">Actualiser les autosignatures</string>
+    <string name="key_detail_refresh_sigs_body">Signe de nouveau les ID utilisateur et les liaisons de sous-clés de cette clé avec SHA-256. Toutes les dates d\'expiration restent inchangées. Une sous-clé écartée parce que sa liaison utilisait SHA-1 est rétablie si sa clé privée se trouve sur ce téléphone. Publiez ensuite la clé pour que les autres reçoivent les nouvelles signatures.</string>
+    <string name="key_detail_refresh_sigs_action">Actualiser</string>
+    <string name="key_detail_refresh_sigs_done">Autosignatures actualisées.</string>
+    <plurals name="key_detail_refresh_sigs_done_restored">
+        <item quantity="one">Autosignatures actualisées. %1$d sous-clé rétablie.</item>
+        <item quantity="many">Autosignatures actualisées. %1$d sous-clés rétablies.</item>
+        <item quantity="other">Autosignatures actualisées. %1$d sous-clés rétablies.</item>
+    </plurals>
+    <!-- 4.7.0 RC5 batch 3, translated Oct 2026 -->
+    <string name="keyring_select_menu">Sélectionner des clés</string>
+    <string name="keyring_select_done_cd">Quitter la sélection</string>
+    <string name="keyring_select_all_cd">Tout sélectionner</string>
+    <string name="keyring_export_selected_cd">Exporter les clés publiques</string>
+    <string name="keyring_export_selected_copied">Clés publiques copiées</string>
+    <plurals name="keyring_selected_count">
+        <item quantity="one">%1$d sélectionnée</item>
+        <item quantity="many">%1$d sélectionnées</item>
+        <item quantity="other">%1$d sélectionnées</item>
+    </plurals>
+    <plurals name="keyring_export_selected_label">
+        <item quantity="one">%1$d clé publique</item>
+        <item quantity="many">%1$d clés publiques</item>
+        <item quantity="other">%1$d clés publiques</item>
+    </plurals>
 </resources>

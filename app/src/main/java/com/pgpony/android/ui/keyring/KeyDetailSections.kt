@@ -534,10 +534,20 @@ fun FingerprintSection(
 fun DetailsSection(
     key: PGPKeyEntity,
     onTrustTap: () -> Unit,
-    onEditExpiry: (() -> Unit)? = null
+    onEditExpiry: (() -> Unit)? = null,
+    /** 4.7.0 (item 58, #89): the primary key's usage, as on subkey rows. */
+    primaryUsage: Int? = null,
+    /** 4.7.0 (item 60, #90): the last key server check's answer. */
+    keyServerCheck: com.pgpony.android.data.KeyServerCheckStore.Result? = null
 ) {
     SectionGroup(title = stringResource(R.string.key_detail_section_details)) {
         DetailRow(label = stringResource(R.string.key_detail_detail_algorithm), value = key.algorithm.displayName)
+        primaryUsage?.let { bits ->
+            DetailRow(
+                label = stringResource(R.string.key_detail_detail_usage),
+                value = SubkeyCapability.displayString(bits)
+            )
+        }
         DetailRow(
             label = stringResource(R.string.key_detail_detail_format),
             value = if (key.isV6Key) stringResource(R.string.key_detail_detail_format_v6)
@@ -578,9 +588,16 @@ fun DetailsSection(
             value = key.lastUploadedAt?.let { formatDate(it) }
                 ?: stringResource(R.string.key_detail_timestamp_never),
         )
+        // 4.7.0 (item 60, #90): with the answer and the server, kept.
         DetailRow(
             label = stringResource(R.string.key_detail_last_checked_label),
-            value = key.lastCheckedAt?.let { formatDate(it) }
+            value = keyServerCheck?.let { c ->
+                stringResource(
+                    if (c.found) R.string.key_detail_last_checked_found_format
+                    else R.string.key_detail_last_checked_not_found_format,
+                    formatDate(c.atMs), c.server
+                )
+            } ?: key.lastCheckedAt?.let { formatDate(it) }
                 ?: stringResource(R.string.key_detail_timestamp_never),
         )
     }
@@ -923,7 +940,9 @@ fun UserIdsSection(
     onCopyEmail: ((String) -> Unit)? = null,
     // 4.7.0 (item 31, #79): who certified each User ID.
     certifications: List<com.pgpony.android.data.repository.KeyRepository.CertificationRow> = emptyList(),
-    onRevokeCertification: ((com.pgpony.android.data.repository.KeyRepository.CertificationRow) -> Unit)? = null
+    onRevokeCertification: ((com.pgpony.android.data.repository.KeyRepository.CertificationRow) -> Unit)? = null,
+    // 4.7.0 (item 61, #88): look up a certifier whose key is not here.
+    onLookUpCertifier: ((com.pgpony.android.data.repository.KeyRepository.CertificationRow) -> Unit)? = null
 ) {
     SectionGroup(title = stringResource(R.string.key_detail_userids_title)) {
         userIds.forEach { uid ->
@@ -995,7 +1014,8 @@ fun UserIdsSection(
                 key(uid.raw) {
                     CertificationList(
                         rows = certifications.filter { it.certification.userId == uid.raw },
-                        onRevoke = onRevokeCertification
+                        onRevoke = onRevokeCertification,
+                        onLookUp = onLookUpCertifier
                     )
                 }
                 if (canEdit && !uid.isRevoked) {
@@ -1070,13 +1090,14 @@ private fun certificationIsGood(row: com.pgpony.android.data.repository.KeyRepos
 @Composable
 private fun CertificationList(
     rows: List<com.pgpony.android.data.repository.KeyRepository.CertificationRow>,
-    onRevoke: ((com.pgpony.android.data.repository.KeyRepository.CertificationRow) -> Unit)?
+    onRevoke: ((com.pgpony.android.data.repository.KeyRepository.CertificationRow) -> Unit)?,
+    onLookUp: ((com.pgpony.android.data.repository.KeyRepository.CertificationRow) -> Unit)? = null
 ) {
     if (rows.isEmpty()) return
     var expanded by rememberSaveable { mutableStateOf(false) }
     val ordered = orderCertifications(rows, { it.isMine }, ::certificationIsGood)
     val shown = if (expanded || ordered.size <= CERTIFICATIONS_SHOWN) ordered else ordered.take(CERTIFICATIONS_SHOWN)
-    shown.forEach { row -> CertificationLine(row = row, onRevoke = onRevoke) }
+    shown.forEach { row -> CertificationLine(row = row, onRevoke = onRevoke, onLookUp = onLookUp) }
     if (ordered.size > CERTIFICATIONS_SHOWN) {
         TextButton(
             onClick = { expanded = !expanded },
@@ -1102,7 +1123,8 @@ private fun CertificationList(
 @Composable
 private fun CertificationLine(
     row: com.pgpony.android.data.repository.KeyRepository.CertificationRow,
-    onRevoke: ((com.pgpony.android.data.repository.KeyRepository.CertificationRow) -> Unit)?
+    onRevoke: ((com.pgpony.android.data.repository.KeyRepository.CertificationRow) -> Unit)?,
+    onLookUp: ((com.pgpony.android.data.repository.KeyRepository.CertificationRow) -> Unit)? = null
 ) {
     val c = row.certification
     // 4.7.0 (item 31, #79): a known certifier shows its short fingerprint
@@ -1118,6 +1140,19 @@ private fun CertificationLine(
         )
     val notes = buildList {
         add(certifyLevelLabel(c.level))
+        // 4.7.0 (item 59, #79): a trust signature (gpg tsign) says the
+        // certifier also trusts this key to introduce others.
+        c.trustDepth?.let { depth ->
+            val amount = c.trustAmount ?: 0
+            add(
+                when {
+                    amount >= 120 -> stringResource(R.string.key_detail_cert_trust_full, depth)
+                    amount >= 60 -> stringResource(R.string.key_detail_cert_trust_partial, depth)
+                    else -> stringResource(R.string.key_detail_cert_trust_amount, amount, depth)
+                }
+            )
+            if (c.trustLimited) add(stringResource(R.string.key_detail_cert_trust_limited))
+        }
         if (!c.exportable) add(stringResource(R.string.key_detail_cert_local))
         if (c.revoked) add(stringResource(R.string.key_detail_cert_revoked))
         if (c.expiredAt(System.currentTimeMillis())) add(stringResource(R.string.key_detail_cert_expired))
@@ -1140,6 +1175,12 @@ private fun CertificationLine(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.weight(1f)
         )
+        // 4.7.0 (item 61, #88): a certifier whose key is not in the keyring.
+        if (row.issuer == null && onLookUp != null) {
+            TextButton(onClick = { onLookUp(row) }, contentPadding = PaddingValues(horizontal = 8.dp)) {
+                Text(stringResource(R.string.key_detail_cert_look_up), style = MaterialTheme.typography.labelMedium)
+            }
+        }
         if (row.isMine && !c.revoked && onRevoke != null) {
             TextButton(onClick = { onRevoke(row) }, contentPadding = PaddingValues(horizontal = 8.dp)) {
                 Text(
@@ -1172,6 +1213,8 @@ fun SubkeysSection(
     onRemoveSubkey: ((SubkeyDisplayInfo) -> Unit)? = null,
     // 4.7.0 (item 53, #86): change one subkey's expiry.
     onChangeSubkeyExpiry: ((SubkeyDisplayInfo) -> Unit)? = null,
+    // 4.7.0 (item 57, #91): tap a subkey's key ID to copy it.
+    onCopyKeyId: ((String) -> Unit)? = null,
     // 4.7.0 (item 34, #43): on a key generated on a card the signing key is the
     // primary itself, so the list of subkeys alone showed only the encryption
     // key; this line says where the primary is.
@@ -1259,11 +1302,26 @@ fun SubkeysSection(
                         }
                     }
                 }
-                Text(
-                    text = stringResource(R.string.key_detail_subkeys_key_id_format, sub.keyId),
-                    style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = if (onCopyKeyId != null) Modifier.clickable { onCopyKeyId(sub.keyId) } else Modifier
+                ) {
+                    val idColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                    Text(
+                        text = stringResource(R.string.key_detail_subkeys_key_id_format, sub.keyId),
+                        style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+                        color = idColor
+                    )
+                    if (onCopyKeyId != null) {
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Icon(
+                            imageVector = Icons.Filled.ContentCopy,
+                            contentDescription = stringResource(R.string.key_detail_copy_key_id_cd),
+                            tint = idColor,
+                            modifier = Modifier.size(14.dp)
+                        )
+                    }
+                }
                 val expiryText = sub.expiresAt?.let {
                     stringResource(R.string.key_detail_subkeys_created_expires_format, formatDate(sub.createdAt), formatDate(it))
                 } ?: stringResource(R.string.key_detail_subkeys_created_no_expiry_format, formatDate(sub.createdAt))

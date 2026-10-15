@@ -157,13 +157,16 @@ fun ExportPublicKeyResultSheet(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    Text(
-                        text = stringResource(R.string.result_sheet_fingerprint_format, shortFingerprint),
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            fontFamily = FontFamily.Monospace
-                        ),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    // 4.7.0 (item 63, #93): several keys in one file have no single fingerprint.
+                    if (shortFingerprint.isNotBlank()) {
+                        Text(
+                            text = stringResource(R.string.result_sheet_fingerprint_format, shortFingerprint),
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                fontFamily = FontFamily.Monospace
+                            ),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                     Text(
                         text = stringResource(R.string.result_sheet_armored_block_format, armoredLength),
                         style = MaterialTheme.typography.bodySmall,

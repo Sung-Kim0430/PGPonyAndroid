@@ -2605,7 +2605,7 @@
     <string name="move_to_card_backup_confirm">이 키쌍의 백업이 있습니다</string>
     <string name="move_to_card_remove_label">옮긴 키를 이 폰에서 제거</string>
     <string name="move_to_card_remove_hint">gpg처럼, 폰에는 키가 보안 키에 있다는 기록만 남고 그때부터는 보안 키를 사용합니다. 여기에도 사본을 남기려면 이 설정을 끄세요.</string>
-    <string name="move_to_card_remove_unavailable">이 키쌍의 모든 키가 보안 키로 옮겨질 때만 가능합니다. 그렇지 않으면 사본이 이 폰에 남고, 폰은 계속 그 사본을 사용합니다.</string>
+    <string name="move_to_card_remove_unavailable">이 키쌍의 모든 보조 키가 보안 키로 옮겨질 때만 가능합니다. gpg처럼 기본 키는 이 폰에 남아도 됩니다. 그렇지 않으면 사본이 이 폰에 남고, 폰은 계속 그 사본을 사용합니다.</string>
     <string name="move_to_card_wrong_admin_pin">관리자 PIN이 틀렸습니다. %1$d\u00A0번 남았습니다. 남은 횟수가 없으면 보안 키를 초기화해야 합니다.</string>
     <string name="move_to_card_wrong_user_pin">사용자 PIN이 틀렸습니다. %1$d\u00A0번 남았습니다. 보안 키에는 아무것도 쓰지 않았습니다.</string>
     <string name="move_to_card_replace_confirm">선택한 슬롯에 이미 있는 키를 교체</string>
@@ -2632,4 +2632,44 @@
     <string name="key_detail_subkey_change_expiry">만료 편집…</string>
     <string name="key_detail_card_no_cert_title">공개 키 필요</string>
     <string name="key_detail_card_no_cert_body">이 보안 키에는 개인 키가 있지만, 키의 나머지 부분인 사용자 ID와 서명은 없습니다. 일치하는 공개 키(내보낸 파일, 백업 또는 키 서버의 사본)를 가져오면 PGPony가 그 키를 이 보안 키와 연결합니다. 그러면 보안 키로 서명하고 복호화할 수 있습니다.</string>
+
+    <!-- 4.7.0 RC5 batch 2, translated Oct 2026 -->
+    <string name="key_detail_key_id_copied">키 ID를 복사했습니다</string>
+    <string name="key_detail_copy_key_id_cd">키 ID 복사</string>
+    <string name="key_detail_detail_usage">용도</string>
+    <string name="key_detail_cert_trust_full">신뢰하는 소개자, 깊이 %1$d</string>
+    <string name="key_detail_cert_trust_partial">일부 신뢰하는 소개자, 깊이 %1$d</string>
+    <string name="key_detail_cert_trust_amount">신뢰 %1$d, 깊이 %2$d</string>
+    <string name="key_detail_cert_trust_limited">일부 사용자 ID로 제한됨</string>
+    <string name="key_detail_last_checked_found_format">%1$s, %2$s에서 찾음</string>
+    <string name="key_detail_last_checked_not_found_format">%1$s, %2$s에 없음</string>
+    <string name="kd_vm_check_found_on">이 키는 %1$s에 공개되어 있습니다.</string>
+    <string name="kd_vm_check_not_found_on">이 키는 %1$s에서 찾을 수 없습니다.</string>
+    <string name="key_detail_cert_look_up">찾기</string>
+    <string name="certifier_lookup_title">인증자 찾기</string>
+    <string name="certifier_lookup_found_body">이 키를 가져오면 키링에 추가되고, 이 키가 만든 인증을 검증할 수 있게 됩니다. 이것으로 키의 신원이 검토되지는 않습니다. 수학만 검사되는 것입니다. 이 키를 믿고 의지하기 전에 누구의 키인지 확인하세요.</string>
+    <string name="certifier_lookup_not_found_title">인증자를 찾을 수 없음</string>
+    <string name="certifier_lookup_not_found_body_format">설정된 어느 키 서버에서도 %1$s의 키를 찾을 수 없습니다. 인증자가 키를 공개하지 않았을 수 있습니다.</string>
+    <string name="certifier_lookup_imported_body">이 키에 있는 해당 인증자의 인증이 다시 검증됩니다.</string>
+    <string name="key_detail_refresh_sigs_menu">자체 서명 새로 고침</string>
+    <string name="key_detail_refresh_sigs_title">자체 서명 새로 고침</string>
+    <string name="key_detail_refresh_sigs_body">이 키의 사용자 ID와 보조 키 바인딩에 SHA-256으로 다시 서명합니다. 만료일은 모두 그대로 유지됩니다. 바인딩에 SHA-1을 써서 빠졌던 보조 키는 그 개인 키가 이 폰에 있으면 복원됩니다. 다른 사람들도 새 서명을 받을 수 있도록 그다음에 키를 공개하세요.</string>
+    <string name="key_detail_refresh_sigs_action">새로 고침</string>
+    <string name="key_detail_refresh_sigs_done">자체 서명을 새로 고쳤습니다.</string>
+    <plurals name="key_detail_refresh_sigs_done_restored">
+        <item quantity="other">자체 서명을 새로 고쳤습니다. 보조 키 %1$d개가 복원되었습니다.</item>
+    </plurals>
+
+    <!-- 4.7.0 RC5 batch 3, translated Oct 2026 -->
+    <string name="keyring_select_menu">키 선택</string>
+    <string name="keyring_select_done_cd">선택 종료</string>
+    <string name="keyring_select_all_cd">모두 선택</string>
+    <string name="keyring_export_selected_cd">공개 키 내보내기</string>
+    <string name="keyring_export_selected_copied">공개 키를 복사했습니다</string>
+    <plurals name="keyring_selected_count">
+        <item quantity="other">%1$d개 선택됨</item>
+    </plurals>
+    <plurals name="keyring_export_selected_label">
+        <item quantity="other">공개 키 %1$d개</item>
+    </plurals>
 </resources>

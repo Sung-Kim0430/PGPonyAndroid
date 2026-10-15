@@ -3033,7 +3033,7 @@
     <string name="move_to_card_backup_confirm">I have a backup of this key pair</string>
     <string name="move_to_card_remove_label">Remove the moved keys from this phone</string>
     <string name="move_to_card_remove_hint">Like gpg, the phone keeps only a note that the keys are on the security key, and uses the security key from then on. Turn this off to keep a copy here as well.</string>
-    <string name="move_to_card_remove_unavailable">Only when every key of this key pair goes to the security key. Otherwise a copy stays on this phone, which keeps using it.</string>
+    <string name="move_to_card_remove_unavailable">Only when every subkey of this key pair goes to the security key. The primary key may stay on this phone, as in gpg. Otherwise a copy stays here, which keeps using it.</string>
     <string name="move_to_card_wrong_admin_pin">Wrong admin PIN. Tries remaining: %1$d. When none are left, the security key has to be reset.</string>
     <string name="move_to_card_wrong_user_pin">Wrong user PIN. Tries remaining: %1$d. Nothing was written to the security key.</string>
     <string name="move_to_card_replace_confirm">Replace keys already in the chosen slots</string>
@@ -3065,4 +3065,45 @@
     <!-- 4.7.0 RC5: a scanned security key without its public key (item 54, #71) -->
     <string name="key_detail_card_no_cert_title">Public key needed</string>
     <string name="key_detail_card_no_cert_body">This security key holds the private keys, but not the rest of the key: its User IDs and signatures. Import the matching public key (an export, a backup or a key server copy) and PGPony pairs it with this security key, so you can sign and decrypt with it.</string>
+    <!-- 4.7.0 RC5: Key Details additions (items 57 to 59) -->
+    <string name="key_detail_key_id_copied">Key ID copied</string>
+    <string name="key_detail_copy_key_id_cd">Copy key ID</string>
+    <string name="key_detail_detail_usage">Usage</string>
+    <string name="key_detail_cert_trust_full">trusted introducer, depth %1$d</string>
+    <string name="key_detail_cert_trust_partial">partly trusted introducer, depth %1$d</string>
+    <string name="key_detail_cert_trust_amount">trust %1$d, depth %2$d</string>
+    <string name="key_detail_cert_trust_limited">limited to some User IDs</string>
+    <string name="key_detail_last_checked_found_format">%1$s, found on %2$s</string>
+    <string name="key_detail_last_checked_not_found_format">%1$s, not on %2$s</string>
+    <string name="kd_vm_check_found_on">This key is published on %1$s.</string>
+    <string name="kd_vm_check_not_found_on">This key is not on %1$s.</string>
+    <string name="key_detail_cert_look_up">Look up</string>
+    <string name="certifier_lookup_title">Look up certifier</string>
+    <string name="certifier_lookup_found_body">Importing this key adds it to your keyring, so its certification can be checked. Its identity is not vetted by this: only the math is. Check who it belongs to before relying on it.</string>
+    <string name="certifier_lookup_not_found_title">Certifier not found</string>
+    <string name="certifier_lookup_not_found_body_format">No key was found for %1$s on any of your configured key servers. The certifier may not have published their key.</string>
+    <string name="certifier_lookup_imported_body">Its certifications on this key are checked again.</string>
+    <string name="key_detail_refresh_sigs_menu">Refresh self-signatures</string>
+    <string name="key_detail_refresh_sigs_title">Refresh self-signatures</string>
+    <string name="key_detail_refresh_sigs_body">Signs this key\'s User IDs and subkey bindings again with SHA-256. Every expiry date stays as it is. A subkey left out because its binding used SHA-1 comes back if its secret key is on this phone. Publish the key afterwards so others get the new signatures.</string>
+    <string name="key_detail_refresh_sigs_action">Refresh</string>
+    <string name="key_detail_refresh_sigs_done">Self-signatures refreshed.</string>
+    <plurals name="key_detail_refresh_sigs_done_restored">
+        <item quantity="one">Self-signatures refreshed. %1$d subkey is back.</item>
+        <item quantity="other">Self-signatures refreshed. %1$d subkeys are back.</item>
+    </plurals>
+    <!-- 4.7.0 RC5: select keys on the Keyring and export them (item 63, #93) -->
+    <string name="keyring_select_menu">Select keys</string>
+    <string name="keyring_select_done_cd">Stop selecting</string>
+    <string name="keyring_select_all_cd">Select all</string>
+    <string name="keyring_export_selected_cd">Export public keys</string>
+    <string name="keyring_export_selected_copied">Public keys copied</string>
+    <plurals name="keyring_selected_count">
+        <item quantity="one">%1$d selected</item>
+        <item quantity="other">%1$d selected</item>
+    </plurals>
+    <plurals name="keyring_export_selected_label">
+        <item quantity="one">%1$d public key</item>
+        <item quantity="other">%1$d public keys</item>
+    </plurals>
 </resources>

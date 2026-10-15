@@ -76,6 +76,17 @@ fun KeyringScreen(
     val state by viewModel.state.collectAsState()
     // 4.6.0 (item 20): the key whose shared identity is being listed.
     var identityDialogFor by remember { mutableStateOf<PGPKeyEntity?>(null) }
+    // 4.7.0 (item 63, #93): select keys and export their public keys as one
+    // .asc file. null when not selecting.
+    var selection by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<List<String>?>(null) }
+    var exportArmored by remember { mutableStateOf<String?>(null) }
+    val selectContext = androidx.compose.ui.platform.LocalContext.current
+    val selectScope = rememberCoroutineScope()
+    androidx.activity.compose.BackHandler(enabled = selection != null) { selection = null }
+    val toggleSelect: (String) -> Unit = { fp ->
+        val cur = selection.orEmpty()
+        selection = if (fp in cur) cur - fp else cur + fp
+    }
 
     // CertainBot (RC4): a delete or trust change made on the Key Detail
     // screen left this list stale until an app reload. The Keyring leaves
@@ -124,8 +135,39 @@ fun KeyringScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.keyring_title)) },
+                title = {
+                    val picked = selection
+                    if (picked != null) Text(pluralStringResource(R.plurals.keyring_selected_count, picked.size, picked.size))
+                    else Text(stringResource(R.string.keyring_title))
+                },
+                navigationIcon = {
+                    if (selection != null) {
+                        IconButton(onClick = { selection = null }) {
+                            Icon(Icons.Filled.Close, stringResource(R.string.keyring_select_done_cd))
+                        }
+                    }
+                },
                 actions = {
+                  val picked = selection
+                  if (picked != null) {
+                    IconButton(onClick = { selection = state.allKeys.map { it.fingerprint } }) {
+                        Icon(Icons.Filled.SelectAll, stringResource(R.string.keyring_select_all_cd))
+                    }
+                    IconButton(
+                        enabled = picked.isNotEmpty(),
+                        onClick = {
+                            selectScope.launch {
+                                val armored = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                    com.pgpony.android.PGPonyApp.instance.keyRepository.exportPublicKeysArmored(picked)
+                                }
+                                if (armored == null) snackbarHostState.showSnackbar(selectContext.getString(R.string.result_save_failed_note))
+                                else exportArmored = armored
+                            }
+                        }
+                    ) {
+                        Icon(Icons.Filled.IosShare, stringResource(R.string.keyring_export_selected_cd))
+                    }
+                  } else {
                     var sortMenuOpen by remember { mutableStateOf(false) }
                     IconButton(onClick = { sortMenuOpen = true }) {
                         Icon(Icons.AutoMirrored.Filled.Sort, stringResource(R.string.keyring_sort_cd))
@@ -168,7 +210,15 @@ fun KeyringScreen(
                             leadingIcon = { Icon(Icons.Filled.Devices, contentDescription = null) },
                             onClick = { moreMenuOpen = false; onOpenPair() }
                         )
+                        if (state.allKeys.isNotEmpty()) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.keyring_select_menu)) },
+                                leadingIcon = { Icon(Icons.Filled.Checklist, contentDescription = null) },
+                                onClick = { moreMenuOpen = false; selection = emptyList() }
+                            )
+                        }
                     }
+                  }
                 }
             )
         },
@@ -364,6 +414,8 @@ fun KeyringScreen(
                         onKeyClick = onKeyClick,
                         identityCounts = identityCounts,
                         onIdentityClick = { identityDialogFor = it },
+                        selection = selection?.toSet(),
+                        onToggleSelect = toggleSelect,
                     )
                     keySection(
                         keys = state.contactKeys,
@@ -377,6 +429,8 @@ fun KeyringScreen(
                         onKeyClick = onKeyClick,
                         identityCounts = identityCounts,
                         onIdentityClick = { identityDialogFor = it },
+                        selection = selection?.toSet(),
+                        onToggleSelect = toggleSelect,
                     )
                     keySection(
                         keys = state.publicKeys,
@@ -390,6 +444,8 @@ fun KeyringScreen(
                         onKeyClick = onKeyClick,
                         identityCounts = identityCounts,
                         onIdentityClick = { identityDialogFor = it },
+                        selection = selection?.toSet(),
+                        onToggleSelect = toggleSelect,
                     )
                 }
             }
@@ -415,6 +471,41 @@ fun KeyringScreen(
     }
 
     // ── 4.6.0 (item 20): every stored key sharing an identity ──────────
+    // 4.7.0 (item 63, #93): the selected keys' public keys, one file.
+    exportArmored?.let { armored ->
+        val count = selection?.size ?: 0
+        val label = pluralStringResource(R.plurals.keyring_export_selected_label, count, count)
+        ExportPublicKeyResultSheet(
+            keyOwnerLabel = label,
+            keyEmail = "",
+            shortFingerprint = "",
+            armoredLength = armored.length,
+            onCopy = {
+                val ok = KeyShareIntents.copyPublicKeyToClipboard(selectContext, armored)
+                selectScope.launch {
+                    snackbarHostState.showSnackbar(
+                        selectContext.getString(if (ok) R.string.keyring_export_selected_copied else R.string.key_detail_status_clip_unavailable)
+                    )
+                }
+            },
+            onSaveFile = {
+                saveArmoredToFile(
+                    context = selectContext,
+                    scope = selectScope,
+                    snackbarHostState = snackbarHostState,
+                    armored = armored,
+                    suggestedName = KeyShareIntents.buildExportFilename("public_keys", count.toString(), "")
+                )
+            },
+            onShare = {
+                if (!KeyShareIntents.sharePublicKey(selectContext, armored, "public_keys", count.toString())) {
+                    selectScope.launch { snackbarHostState.showSnackbar(selectContext.getString(R.string.result_save_failed_note)) }
+                }
+            },
+            onDismiss = { exportArmored = null }
+        )
+    }
+
     identityDialogFor?.let { picked ->
         val matches = state.allKeys.filter { it.identityKey == picked.identityKey }
         AlertDialog(
@@ -669,6 +760,9 @@ private fun LazyListScope.keySection(
     onKeyClick: (String) -> Unit,
     identityCounts: Map<String, Int> = emptyMap(),
     onIdentityClick: (PGPKeyEntity) -> Unit = {},
+    // 4.7.0 (item 63, #93): when selecting, a tap ticks the key.
+    selection: Set<String>? = null,
+    onToggleSelect: (String) -> Unit = {},
 ) {
     if (keys.isEmpty()) return
     // #45: header shows the count and toggles the section. A collapsed
@@ -701,10 +795,12 @@ private fun LazyListScope.keySection(
         ReorderableItem(reorderableState, key = key.id) { _ ->
             KeyCard(
                 key = key,
-                onClick = { onKeyClick(key.fingerprint) },
+                onClick = { if (selection != null) onToggleSelect(key.fingerprint) else onKeyClick(key.fingerprint) },
                 sameIdentityCount = identityCounts[key.identityKey] ?: 1,
                 onSameIdentityClick = { onIdentityClick(key) },
-                trailing = if (manualMode) {
+                trailing = if (selection != null) {
+                    { Checkbox(checked = key.fingerprint in selection, onCheckedChange = { onToggleSelect(key.fingerprint) }) }
+                } else if (manualMode) {
                     {
                         Icon(
                             Icons.Filled.DragHandle,

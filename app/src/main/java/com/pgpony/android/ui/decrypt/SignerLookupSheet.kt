@@ -88,7 +88,10 @@ fun SignerLookupSheet(
     state: SignerLookupState,
     claimedFingerprint: String?,
     onImport: (armoredKey: String) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    /** 4.7.0 (item 61, #88): looking up the key behind a certification on
+     *  Key Details, not a message's signer; only the wording differs. */
+    forCertifier: Boolean = false
 ) {
     val sheetState = rememberModalBottomSheetState()
     ModalBottomSheet(
@@ -108,17 +111,17 @@ fun SignerLookupSheet(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                stringResource(R.string.signer_lookup_searching_title),
+                stringResource(if (forCertifier) R.string.certifier_lookup_title else R.string.signer_lookup_searching_title),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
 
             when (state) {
                 SignerLookupState.Searching -> SearchingBody(claimedFingerprint)
-                is SignerLookupState.Found -> FoundBody(state, onImport, onDismiss)
-                is SignerLookupState.NotFound -> NotFoundBody(state, onDismiss)
+                is SignerLookupState.Found -> FoundBody(state, onImport, onDismiss, forCertifier)
+                is SignerLookupState.NotFound -> NotFoundBody(state, onDismiss, forCertifier)
                 is SignerLookupState.Failed -> FailedBody(state, onDismiss)
-                is SignerLookupState.ImportSuccess -> ImportSuccessBody(state, onDismiss)
+                is SignerLookupState.ImportSuccess -> ImportSuccessBody(state, onDismiss, forCertifier)
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -153,7 +156,8 @@ private fun SearchingBody(claimedFingerprint: String?) {
 private fun FoundBody(
     state: SignerLookupState.Found,
     onImport: (String) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    forCertifier: Boolean = false
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -199,7 +203,7 @@ private fun FoundBody(
         }
 
         Text(
-            stringResource(R.string.signer_lookup_found_body),
+            stringResource(if (forCertifier) R.string.certifier_lookup_found_body else R.string.signer_lookup_found_body),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -225,7 +229,7 @@ private fun FoundBody(
 }
 
 @Composable
-private fun NotFoundBody(state: SignerLookupState.NotFound, onDismiss: () -> Unit) {
+private fun NotFoundBody(state: SignerLookupState.NotFound, onDismiss: () -> Unit, forCertifier: Boolean = false) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
@@ -236,13 +240,16 @@ private fun NotFoundBody(state: SignerLookupState.NotFound, onDismiss: () -> Uni
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                stringResource(R.string.signer_lookup_not_found_title),
+                stringResource(if (forCertifier) R.string.certifier_lookup_not_found_title else R.string.signer_lookup_not_found_title),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold
             )
         }
         Text(
-            stringResource(R.string.signer_lookup_not_found_body_format, formatFingerprint(state.searchedFingerprint)),
+            stringResource(
+                if (forCertifier) R.string.certifier_lookup_not_found_body_format else R.string.signer_lookup_not_found_body_format,
+                formatFingerprint(state.searchedFingerprint)
+            ),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -288,7 +295,7 @@ private fun FailedBody(state: SignerLookupState.Failed, onDismiss: () -> Unit) {
 }
 
 @Composable
-private fun ImportSuccessBody(state: SignerLookupState.ImportSuccess, onDismiss: () -> Unit) {
+private fun ImportSuccessBody(state: SignerLookupState.ImportSuccess, onDismiss: () -> Unit, forCertifier: Boolean = false) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
@@ -306,7 +313,7 @@ private fun ImportSuccessBody(state: SignerLookupState.ImportSuccess, onDismiss:
         }
         Text(
             stringResource(R.string.signer_lookup_imported_user_format, state.previewUserId) + " " +
-                    stringResource(R.string.signer_lookup_imported_body),
+                    stringResource(if (forCertifier) R.string.certifier_lookup_imported_body else R.string.signer_lookup_imported_body),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

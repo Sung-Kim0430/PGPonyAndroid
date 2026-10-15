@@ -195,6 +195,20 @@ data class KeyDetailUiState(
     /** 4.7.0 (item 22): the stored primary is a stub (offline primary or
      *  divert-to-card), so the edits that need the primary are hidden. */
     val primaryStub: com.pgpony.android.crypto.OfflineStub.Kind? = null,
+    /** 4.7.0 (item 58, #89): the primary key's usage (SubkeyCapability bits)
+     *  from its newest self-signature carrying key flags; null when unknown. */
+    val primaryUsage: Int? = null,
+    /** 4.7.0 (item 60, #90): the last key server check's answer. */
+    val keyServerCheck: com.pgpony.android.data.KeyServerCheckStore.Result? = null,
+    /** 4.7.0 (item 61, #88): the certifier lookup sheet, when open, and what
+     *  it searched for (a fingerprint, or a key ID when the certification
+     *  names no fingerprint). */
+    val certifierLookup: com.pgpony.android.ui.decrypt.SignerLookupState? = null,
+    val certifierLookupQuery: String? = null,
+    /** 4.7.0 (item 51, #86): the Refresh self-signatures dialog. */
+    val showRefreshSigs: Boolean = false,
+    val refreshSigsInFlight: Boolean = false,
+    val refreshSigsError: String? = null,
     // 4.7.0 (item 31, #79): certifications of this key's User IDs, and the
     // Certify flow (public keys only).
     val certifications: List<com.pgpony.android.data.repository.KeyRepository.CertificationRow> = emptyList(),
@@ -484,8 +498,14 @@ class KeyDetailViewModel(
                 privateKeyIsProtected = loaded?.takeIf { it.isKeyPair }?.let {
                     withContext(Dispatchers.IO) { repo.isPrivateKeyPassphraseProtected(it.fingerprint) }
                 } ?: false,
-                primaryStub = loaded?.takeIf { it.isKeyPair && !it.isCardBacked }?.let {
+                primaryStub = loaded?.takeIf { it.isKeyPair }?.let {
                     withContext(Dispatchers.IO) { runCatching { repo.primaryStubKind(it.fingerprint) }.getOrNull() }
+                },
+                keyServerCheck = loaded?.let { com.pgpony.android.data.KeyServerCheckStore.last(it.fingerprint) },
+                primaryUsage = loaded?.let { e ->
+                    withContext(Dispatchers.IO) {
+                        repo.loadPublicKeyRing(e.fingerprint)?.publicKey?.let { primaryUsageOf(it) }
+                    }
                 },
                 certifications = loaded?.let { runCatching { repo.certificationsOf(it.fingerprint) }.getOrNull() }.orEmpty(),
                 canCertify = loaded?.let { withContext(Dispatchers.IO) { runCatching { repo.canBeCertified(it) }.getOrDefault(false) } } ?: false,
@@ -1000,15 +1020,20 @@ class KeyDetailViewModel(
         viewModelScope.launch {
             _state.value = _state.value.copy(isCheckingKeyServer = true)
             try {
-                val found = keyServer.searchByFingerprint(key.fingerprint)
+                // 4.7.0 (item 60, #90): fetchByFingerprint throws on a transport
+                // failure, so a failed check is no longer reported as "not found".
+                val found = keyServer.fetchByFingerprint(key.fingerprint)
+                val server = com.pgpony.android.network.KeyServerRepository.CHECK_SERVER_NAME
+                com.pgpony.android.data.KeyServerCheckStore.record(key.fingerprint, server, found != null)
                 repo.markKeyServerChecked(key.fingerprint)
                 val reloaded = repo.getByFingerprint(key.fingerprint)
                 _state.value = _state.value.copy(
                     key = reloaded ?: key,
                     isCheckingKeyServer = false,
+                    keyServerCheck = com.pgpony.android.data.KeyServerCheckStore.last(key.fingerprint),
                     successMessage = PGPonyApp.instance.getString(
-                        if (found != null) R.string.kd_vm_check_found
-                        else R.string.kd_vm_check_not_found
+                        if (found != null) R.string.kd_vm_check_found_on else R.string.kd_vm_check_not_found_on,
+                        server
                     )
                 )
             } catch (e: Exception) {
@@ -1499,6 +1524,143 @@ PGPonyApp.instance.getString(R.string.kd_vm_upload_verify_skipped)
                 )
             }
         }
+    }
+
+    /** 4.7.0 (item 58, #89): key flags on the primary's newest self-signature
+     *  (a User ID self-certification or a direct-key signature), read only from
+     *  signatures the primary made. */
+    private fun primaryUsageOf(primary: org.bouncycastle.openpgp.PGPPublicKey): Int? {
+        var newest: org.bouncycastle.openpgp.PGPSignature? = null
+        val selfTypes = setOf(
+            org.bouncycastle.openpgp.PGPSignature.DEFAULT_CERTIFICATION,
+            org.bouncycastle.openpgp.PGPSignature.NO_CERTIFICATION,
+            org.bouncycastle.openpgp.PGPSignature.CASUAL_CERTIFICATION,
+            org.bouncycastle.openpgp.PGPSignature.POSITIVE_CERTIFICATION,
+            org.bouncycastle.openpgp.PGPSignature.DIRECT_KEY
+        )
+        primary.signatures.forEach { sig ->
+            if (sig.keyID != primary.keyID || sig.signatureType !in selfTypes) return@forEach
+            if (sig.hashedSubPackets?.hasSubpacket(org.bouncycastle.bcpg.SignatureSubpacketTags.KEY_FLAGS) != true) return@forEach
+            if (newest == null || sig.creationTime.after(newest!!.creationTime)) newest = sig
+        }
+        return newest?.hashedSubPackets?.keyFlags?.let { SubkeyCapability.fromBcKeyFlags(it) }
+    }
+
+    // ── 4.7.0 (item 51, #86): refresh self-signatures ─────────────────
+
+    fun openRefreshSigs() {
+        _state.value = _state.value.copy(showRefreshSigs = true, refreshSigsError = null)
+    }
+
+    fun dismissRefreshSigs() {
+        if (_state.value.refreshSigsInFlight) return
+        _state.value = _state.value.copy(showRefreshSigs = false, refreshSigsError = null)
+    }
+
+    fun applyRefreshSigs(passphrase: String?) {
+        val key = _state.value.key ?: return
+        _state.value = _state.value.copy(refreshSigsInFlight = true, refreshSigsError = null)
+        viewModelScope.launch {
+            try {
+                val restored = repo.refreshSelfSignatures(key.fingerprint, passphrase)
+                val reloaded = repo.getByFingerprint(key.fingerprint)
+                _state.value = _state.value.copy(
+                    key = reloaded ?: key,
+                    userIds = reloaded?.let { deriveUserIds(it) } ?: _state.value.userIds,
+                    subkeys = reloaded?.let { deriveSubkeys(it) } ?: _state.value.subkeys,
+                    refreshSigsInFlight = false,
+                    showRefreshSigs = false,
+                    successMessage = if (restored == 0) PGPonyApp.instance.getString(R.string.key_detail_refresh_sigs_done)
+                        else PGPonyApp.instance.resources.getQuantityString(R.plurals.key_detail_refresh_sigs_done_restored, restored, restored)
+                )
+                refreshSigningSubkeys()
+            } catch (e: KeyExpirationService.ExpirationError.PassphraseRequired) {
+                _state.value = _state.value.copy(refreshSigsInFlight = false,
+                    refreshSigsError = PGPonyApp.instance.getString(R.string.kd_vm_error_revoke_passphrase_required))
+            } catch (e: KeyExpirationService.ExpirationError.InvalidPassphrase) {
+                _state.value = _state.value.copy(refreshSigsInFlight = false,
+                    refreshSigsError = PGPonyApp.instance.getString(R.string.kd_vm_error_revoke_incorrect_passphrase))
+            } catch (e: Exception) {
+                _state.value = _state.value.copy(refreshSigsInFlight = false,
+                    refreshSigsError = ErrorText.localize(e.message) ?: PGPonyApp.instance.getString(R.string.key_detail_expiry_failed))
+            }
+        }
+    }
+
+    // ── 4.7.0 (item 61, #88): look up a certifier ──────────────────────
+
+    /** Search the configured key servers for the key that made [row], by the
+     *  issuer fingerprint when the certification has one, else by key ID. The
+     *  user sees the key before anything is imported. */
+    fun lookUpCertifier(row: com.pgpony.android.data.repository.KeyRepository.CertificationRow) {
+        val c = row.certification
+        val fp = c.issuerFingerprint
+        val query = fp ?: String.format("%016X", c.issuerKeyId)
+        _state.value = _state.value.copy(
+            certifierLookup = com.pgpony.android.ui.decrypt.SignerLookupState.Searching,
+            certifierLookupQuery = query
+        )
+        viewModelScope.launch {
+            val armored = try {
+                if (fp != null) keyServer.findByFingerprint(fp)?.armoredKey else keyServer.findByKeyId(query)?.armoredKey
+            } catch (e: Exception) {
+                _state.value = _state.value.copy(
+                    certifierLookup = com.pgpony.android.ui.decrypt.SignerLookupState.Failed(
+                        ErrorText.localize(e.message) ?: PGPonyApp.instance.getString(R.string.encdec_error_keyserver_network)
+                    )
+                )
+                return@launch
+            }
+            if (armored.isNullOrBlank()) {
+                _state.value = _state.value.copy(
+                    certifierLookup = com.pgpony.android.ui.decrypt.SignerLookupState.NotFound(query)
+                )
+                return@launch
+            }
+            val preview = runCatching {
+                withContext(Dispatchers.Default) { PGPCryptoService.shared.importKeyData(armored.toByteArray(Charsets.UTF_8)) }
+            }.getOrElse { e ->
+                _state.value = _state.value.copy(
+                    certifierLookup = com.pgpony.android.ui.decrypt.SignerLookupState.Failed(
+                        PGPonyApp.instance.getString(R.string.encdec_error_keyserver_parse_format, ErrorText.detail(e.message) ?: "")
+                    )
+                )
+                return@launch
+            }
+            _state.value = _state.value.copy(
+                certifierLookup = com.pgpony.android.ui.decrypt.SignerLookupState.Found(
+                    armoredKey = armored,
+                    previewUserId = preview.userID,
+                    previewFingerprint = preview.fingerprint,
+                    previewAlgorithm = preview.algorithm.displayName
+                )
+            )
+        }
+    }
+
+    /** Import the key the lookup found, then reload this key's certifications
+     *  so the certifier shows by name and its signature is checked. */
+    fun importCertifier(armoredKey: String) {
+        val key = _state.value.key ?: return
+        viewModelScope.launch {
+            try {
+                val imported = repo.importArmoredKey(armoredKey)
+                _state.value = _state.value.copy(
+                    certifierLookup = com.pgpony.android.ui.decrypt.SignerLookupState.ImportSuccess(imported.userID),
+                    certifications = runCatching { repo.certificationsOf(key.fingerprint) }.getOrNull() ?: _state.value.certifications
+                )
+            } catch (e: Exception) {
+                _state.value = _state.value.copy(
+                    certifierLookup = com.pgpony.android.ui.decrypt.SignerLookupState.Failed(
+                        PGPonyApp.instance.getString(R.string.encdec_error_signer_import_failed_format, ErrorText.detail(e.message) ?: "")
+                    )
+                )
+            }
+        }
+    }
+
+    fun dismissCertifierLookup() {
+        _state.value = _state.value.copy(certifierLookup = null, certifierLookupQuery = null)
     }
 
     // ── Expiration editing ──────────────────────────────────────────────

@@ -63,6 +63,7 @@ import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Usb
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.IosShare
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Password
@@ -383,6 +384,14 @@ fun KeyDetailScreen(
                                     onClick = { menuOpen = false; dispatchAction(KeyDetailActionIds.MOVE_TO_CARD) }
                                 )
                             }
+                            // 4.7.0 (item 51, #86): re-sign with a current hash.
+                            if (menuKey.isKeyPair && state.primaryStub == null && !menuKey.algorithm.isCompositeSign) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.key_detail_refresh_sigs_menu)) },
+                                    leadingIcon = { Icon(Icons.Filled.Refresh, null) },
+                                    onClick = { menuOpen = false; viewModel.openRefreshSigs() }
+                                )
+                            }
                             // 4.7.0 (item 31, #79): certify someone else's key.
                             if (!menuKey.isKeyPair && state.canCertify) {
                                 DropdownMenuItem(
@@ -505,6 +514,10 @@ fun KeyDetailScreen(
                 onRevokeSubkey = { viewModel.showSubkeyRevokeSheet(it) },
                 onRemoveSubkey = { viewModel.requestSubkeyRemove(it) },
                 onChangeSubkeyExpiry = { viewModel.showSubkeyExpirySheet(it) },
+                onCopyKeyId = { id ->
+                    clipboard.setText(AnnotatedString(id))
+                    scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.key_detail_key_id_copied)) }
+                },
                 onAddUserId = { viewModel.showAddUserIdSheet() },
                 onMakePrimaryUserId = { uid -> viewModel.requestUserIdAction(uid, UserIdActionRequest.Kind.MAKE_PRIMARY) },
                 onRevokeUserId = { uid -> viewModel.requestUserIdAction(uid, UserIdActionRequest.Kind.REVOKE) },
@@ -518,7 +531,8 @@ fun KeyDetailScreen(
                 onPickSigningDefault = { slot, fp -> viewModel.setSigningDefault(slot, fp) },
                 onStrictFallbacksChange = { enabled -> viewModel.setStrictFallbacks(enabled) },
                 onPickSigningSubkey = { fp -> viewModel.setSigningSubkey(fp) },
-                onRevokeCertification = { row -> viewModel.requestRevokeCertification(row) }
+                onRevokeCertification = { row -> viewModel.requestRevokeCertification(row) },
+                onLookUpCertifier = { row -> viewModel.lookUpCertifier(row) }
             )
         }
     }
@@ -825,6 +839,56 @@ fun KeyDetailScreen(
         )
     }
 
+    // ── 4.7.0 (item 51, #86): refresh self-signatures ──────────────────
+    if (state.showRefreshSigs) {
+        var refreshPass by remember { mutableStateOf("") }
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissRefreshSigs() },
+            title = { Text(stringResource(R.string.key_detail_refresh_sigs_title)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(stringResource(R.string.key_detail_refresh_sigs_body))
+                    if (state.privateKeyIsProtected) {
+                        OutlinedTextField(
+                            value = refreshPass,
+                            onValueChange = { refreshPass = it },
+                            label = { Text(stringResource(R.string.key_detail_expiry_passphrase_label)) },
+                            visualTransformation = PasswordVisualTransformation(),
+                            singleLine = true,
+                            enabled = !state.refreshSigsInFlight,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                    state.refreshSigsError?.let {
+                        Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = { viewModel.applyRefreshSigs(refreshPass.ifBlank { null }) },
+                    enabled = !state.refreshSigsInFlight
+                ) { Text(stringResource(R.string.key_detail_refresh_sigs_action)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.dismissRefreshSigs() }, enabled = !state.refreshSigsInFlight) {
+                    Text(stringResource(R.string.common_button_cancel))
+                }
+            }
+        )
+    }
+
+    // ── 4.7.0 (item 61, #88): certifier lookup ──────────────────────────
+    state.certifierLookup?.let { lookup ->
+        com.pgpony.android.ui.decrypt.SignerLookupSheet(
+            state = lookup,
+            claimedFingerprint = state.certifierLookupQuery,
+            onImport = { viewModel.importCertifier(it) },
+            onDismiss = { viewModel.dismissCertifierLookup() },
+            forCertifier = true
+        )
+    }
+
     // ── Expiration editor sheet ───────────────────────────────────────
     val keyForExpiry = state.key
     if (state.showExpirySheet && keyForExpiry != null) {
@@ -838,7 +902,9 @@ fun KeyDetailScreen(
         val nowMs = System.currentTimeMillis()
         EditExpirationSheet(
             keyOwnerLabel = ownerLabel,
-            isCardBacked = keyForExpiry.isCardBacked,
+            // 4.7.0 (item 55): a key pair whose subkeys are on a card signs with
+            // the primary here, so it takes the software path.
+            isCardBacked = keyForExpiry.isCardBacked && !(keyForExpiry.isKeyPair && state.primaryStub == null),
             isProcessing = state.expiryInFlight,
             errorMessage = state.expiryError,
             subkeyLabel = expirySubkey?.keyId,
@@ -954,7 +1020,8 @@ fun KeyDetailScreen(
             errorMessage = state.certifyError,
             onApply = { certifierFp, passphrase, uids, level, expirySeconds, exportable ->
                 val certifierEntity = state.certifierChoices.firstOrNull { it.fingerprint == certifierFp }
-                if (certifierEntity?.isCardBacked == true) {
+                // 4.7.0 (item 55): only a key whose primary is on the card signs there.
+                if (certifierEntity != null && certifierEntity.isCardBacked && !certifierEntity.isKeyPair) {
                     // 4.7.0 RC4 (item 31): sign on the card, NFC or USB; [passphrase] is the card PIN.
                     val targetFp = keyForCertify.fingerprint
                     val pin = (passphrase ?: "").toByteArray(Charsets.UTF_8)
@@ -1026,7 +1093,7 @@ fun KeyDetailScreen(
         var certRevokePass by remember(row) { mutableStateOf("") }
         val local = !row.certification.exportable
         // 4.7.0 RC4 (item 31): a certification made on a card is withdrawn on it.
-        val onCard = !local && row.issuer?.isCardBacked == true
+        val onCard = !local && row.issuer?.let { it.isCardBacked && !it.isKeyPair } == true
         val revokePairFirst = stringResource(R.string.card_sign_pair_first)
         val revokeNoLink = stringResource(R.string.card_scan_nfc_unavailable)
         AlertDialog(
@@ -1754,6 +1821,7 @@ private fun LoadedBody(
     onRevokeSubkey: (SubkeyDisplayInfo) -> Unit,
     onRemoveSubkey: (SubkeyDisplayInfo) -> Unit,
     onChangeSubkeyExpiry: (SubkeyDisplayInfo) -> Unit,
+    onCopyKeyId: (String) -> Unit,
     onAddUserId: () -> Unit,
     onMakePrimaryUserId: (String) -> Unit,
     onRevokeUserId: (String) -> Unit,
@@ -1768,7 +1836,8 @@ private fun LoadedBody(
     onStrictFallbacksChange: (Boolean) -> Unit,
     onPickSigningSubkey: (String?) -> Unit,
     // 4.7.0 (item 31)
-    onRevokeCertification: (com.pgpony.android.data.repository.KeyRepository.CertificationRow) -> Unit
+    onRevokeCertification: (com.pgpony.android.data.repository.KeyRepository.CertificationRow) -> Unit,
+    onLookUpCertifier: (com.pgpony.android.data.repository.KeyRepository.CertificationRow) -> Unit
 ) {
     val key = state.key ?: return  // Defensive — caller already filtered
     val hideDestructiveActions = DestructiveActionsDisabled.isEnabled(androidx.compose.ui.platform.LocalContext.current)
@@ -1822,7 +1891,8 @@ private fun LoadedBody(
         // Rendered when there's more than one, or when the key can add
         // one (RC3 §17.2 I / #29) — software key pairs only, same
         // gating as the Subkeys section's Add button.
-        val canEditUserIds = key.isKeyPair && !key.isCardBacked && state.primaryStub == null
+        // 4.7.0 (item 55): also a key pair whose subkeys are on a card.
+        val canEditUserIds = key.isKeyPair && state.primaryStub == null
         // 4.7.0 (item 27): also shown for a single User ID carrying the
         // weak-hash mark, so the mark is never hidden.
         // 4.7.0 (item 31): and whenever someone has certified one of them.
@@ -1839,7 +1909,8 @@ private fun LoadedBody(
                     onAddUserId = onAddUserId,
                     onCopyEmail = onCopyEmail,
                     certifications = state.certifications,
-                    onRevokeCertification = onRevokeCertification
+                    onRevokeCertification = onRevokeCertification,
+                    onLookUpCertifier = if (com.pgpony.android.network.OfflineMode.enabled) null else onLookUpCertifier
                 )
             }
         }
@@ -1859,7 +1930,9 @@ private fun LoadedBody(
             DetailsSection(
                 key = key,
                 onTrustTap = { onComingSoon(KeyDetailActionIds.CHANGE_TRUST) },
-                onEditExpiry = if ((key.isKeyPair && state.primaryStub == null) || key.isCardBacked) onEditExpiry else null
+                onEditExpiry = if ((key.isKeyPair && state.primaryStub == null) || key.isCardBacked) onEditExpiry else null,
+                primaryUsage = state.primaryUsage,
+                keyServerCheck = state.keyServerCheck
             )
         }
         // 4.2.0 RC3 workstream G (§11.2) — read-only subkey list.
@@ -1868,6 +1941,9 @@ private fun LoadedBody(
         // Edit Expiry row's own gating (card-backed keys use the NFC
         // flow, public-only keys have no private material to sign
         // the binding with).
+        // Not on a key pair whose subkeys are on a card (item 55): it signs and
+        // decrypts on the card, so a new subkey here would receive mail the
+        // card cannot open. Add the subkey first, then move it.
         val canAddSubkey = key.isKeyPair && !key.isCardBacked && state.primaryStub == null
         if (state.subkeys.isNotEmpty() || canAddSubkey || key.primaryOnCard) {
             item {
@@ -1879,6 +1955,7 @@ private fun LoadedBody(
                     onRevokeSubkey = onRevokeSubkey,
                     onRemoveSubkey = if (hideDestructiveActions) null else onRemoveSubkey,
                     onChangeSubkeyExpiry = onChangeSubkeyExpiry,
+                    onCopyKeyId = onCopyKeyId,
                     primaryOnCard = key.primaryOnCard
                 )
             }
