@@ -1729,7 +1729,7 @@
     <!-- Key expiration editing -->
     <string name="key_detail_expiry_edit">만료 편집</string>
     <string name="key_detail_expiry_sheet_title">만료 편집</string>
-    <string name="key_detail_expiry_sheet_subtitle">%1$s의 새 만료일을 설정합니다. 키와 보조 키가 다시 서명되며, 지문은 그대로입니다.</string>
+    <string name="key_detail_expiry_sheet_subtitle">%1$s의 새 만료일을 설정합니다. 기본 키가 다시 서명됩니다. 보조 키는 각자의 만료일을 유지하며, 지문은 그대로입니다.</string>
     <string name="key_detail_expiry_custom">사용자 지정 날짜</string>
     <string name="key_detail_expiry_pick_date">날짜를 고르세요</string>
     <string name="key_detail_expiry_passphrase_label">키 비밀구절 (설정되어 있다면)</string>
@@ -2623,4 +2623,13 @@
     <plurals name="move_to_card_done_kept">
         <item quantity="other">키 %1$d개가 이제 보안 키에 있습니다. 사본이 이 폰에 남으며, 폰은 계속 그 사본을 사용합니다.</item>
     </plurals>
+
+    <!-- 4.7.0 RC5, translated Oct 2026 -->
+    <string name="key_detail_expiry_sheet_title_subkey">보조 키 만료 편집</string>
+    <string name="key_detail_expiry_sheet_subtitle_subkey">보조 키 %1$s의 새 만료일을 설정합니다. 기본 키와 다른 보조 키는 만료일이 그대로 유지됩니다.</string>
+    <string name="key_detail_expiry_also_subkeys">아직 유효한 보조 키에도 적용</string>
+    <string name="key_detail_expiry_also_subkeys_hint">만료되었거나 철회된 보조 키는 만료일이 그대로 유지됩니다.</string>
+    <string name="key_detail_subkey_change_expiry">만료 편집…</string>
+    <string name="key_detail_card_no_cert_title">공개 키 필요</string>
+    <string name="key_detail_card_no_cert_body">이 보안 키에는 개인 키가 있지만, 키의 나머지 부분인 사용자 ID와 서명은 없습니다. 일치하는 공개 키(내보낸 파일, 백업 또는 키 서버의 사본)를 가져오면 PGPony가 그 키를 이 보안 키와 연결합니다. 그러면 보안 키로 서명하고 복호화할 수 있습니다.</string>
 </resources>

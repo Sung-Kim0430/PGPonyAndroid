@@ -1808,7 +1808,7 @@
     <!-- Key expiration editing -->
     <string name="key_detail_expiry_edit">编辑有效期</string>
     <string name="key_detail_expiry_sheet_title">编辑有效期</string>
-    <string name="key_detail_expiry_sheet_subtitle">为 %1$s 设置新的有效期。这会重新签名该密钥及其子钥，指纹保持不变。</string>
+    <string name="key_detail_expiry_sheet_subtitle">为 %1$s 设置新的有效期。这会重新签名主钥。子钥保留各自的有效期，指纹保持不变。</string>
     <string name="key_detail_expiry_custom">自定义日期</string>
     <string name="key_detail_expiry_pick_date">选择日期</string>
     <string name="key_detail_expiry_passphrase_label">密钥口令（如已设置）</string>
@@ -3018,4 +3018,12 @@
     <string name="err_card_expiry_primary_missing">主钥不在此硬件密钥的签名槽位中，因此无法用它更改有效期</string>
     <string name="err_move_to_card_unsupported">此硬件密钥无法容纳所选密钥中的某一个。请选择其他密钥或槽位。</string>
     <string name="err_move_to_card_check_failed">写入密钥后，硬件密钥未通过检查，因此此手机上的任何内容均未更改。请勿依赖硬件密钥上的这些密钥。</string>
+    <!-- 4.7.0 RC5, translated Oct 2026 -->
+    <string name="key_detail_expiry_sheet_title_subkey">编辑子钥有效期</string>
+    <string name="key_detail_expiry_sheet_subtitle_subkey">为子钥 %1$s 设置新的有效期。主钥和其他子钥保留各自的有效期。</string>
+    <string name="key_detail_expiry_also_subkeys">同时应用于仍然有效的子钥</string>
+    <string name="key_detail_expiry_also_subkeys_hint">已过期和已吊销的子钥保留各自的有效期。</string>
+    <string name="key_detail_subkey_change_expiry">编辑有效期…</string>
+    <string name="key_detail_card_no_cert_title">需要公钥</string>
+    <string name="key_detail_card_no_cert_body">此硬件密钥存有私钥，但没有密钥的其余部分，即它的用户 ID 和签名。导入匹配的公钥（导出文件、备份或密钥服务器上的副本），PGPony 就会将其与此硬件密钥配对，以便你用它签名和解密。</string>
 </resources>

@@ -1490,7 +1490,7 @@ Opcionalmente, bloquea la app con tu huella digital o cara para mayor tranquilid
     <string name="key_detail_expiry_failed">No se pudo actualizar la caducidad. Inténtalo de nuevo.</string>
     <string name="key_detail_expiry_passphrase_label">Frase de contraseña de la clave (si tiene)</string>
     <string name="key_detail_expiry_pick_date">Elegir una fecha</string>
-    <string name="key_detail_expiry_sheet_subtitle">Establece una nueva caducidad para %1$s. Se vuelven a firmar la clave y sus subclaves; la huella digital no cambia.</string>
+    <string name="key_detail_expiry_sheet_subtitle">Establece una nueva caducidad para %1$s. Se vuelve a firmar la clave principal. Las subclaves conservan sus propias fechas y la huella digital no cambia.</string>
     <string name="key_detail_expiry_sheet_title">Editar caducidad</string>
     <string name="key_detail_userids_primary">Principal</string>
     <string name="key_detail_userid_weak_hash_badge">Hash débil</string>
@@ -2969,4 +2969,12 @@ Opcionalmente, bloquea la app con tu huella digital o cara para mayor tranquilid
     <string name="err_card_expiry_primary_missing">La clave principal no está en la ranura de firma de esta llave de seguridad, así que no se puede cambiar la caducidad con ella</string>
     <string name="err_move_to_card_unsupported">Esta llave de seguridad no puede contener una de las claves elegidas. Elige otra clave u otra ranura.</string>
     <string name="err_move_to_card_check_failed">La llave de seguridad no superó la comprobación después de escribir las claves, así que no se cambió nada en este teléfono. No confíes en las claves de la llave de seguridad.</string>
+    <!-- 4.7.0 RC5, translated Oct 2026 -->
+    <string name="key_detail_expiry_sheet_title_subkey">Editar caducidad de la subclave</string>
+    <string name="key_detail_expiry_sheet_subtitle_subkey">Establece una nueva caducidad para la subclave %1$s. La clave principal y las demás subclaves conservan sus fechas.</string>
+    <string name="key_detail_expiry_also_subkeys">Aplicar también a las subclaves que siguen siendo válidas</string>
+    <string name="key_detail_expiry_also_subkeys_hint">Las subclaves caducadas y revocadas conservan sus fechas.</string>
+    <string name="key_detail_subkey_change_expiry">Editar caducidad…</string>
+    <string name="key_detail_card_no_cert_title">Se necesita la clave pública</string>
+    <string name="key_detail_card_no_cert_body">Esta llave de seguridad contiene las claves privadas, pero no el resto de la clave: sus ID de usuario y firmas. Importa la clave pública correspondiente (de una exportación, una copia de seguridad o un servidor de claves) y PGPony la emparejará con esta llave de seguridad para que puedas firmar y descifrar con ella.</string>
 </resources>

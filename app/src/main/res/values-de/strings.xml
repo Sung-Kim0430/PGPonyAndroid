@@ -1490,7 +1490,7 @@ Optional kannst du die App hinter deinem Fingerabdruck oder Gesicht sperren, um 
     <string name="key_detail_expiry_failed">Ablaufdatum konnte nicht aktualisiert werden. Bitte versuche es erneut.</string>
     <string name="key_detail_expiry_passphrase_label">Schlüssel-Passphrase (falls gesetzt)</string>
     <string name="key_detail_expiry_pick_date">Datum wählen</string>
-    <string name="key_detail_expiry_sheet_subtitle">Lege ein neues Ablaufdatum für %1$s fest. Der Schlüssel und seine Unterschlüssel werden neu signiert; der Fingerabdruck bleibt gleich.</string>
+    <string name="key_detail_expiry_sheet_subtitle">Lege ein neues Ablaufdatum für %1$s fest. Dabei wird der Hauptschlüssel neu signiert. Unterschlüssel behalten ihr eigenes Ablaufdatum, und der Fingerabdruck bleibt gleich.</string>
     <string name="key_detail_expiry_sheet_title">Ablaufdatum bearbeiten</string>
     <string name="key_detail_userids_primary">Primär</string>
     <string name="key_detail_userid_weak_hash_badge">Schwacher Hash</string>
@@ -2963,4 +2963,12 @@ Optional kannst du die App hinter deinem Fingerabdruck oder Gesicht sperren, um 
     <string name="err_card_expiry_primary_missing">Der Hauptschlüssel liegt nicht im Signatur-Slot dieses Sicherheitsschlüssels, daher kann das Ablaufdatum damit nicht geändert werden</string>
     <string name="err_move_to_card_unsupported">Dieser Sicherheitsschlüssel kann einen der gewählten Schlüssel nicht aufnehmen. Wähle einen anderen Schlüssel oder Slot.</string>
     <string name="err_move_to_card_check_failed">Der Sicherheitsschlüssel hat die Prüfung nach dem Schreiben der Schlüssel nicht bestanden, daher wurde auf diesem Telefon nichts geändert. Verlass dich nicht auf die Schlüssel auf dem Sicherheitsschlüssel.</string>
+    <!-- 4.7.0 RC5, translated Oct 2026 -->
+    <string name="key_detail_expiry_sheet_title_subkey">Ablaufdatum des Unterschlüssels bearbeiten</string>
+    <string name="key_detail_expiry_sheet_subtitle_subkey">Lege ein neues Ablaufdatum für den Unterschlüssel %1$s fest. Der Hauptschlüssel und die anderen Unterschlüssel behalten ihr Ablaufdatum.</string>
+    <string name="key_detail_expiry_also_subkeys">Auch für noch gültige Unterschlüssel festlegen</string>
+    <string name="key_detail_expiry_also_subkeys_hint">Abgelaufene und widerrufene Unterschlüssel behalten ihr Ablaufdatum.</string>
+    <string name="key_detail_subkey_change_expiry">Ablaufdatum bearbeiten…</string>
+    <string name="key_detail_card_no_cert_title">Öffentlicher Schlüssel benötigt</string>
+    <string name="key_detail_card_no_cert_body">Auf diesem Sicherheitsschlüssel liegen die privaten Schlüssel, aber nicht der Rest des Schlüssels: seine Benutzer-IDs und Signaturen. Importiere den passenden öffentlichen Schlüssel (einen Export, eine Sicherung oder eine Kopie vom Schlüsselserver), dann koppelt PGPony ihn mit diesem Sicherheitsschlüssel, sodass du damit signieren und entschlüsseln kannst.</string>
 </resources>

@@ -1490,7 +1490,7 @@ Opcionalmente, bloqueie o app com sua impressão digital ou rosto para mais tran
     <string name="key_detail_expiry_failed">Não foi possível atualizar a validade. Tente novamente.</string>
     <string name="key_detail_expiry_passphrase_label">Frase-senha da chave (se houver)</string>
     <string name="key_detail_expiry_pick_date">Escolher uma data</string>
-    <string name="key_detail_expiry_sheet_subtitle">Defina uma nova validade para %1$s. A chave e suas subchaves são reassinadas; a impressão digital continua a mesma.</string>
+    <string name="key_detail_expiry_sheet_subtitle">Defina uma nova validade para %1$s. Isto reassina a chave principal. As subchaves mantêm suas próprias datas, e a impressão digital continua a mesma.</string>
     <string name="key_detail_expiry_sheet_title">Editar validade</string>
     <string name="key_detail_userids_primary">Principal</string>
     <string name="key_detail_userid_weak_hash_badge">Hash fraco</string>
@@ -2969,4 +2969,12 @@ Opcionalmente, bloqueie o app com sua impressão digital ou rosto para mais tran
     <string name="err_card_expiry_primary_missing">A chave principal não está no slot de assinatura desta chave de segurança, então a expiração não pode ser alterada com ela</string>
     <string name="err_move_to_card_unsupported">Esta chave de segurança não comporta uma das chaves escolhidas. Escolha outra chave ou outro slot.</string>
     <string name="err_move_to_card_check_failed">A chave de segurança não passou na verificação depois que as chaves foram gravadas, então nada neste telefone foi alterado. Não confie nas chaves que estão na chave de segurança.</string>
+    <!-- 4.7.0 RC5, translated Oct 2026 -->
+    <string name="key_detail_expiry_sheet_title_subkey">Editar validade da subchave</string>
+    <string name="key_detail_expiry_sheet_subtitle_subkey">Defina uma nova validade para a subchave %1$s. A chave principal e as outras subchaves mantêm suas datas.</string>
+    <string name="key_detail_expiry_also_subkeys">Aplicar também às subchaves que ainda são válidas</string>
+    <string name="key_detail_expiry_also_subkeys_hint">Subchaves expiradas e revogadas mantêm suas datas.</string>
+    <string name="key_detail_subkey_change_expiry">Editar validade…</string>
+    <string name="key_detail_card_no_cert_title">Chave pública necessária</string>
+    <string name="key_detail_card_no_cert_body">Esta chave de segurança contém as chaves privadas, mas não o restante da chave: seus IDs de usuário e assinaturas. Importe a chave pública correspondente (uma exportação, um backup ou uma cópia de um servidor de chaves) e o PGPony vai pareá-la com esta chave de segurança para que você possa assinar e decifrar com ela.</string>
 </resources>

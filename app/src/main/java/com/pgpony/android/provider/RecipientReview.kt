@@ -149,3 +149,68 @@ internal object RecipientReview {
         return accepted.filter { it.fingerprint.uppercase() !in have }
     }
 }
+
+/**
+ * 4.7.0 (item 56, #25): what the user picked in the recipient review, so one
+ * send does not ask again. FairEmail asks for key ids when Encrypt is tapped,
+ * again when the message is sent, and again when it saves an encrypted draft,
+ * each time with the addresses and without the earlier picks, so the review
+ * opened two or three times and forgot the choice in between.
+ *
+ * Kept in memory in the provider process only, per calling app and per exact
+ * set of addresses the review covered, for [ttlMs]. A recalled answer goes
+ * through the same checks as a fresh one (RecipientReview.resolveSelected).
+ * [lastPicks] preselects the earlier picks when the addresses change. Cleared
+ * with the provider's passphrase cache (clear-all and device lock).
+ */
+class RecipientReviewMemory(
+    private val ttlMs: Long = 30L * 60_000L,
+    private val now: () -> Long = { System.currentTimeMillis() }
+) {
+    private class Entry(val ids: LongArray, val at: Long)
+
+    private val byAddresses = HashMap<String, Entry>()
+    private val lastByPackage = HashMap<String, Entry>()
+
+    private fun keyOf(callingPackage: String, addresses: Collection<String>): String =
+        callingPackage + "\u0000" + addresses
+            .map { it.substringAfterLast('<').substringBefore('>').trim().ifEmpty { it.trim() }.lowercase() }
+            .distinct().sorted().joinToString("\u0000")
+
+    private fun prune() {
+        val cutoff = now() - ttlMs
+        byAddresses.values.removeAll { it.at < cutoff }
+        lastByPackage.values.removeAll { it.at < cutoff }
+    }
+
+    @Synchronized
+    fun remember(callingPackage: String, addresses: Collection<String>, ids: LongArray) {
+        if (addresses.isEmpty() || ids.isEmpty()) return
+        val entry = Entry(ids.copyOf(), now())
+        byAddresses[keyOf(callingPackage, addresses)] = entry
+        lastByPackage[callingPackage] = entry
+    }
+
+    @Synchronized
+    fun recall(callingPackage: String, addresses: Collection<String>): LongArray? {
+        if (addresses.isEmpty()) return null
+        prune()
+        return byAddresses[keyOf(callingPackage, addresses)]?.ids?.copyOf()
+    }
+
+    @Synchronized
+    fun lastPicks(callingPackage: String): LongArray? {
+        prune()
+        return lastByPackage[callingPackage]?.ids?.copyOf()
+    }
+
+    @Synchronized
+    fun clear() {
+        byAddresses.clear()
+        lastByPackage.clear()
+    }
+
+    companion object {
+        val shared = RecipientReviewMemory()
+    }
+}

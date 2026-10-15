@@ -450,8 +450,12 @@ class PGPonyOpenPgpService : Service() {
         // Opportunistic callers ("encrypt if possible") get the partial answer
         // without a prompt, the same as encryptOp keeps them silent.
         val opportunistic = data.getBooleanExtra(OpenPgpApi.EXTRA_OPPORTUNISTIC_ENCRYPTION, false)
+        // 4.7.0 (item 56, #25): a later request for the same addresses reuses
+        // the picks from this app's last review.
+        val reviewed = missing + dontUse
         val selectedKeyIds: LongArray? =
-            if (opportunistic) null else data.getLongArrayExtra(OpenPgpApi.EXTRA_KEY_IDS_SELECTED)
+            if (opportunistic) null
+            else data.getLongArrayExtra(OpenPgpApi.EXTRA_KEY_IDS_SELECTED) ?: recalledPicks(callingPackage, reviewed)
         if (selectedKeyIds != null) {
             // The re-run after the review: the same rules as encryptOp. Every
             // picked id must be usable, or the answer is the same refusal.
@@ -461,6 +465,7 @@ class PGPonyOpenPgpService : Service() {
             if (selection.refused.isNotEmpty()) {
                 return reviewKeyUnusableResult(selection.refused.map { RecipientReview.formatKeyId(it) })
             }
+            RecipientReviewMemory.shared.remember(callingPackage, reviewed, selectedKeyIds)
             return successResult().putExtra(
                 OpenPgpApi.RESULT_KEY_IDS,
                 RecipientReview.mergeKeyIds(resolvedIds, selection.accepted)
@@ -632,7 +637,7 @@ class PGPonyOpenPgpService : Service() {
         // the keys the user picked there. Opportunistic sends never open the
         // review, so a selection on one is ignored and that path stays as it was.
         val opportunistic = data.getBooleanExtra(OpenPgpApi.EXTRA_OPPORTUNISTIC_ENCRYPTION, false)
-        val selectedKeyIds: LongArray? =
+        val explicitSelected: LongArray? =
             if (opportunistic) null else data.getLongArrayExtra(OpenPgpApi.EXTRA_KEY_IDS_SELECTED)
         runBlocking {
             requestedKeyIds?.forEach { id ->
@@ -690,6 +695,11 @@ class PGPonyOpenPgpService : Service() {
             // Opportunistic: reported as missing below, as before.
             dontUse += dontUseKeyIds
         }
+        // 4.7.0 (item 56, #25): the addresses this send would review, and the
+        // picks from this app's last review of exactly those addresses.
+        val reviewed = missing + dontUse
+        val selectedKeyIds: LongArray? =
+            if (opportunistic) null else explicitSelected ?: recalledPicks(callingPackage, reviewed)
         if (selectedKeyIds != null) {
             // 4.7.0 (item 41, #25): the user reviewed this send. Every picked id
             // must still be a key in the keyring that is not revoked, not
@@ -716,6 +726,7 @@ class PGPonyOpenPgpService : Service() {
             if (rings.isEmpty()) {
                 return errorResult(OpenPgpError.NO_USER_IDS, "No recipients provided")
             }
+            RecipientReviewMemory.shared.remember(callingPackage, reviewed, selectedKeyIds)
             missing.clear()
             dontUse.clear()
         }
@@ -2220,6 +2231,15 @@ class PGPonyOpenPgpService : Service() {
      * EXTRA_KEY_IDS_SELECTED. Cancel returns RESULT_CANCELED, so the mail app
      * keeps its draft.
      */
+    /** 4.7.0 (item 56, #25): this app's picks for exactly [addresses], when
+     *  every one still passes the review's checks; otherwise none, so the
+     *  review opens. */
+    private fun recalledPicks(callingPackage: String, addresses: List<String>): LongArray? {
+        val ids = RecipientReviewMemory.shared.recall(callingPackage, addresses) ?: return null
+        val ok = runBlocking { RecipientReview.resolveSelected(ids, repo.getAllKeys(), allowExpiredKeys()).refused.isEmpty() }
+        return ids.takeIf { ok }
+    }
+
     private fun recipientReviewInteraction(
         data: Intent,
         callingPackage: String,
@@ -2236,6 +2256,11 @@ class PGPonyOpenPgpService : Service() {
                 ProviderRecipientReviewActivity.EXTRA_SIGN_KEY_ID,
                 data.getLongExtra(OpenPgpApi.EXTRA_SIGN_KEY_ID, 0L)
             )
+            // 4.7.0 (item 56, #25): the addresses changed since the last review;
+            // start from the keys picked then.
+            RecipientReviewMemory.shared.lastPicks(callingPackage)?.let {
+                putExtra(ProviderRecipientReviewActivity.EXTRA_PREVIOUS_PICKS, it)
+            }
             // GET_KEY_IDS and encrypt get their own scheme and request code,
             // so one review's PendingIntent never replaces the other's extras.
             val reviewScheme = if (forKeyIds) "pgpony-api-recipients-keyids" else "pgpony-api-recipients"

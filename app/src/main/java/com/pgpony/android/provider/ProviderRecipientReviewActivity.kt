@@ -91,6 +91,10 @@ class ProviderRecipientReviewActivity : ComponentActivity() {
 
         /** The client's signing key id (0 when none), preselected when offered. */
         const val EXTRA_SIGN_KEY_ID = "com.pgpony.android.provider.REVIEW_SIGN_KEY_ID"
+
+        /** 4.7.0 (item 56, #25): key ids picked in this app's last review,
+         *  ticked again. */
+        const val EXTRA_PREVIOUS_PICKS = "com.pgpony.android.provider.REVIEW_PREVIOUS_PICKS"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -112,6 +116,7 @@ class ProviderRecipientReviewActivity : ComponentActivity() {
         val dontUse: List<String> = intent.getStringArrayExtra(EXTRA_DONT_USE)?.toList() ?: emptyList()
         val senderEmail: String? = intent.getStringExtra(EXTRA_SENDER_EMAIL)?.takeIf { it.isNotBlank() }
         val signKeyId = intent.getLongExtra(EXTRA_SIGN_KEY_ID, 0L)
+        val previousPicks: Set<Long> = intent.getLongArrayExtra(EXTRA_PREVIOUS_PICKS)?.toSet() ?: emptySet()
 
         val repo = (application as PGPonyApp).keyRepository
 
@@ -130,7 +135,9 @@ class ProviderRecipientReviewActivity : ComponentActivity() {
                 val current = loaded
                 LaunchedEffect(current) {
                     if (current != null && selected == null) {
-                        selected = setOfNotNull(current.preselected)
+                        selected = setOfNotNull(current.preselected) + current.keys
+                            .filter { RecipientReview.keyIdOf(it) in previousPicks }
+                            .map { it.fingerprint }
                     }
                 }
                 val chosen: Set<String> = selected ?: emptySet()

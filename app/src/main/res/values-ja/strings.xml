@@ -1490,7 +1490,7 @@ PGPony は、古い OpenPGP 実装との相互運用性のために従来の RSA
     <string name="key_detail_expiry_failed">有効期限を更新できませんでした。もう一度お試しください。</string>
     <string name="key_detail_expiry_passphrase_label">鍵のパスフレーズ（設定している場合）</string>
     <string name="key_detail_expiry_pick_date">日付を選択</string>
-    <string name="key_detail_expiry_sheet_subtitle">%1$s の新しい有効期限を設定します。鍵とサブ鍵が再署名されますが、フィンガープリントは変わりません。</string>
+    <string name="key_detail_expiry_sheet_subtitle">%1$s の新しい有効期限を設定します。主鍵が再署名されます。サブキーはそれぞれの有効期限を保ち、フィンガープリントは変わりません。</string>
     <string name="key_detail_expiry_sheet_title">有効期限を編集</string>
     <string name="key_detail_userids_primary">プライマリ</string>
     <string name="key_detail_userid_weak_hash_badge">弱いハッシュ</string>
@@ -2942,4 +2942,13 @@ PGPony は、古い OpenPGP 実装との相互運用性のために従来の RSA
     <string name="err_card_expiry_primary_missing">主鍵がこのセキュリティキーの署名スロットにないため、このセキュリティキーでは有効期限を変更できません</string>
     <string name="err_move_to_card_unsupported">このセキュリティキーには、選択した鍵のうち 1 つを格納できません。別の鍵またはスロットを選んでください。</string>
     <string name="err_move_to_card_check_failed">鍵の書き込み後にセキュリティキーが確認に合格しなかったため、このスマートフォン上では何も変更されていません。セキュリティキー上の鍵には頼らないでください。</string>
+
+    <!-- 4.7.0 RC5, translated Oct 2026 -->
+    <string name="key_detail_expiry_sheet_title_subkey">サブキーの有効期限を編集</string>
+    <string name="key_detail_expiry_sheet_subtitle_subkey">サブキー %1$s の新しい有効期限を設定します。主鍵とほかのサブキーの有効期限は変わりません。</string>
+    <string name="key_detail_expiry_also_subkeys">まだ有効なサブキーにも設定する</string>
+    <string name="key_detail_expiry_also_subkeys_hint">期限切れまたは失効済みのサブキーは、有効期限が変わりません。</string>
+    <string name="key_detail_subkey_change_expiry">有効期限を編集…</string>
+    <string name="key_detail_card_no_cert_title">公開鍵が必要です</string>
+    <string name="key_detail_card_no_cert_body">このセキュリティキーには秘密鍵が入っていますが、鍵のそれ以外の部分、つまりユーザー ID と署名は入っていません。対応する公開鍵（エクスポートしたもの、バックアップ、または鍵サーバー上のコピー）をインポートすると、PGPony がそれをこのセキュリティキーとペアリングし、署名と復号に使えるようになります。</string>
 </resources>

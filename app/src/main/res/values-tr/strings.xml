@@ -1812,7 +1812,7 @@
     <!-- Key expiration editing -->
     <string name="key_detail_expiry_edit">Son kullanma tarihini düzenle</string>
     <string name="key_detail_expiry_sheet_title">Son kullanma tarihini düzenle</string>
-    <string name="key_detail_expiry_sheet_subtitle">%1$s için yeni bir son kullanma tarihi belirleyin. Bu işlem anahtarı ve alt anahtarlarını yeniden imzalar; parmak izi aynı kalır.</string>
+    <string name="key_detail_expiry_sheet_subtitle">%1$s için yeni bir son kullanma tarihi belirleyin. Bu işlem birincil anahtarı yeniden imzalar. Alt anahtarlar kendi tarihlerini korur ve parmak izi aynı kalır.</string>
     <string name="key_detail_expiry_custom">Özel tarih</string>
     <string name="key_detail_expiry_pick_date">Tarih seç</string>
     <string name="key_detail_expiry_passphrase_label">Anahtar parola ifadesi (ayarlıysa)</string>
@@ -3039,4 +3039,12 @@
     <string name="err_card_expiry_primary_missing">Birincil anahtar bu güvenlik anahtarının imza yuvasında değil, bu yüzden son kullanma tarihi onunla değiştirilemez</string>
     <string name="err_move_to_card_unsupported">Bu güvenlik anahtarı seçilen anahtarlardan birini tutamaz. Başka bir anahtar veya yuva seçin.</string>
     <string name="err_move_to_card_check_failed">Anahtarlar yazıldıktan sonra güvenlik anahtarı kontrolü geçemedi, bu yüzden bu telefonda hiçbir şey değiştirilmedi. Güvenlik anahtarındaki anahtarlara güvenmeyin.</string>
+    <!-- 4.7.0 RC5, translated Oct 2026 -->
+    <string name="key_detail_expiry_sheet_title_subkey">Alt anahtarın son kullanma tarihini düzenle</string>
+    <string name="key_detail_expiry_sheet_subtitle_subkey">%1$s alt anahtarı için yeni bir son kullanma tarihi belirleyin. Birincil anahtar ve diğer alt anahtarlar kendi tarihlerini korur.</string>
+    <string name="key_detail_expiry_also_subkeys">Hâlâ geçerli olan alt anahtarlara da uygula</string>
+    <string name="key_detail_expiry_also_subkeys_hint">Süresi dolmuş ve geçersiz kılınmış alt anahtarlar kendi tarihlerini korur.</string>
+    <string name="key_detail_subkey_change_expiry">Son kullanma tarihini düzenle…</string>
+    <string name="key_detail_card_no_cert_title">Açık anahtar gerekli</string>
+    <string name="key_detail_card_no_cert_body">Bu güvenlik anahtarı gizli anahtarları tutuyor, ancak anahtarın geri kalanını, yani Kullanıcı Kimliklerini ve imzalarını tutmuyor. Eşleşen açık anahtarı (bir dışa aktarım, bir yedek veya anahtar sunucusundaki bir kopya) içe aktarın; PGPony onu bu güvenlik anahtarıyla eşleştirir, böylece onunla imzalayabilir ve şifre çözebilirsiniz.</string>
 </resources>

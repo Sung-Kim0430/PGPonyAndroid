@@ -1490,7 +1490,7 @@ Vous pouvez aussi verrouiller l\'application derrière votre empreinte digitale 
     <string name="key_detail_expiry_failed">Impossible de mettre à jour l\'expiration. Veuillez réessayer.</string>
     <string name="key_detail_expiry_passphrase_label">Phrase secrète de la clé (le cas échéant)</string>
     <string name="key_detail_expiry_pick_date">Choisir une date</string>
-    <string name="key_detail_expiry_sheet_subtitle">Définissez une nouvelle expiration pour %1$s. La clé et ses sous-clés sont re-signées ; l\'empreinte reste la même.</string>
+    <string name="key_detail_expiry_sheet_subtitle">Définissez une nouvelle expiration pour %1$s. La clé principale est re-signée. Les sous-clés gardent leurs propres dates, et l\'empreinte reste la même.</string>
     <string name="key_detail_expiry_sheet_title">Modifier l\'expiration</string>
     <string name="key_detail_userids_primary">Principale</string>
     <string name="key_detail_userid_weak_hash_badge">Hachage faible</string>
@@ -2969,4 +2969,12 @@ Vous pouvez aussi verrouiller l\'application derrière votre empreinte digitale 
     <string name="err_card_expiry_primary_missing">La clé principale n\'est pas dans l\'emplacement de signature de cette clé de sécurité : l\'expiration ne peut donc pas être modifiée avec celle-ci</string>
     <string name="err_move_to_card_unsupported">Cette clé de sécurité ne peut pas contenir l\'une des clés choisies. Choisissez une autre clé ou un autre emplacement.</string>
     <string name="err_move_to_card_check_failed">La clé de sécurité n\'a pas réussi la vérification après l\'écriture des clés : rien n\'a donc été modifié sur ce téléphone. Ne vous fiez pas aux clés présentes sur la clé de sécurité.</string>
+    <!-- 4.7.0 RC5, translated Oct 2026 -->
+    <string name="key_detail_expiry_sheet_title_subkey">Modifier l\'expiration de la sous-clé</string>
+    <string name="key_detail_expiry_sheet_subtitle_subkey">Définissez une nouvelle expiration pour la sous-clé %1$s. La clé principale et les autres sous-clés gardent leurs dates.</string>
+    <string name="key_detail_expiry_also_subkeys">Appliquer aussi aux sous-clés encore valides</string>
+    <string name="key_detail_expiry_also_subkeys_hint">Les sous-clés expirées et révoquées gardent leurs dates.</string>
+    <string name="key_detail_subkey_change_expiry">Modifier l\'expiration…</string>
+    <string name="key_detail_card_no_cert_title">Clé publique requise</string>
+    <string name="key_detail_card_no_cert_body">Cette clé de sécurité contient les clés privées, mais pas le reste de la clé : ses ID utilisateur et ses signatures. Importez la clé publique correspondante (une exportation, une sauvegarde ou une copie d\'un serveur de clés) et PGPony l\'associe à cette clé de sécurité, pour que vous puissiez signer et déchiffrer avec elle.</string>
 </resources>

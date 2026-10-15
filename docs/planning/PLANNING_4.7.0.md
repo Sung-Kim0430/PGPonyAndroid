@@ -1375,6 +1375,20 @@ place (item 40's secret locations already do). Also the import of such a key fro
 
 Priority: medium-high (feature gap). Origin: #71 (Oct 15).
 
+## 56. The recipient review opens two or three times for one send (#25)
+
+**Status:** Next RC, code in, not yet on device. FairEmail asks for key ids on Encrypt, again on Send, and
+again when it saves an encrypted draft, each time with the addresses and without the earlier picks, so the
+review (item 41) opened each time and started from scratch. New RecipientReviewMemory (provider process, in
+memory only): the picks from a review are kept for 30 minutes per calling app and per exact set of addresses
+the review covered (case and display names ignored). GET_KEY_IDS and encrypt reuse them for the same set,
+after the same checks as a fresh answer (a pick that is now revoked, Don't use or expired sends the user back
+to the review). When the set changes, the review opens with the earlier picks ticked. Cleared with the
+provider's cache (clear-all) and on device lock. No new strings. Tests: RecipientReviewMemoryTest.
+
+Priority: medium (bug, provider). Origin: #25 (Oct 15, FairEmail): the review opened on Encrypt and again on
+Send (three times when the draft was saved first), and the keys picked were not remembered.
+
 RC3 translation pass (Oct 13): every string missing from a locale went into all 10 (about 125 each; Korean 322,
 including 184 strings and 10 plurals that had fallen behind since 4.6.3, still no err_ strings), and strings that
 were English copies (key_count_summary, clipboard_will_clear_in and a few per locale) were translated. One

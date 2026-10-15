@@ -1820,7 +1820,7 @@
     <!-- Key expiration editing -->
     <string name="key_detail_expiry_edit">Змінити термін дії</string>
     <string name="key_detail_expiry_sheet_title">Змінити термін дії</string>
-    <string name="key_detail_expiry_sheet_subtitle">Установіть новий термін дії для %1$s. Ключ і його підключі буде підписано заново; відбиток залишиться тим самим.</string>
+    <string name="key_detail_expiry_sheet_subtitle">Установіть новий термін дії для %1$s. Основний ключ буде підписано заново. Підключі збережуть свої дати, а відбиток залишиться тим самим.</string>
     <string name="key_detail_expiry_custom">Власна дата</string>
     <string name="key_detail_expiry_pick_date">Виберіть дату</string>
     <string name="key_detail_expiry_passphrase_label">Парольна фраза ключа (якщо встановлено)</string>
@@ -3081,4 +3081,12 @@
     <string name="err_card_expiry_primary_missing">Основного ключа немає в слоті підпису цього ключа безпеки, тому цим ключем безпеки термін дії змінити неможливо</string>
     <string name="err_move_to_card_unsupported">Цей ключ безпеки не може зберігати один із вибраних ключів. Виберіть інший ключ або слот.</string>
     <string name="err_move_to_card_check_failed">Ключ безпеки не пройшов перевірку після запису ключів, тому на цьому телефоні нічого не змінено. Не покладайтеся на ключі, записані на ключ безпеки.</string>
+    <!-- 4.7.0 RC5, translated Oct 2026 -->
+    <string name="key_detail_expiry_sheet_title_subkey">Змінити термін дії підключа</string>
+    <string name="key_detail_expiry_sheet_subtitle_subkey">Установіть новий термін дії для підключа %1$s. Основний ключ та інші підключі збережуть свої дати.</string>
+    <string name="key_detail_expiry_also_subkeys">Також застосувати до підключів, які ще дійсні</string>
+    <string name="key_detail_expiry_also_subkeys_hint">Прострочені та відкликані підключі збережуть свої дати.</string>
+    <string name="key_detail_subkey_change_expiry">Змінити термін дії…</string>
+    <string name="key_detail_card_no_cert_title">Потрібен відкритий ключ</string>
+    <string name="key_detail_card_no_cert_body">Цей ключ безпеки містить закриті ключі, але не решту ключа: його ідентифікатори користувача й підписи. Імпортуйте відповідний відкритий ключ (експорт, резервну копію або копію із сервера ключів), і PGPony пов’яже його з цим ключем безпеки, щоб ви могли підписувати й розшифровувати ним.</string>
 </resources>

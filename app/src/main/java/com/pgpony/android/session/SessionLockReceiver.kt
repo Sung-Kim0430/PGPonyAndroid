@@ -26,6 +26,7 @@ class SessionLockReceiver : BroadcastReceiver() {
         val keyguard = context.getSystemService<KeyguardManager>()
         if (keyguard?.isDeviceSecure != true) return
         ProviderPassphraseCache.clearAll()
+        com.pgpony.android.provider.RecipientReviewMemory.shared.clear() // 4.7.0 (item 56)
         CardPinCache.clear()
         InAppPassphraseCache.clearAll()
     }
