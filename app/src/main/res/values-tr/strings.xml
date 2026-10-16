@@ -3088,4 +3088,22 @@
         <item quantity="one">%1$d açık anahtar</item>
         <item quantity="other">%1$d açık anahtar</item>
     </plurals>
+    <!-- 4.7.0 RC6, translated Oct 2026 -->
+    <string name="key_detail_expiry_confirm_title">Son kullanma tarihi değiştirilsin mi?</string>
+    <string name="key_detail_expiry_confirm_current">Mevcut son kullanma tarihi: %1$s</string>
+    <string name="key_detail_expiry_confirm_new">Yeni son kullanma tarihi: %1$s</string>
+    <string name="key_detail_expiry_confirm_subkey_only">Yalnızca %1$s alt anahtarının bağlaması yeniden imzalanır.</string>
+    <plurals name="key_detail_expiry_confirm_user_ids">
+        <item quantity="one">%1$d Kullanıcı Kimliği yeniden imzalanır.</item>
+        <item quantity="other">%1$d Kullanıcı Kimliği yeniden imzalanır.</item>
+    </plurals>
+    <plurals name="key_detail_expiry_confirm_subkeys">
+        <item quantity="one">Hâlâ geçerli olan %1$d alt anahtar da yeniden imzalanır.</item>
+        <item quantity="other">Hâlâ geçerli olan %1$d alt anahtar da yeniden imzalanır.</item>
+    </plurals>
+    <string name="key_detail_expiry_confirm_publish">Başkaları yeni tarihi ancak siz anahtarı yayımladıktan sonra görür.</string>
+    <string name="key_detail_expiry_confirm_action">Son kullanma tarihini değiştir</string>
+    <string name="key_detail_resign_biometric_title">Yeni imzaları onaylayın</string>
+    <string name="key_detail_resign_biometric_subtitle">Bu anahtarı yeniden imzalamak için kimliğinizi doğrulayın</string>
+    <string name="provider_review_included_format">%1$s için zaten dahil edildi</string>
 </resources>

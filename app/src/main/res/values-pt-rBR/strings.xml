@@ -3021,4 +3021,26 @@ Opcionalmente, bloqueie o app com sua impressão digital ou rosto para mais tran
         <item quantity="many">%1$d chaves públicas</item>
         <item quantity="other">%1$d chaves públicas</item>
     </plurals>
+    <!-- 4.7.0 RC6, translated Oct 2026 -->
+    <!-- 4.7.0 RC6: confirm before an expiry change or a refresh (item 66, #86) -->
+    <string name="key_detail_expiry_confirm_title">Alterar a validade?</string>
+    <string name="key_detail_expiry_confirm_current">Validade atual: %1$s</string>
+    <string name="key_detail_expiry_confirm_new">Nova validade: %1$s</string>
+    <string name="key_detail_expiry_confirm_subkey_only">Apenas o vínculo da subchave %1$s é assinado novamente.</string>
+    <plurals name="key_detail_expiry_confirm_user_ids">
+        <item quantity="one">%1$d ID de usuário é assinado novamente.</item>
+        <item quantity="many">%1$d IDs de usuário são assinados novamente.</item>
+        <item quantity="other">%1$d IDs de usuário são assinados novamente.</item>
+    </plurals>
+    <plurals name="key_detail_expiry_confirm_subkeys">
+        <item quantity="one">%1$d subchave que ainda é válida também é assinada novamente.</item>
+        <item quantity="many">%1$d subchaves que ainda são válidas também são assinadas novamente.</item>
+        <item quantity="other">%1$d subchaves que ainda são válidas também são assinadas novamente.</item>
+    </plurals>
+    <string name="key_detail_expiry_confirm_publish">As outras pessoas só verão a nova data depois que você publicar a chave.</string>
+    <string name="key_detail_expiry_confirm_action">Alterar validade</string>
+    <string name="key_detail_resign_biometric_title">Confirmar as novas assinaturas</string>
+    <string name="key_detail_resign_biometric_subtitle">Autentique-se para assinar esta chave novamente</string>
+    <!-- 4.7.0 RC6: the recipient review shows keys the request already includes (item 67, #25) -->
+    <string name="provider_review_included_format">Já incluída para %1$s</string>
 </resources>

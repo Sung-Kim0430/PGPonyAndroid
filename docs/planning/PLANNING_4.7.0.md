@@ -704,6 +704,8 @@ Priority: medium. Origin: #43 and the 4.6.4 USB fix (PLANNING_4.6.4.md item 1).
 
 ## 30. README: hardware keys and Verify a release (#43, #77)
 
+**Status:** Done on main: the hardware line names NFC and USB with the Nitrokey 3 note, and Verify a release lists the four assets, immutable releases, the fingerprint check and the RC-only .sha256.
+
 Priority: medium (docs, promised). Not gated on 4.7.0; can land on main at any time.
 
 - The hardware line says NFC only, with YubiKey 5 NFC and Token2. USB has worked since 4.1.0, and the Nitrokey 3 works
@@ -1267,7 +1269,7 @@ Priority: low (UI, regression of a promise). Origin: #59 (Oct 14, reopened on 4.
 
 ## 51. Re-sign a key's self-signatures with a current hash (#86)
 
-**Status:** Next RC, code in, not yet on device. Key Details > Refresh self-signatures (software key pairs whose
+**Status:** RC5, on device green (Oct 16). Key Details > Refresh self-signatures (software key pairs whose
 primary is on the phone): KeyExpirationService.refreshSelfSignatures re-signs every live User ID and every
 subkey binding not revoked with SHA-256 (Target.Refresh), each keeping its own expiry, carrying the old
 subpackets forward; a signing subkey whose secret is not here is passed over. First it puts back a subkey the
@@ -1316,7 +1318,7 @@ of the same key gets no offer.
 
 ## 52. Publishing refuses a key whose first User ID is revoked
 
-**Status:** Next RC, code in, not yet on device. New UserIdService.shownUserId: the live User ID whose newest
+**Status:** RC5, on device green (Oct 16). New UserIdService.shownUserId: the live User ID whose newest
 self-certification carries the primary flag (the newest such one when several do), else the first live User
 ID, else the first. Import takes it for the key's shown identity (PGPCryptoService, the four import paths)
 instead of the first User ID in ring order. KeyRepository.reconcileShownUserId corrects a key imported before
@@ -1335,7 +1337,7 @@ User ID, then on the wanted one again.
 
 ## 53. Changing the primary key's expiry brought expired subkeys back (#86)
 
-**Status:** Next RC, code in, not yet on device. KeyExpirationService edits now have a Target: Primary (each
+**Status:** RC5, on device green (Oct 16). KeyExpirationService edits now have a Target: Primary (each
 live User ID's self-certification; a revoked User ID is skipped, so its revocation stands) with an opt-in
 "Also set it on subkeys that are still valid" (only subkeys bound, not revoked and not expired now, the v4
 ML-KEM bindings included), or Subkey (that subkey's binding alone, with a new back-signature for a signing
@@ -1359,7 +1361,7 @@ the tester's expired subkeys; they removed the key before publishing. Also asked
 
 ## 54. A security key scanned before its public key is imported never pairs (#71)
 
-**Status:** Next RC, code in, not yet on device. A card scanned with no matching key makes a placeholder row
+**Status:** RC5, on device green (Oct 16). A card scanned with no matching key makes a placeholder row
 keyed by the Signature slot's fingerprint. Importing the public key afterwards paired onto it only when that
 was the primary's fingerprint; with a subkey in the Signature slot (Move to security key's default when the
 primary only certifies) the import made a separate public key row, and the placeholder stayed unusable
@@ -1375,7 +1377,7 @@ scanned back did the same.
 
 ## 55. Move only some keys to a security key and remove those from the phone (#71)
 
-**Status:** Next RC, code in, not yet on device. Remove from this phone is now also offered when every subkey
+**Status:** RC5, on device green (Oct 16). Remove from this phone is now also offered when every subkey
 moves and the primary stays (picked = keys with a secret here minus the primary). finishKeyToCard stubs the
 moved subkeys and keeps the key a key pair linked to the card (isKeyPair and isCardBacked both set, the state a
 card scan already made when it linked onto a key pair): signing and decrypting go to the card, in the app and
@@ -1399,7 +1401,7 @@ Priority: medium-high (feature gap). Origin: #71 (Oct 15).
 
 ## 56. The recipient review opens two or three times for one send (#25)
 
-**Status:** Next RC, code in, not yet on device. FairEmail asks for key ids on Encrypt, again on Send, and
+**Status:** RC5, on device green (Oct 16). FairEmail asks for key ids on Encrypt, again on Send, and
 again when it saves an encrypted draft, each time with the addresses and without the earlier picks, so the
 review (item 41) opened each time and started from scratch. New RecipientReviewMemory (provider process, in
 memory only): the picks from a review are kept for 30 minutes per calling app and per exact set of addresses
@@ -1413,33 +1415,33 @@ Send (three times when the draft was saved first), and the keys picked were not 
 
 ## 57. Copy a subkey's key ID (#91)
 
-**Status:** Next RC, code in. Each subkey's key ID row is tappable with a copy icon; a snackbar confirms. 2 new
+**Status:** RC5, on device green (Oct 16). Each subkey's key ID row is tappable with a copy icon; a snackbar confirms. 2 new
 strings. Origin: #91 (Oct 15).
 
 ## 58. The primary key's usage in Details (#89)
 
-**Status:** Next RC, code in. Details shows Usage for the primary (Certify, Sign, Encrypt, Authenticate) from the
+**Status:** RC5, on device green (Oct 16). Details shows Usage for the primary (Certify, Sign, Encrypt, Authenticate) from the
 key flags on its newest self-signature made by the primary (KeyDetailViewModel.primaryUsageOf), in the same
 wording as the subkey rows (SubkeyCapability.displayString, English like them). 1 new string. Origin: #89
 (Oct 15, coming from OpenKeychain's usage icons).
 
 ## 59. Trust signatures on certifications (#79)
 
-**Status:** Next RC, code in. A certification carrying a Trust Signature subpacket (gpg tsign) now says so after
+**Status:** RC5, on device green (Oct 16). A certification carrying a Trust Signature subpacket (gpg tsign) now says so after
 its level: trusted introducer (amount 120 or more), partly trusted introducer (60 or more), or the amount, with
 the depth, and "limited to some User IDs" when a Regular Expression subpacket is present. The level label
 "No claim" is right for gpg's default tsign (0x10). 4 new strings. Origin: #79 (Oct 15).
 
 ## 60. Key server check result stays in Details (#90)
 
-**Status:** Next RC, code in. Check Key Server now uses fetchByFingerprint, so a network failure is reported as an
+**Status:** RC5, on device green (Oct 16). Check Key Server now uses fetchByFingerprint, so a network failure is reported as an
 error instead of "not found"; the answer is kept per key (KeyServerCheckStore: server, found, time) and Last
 checked reads "<date>, found on keys.openpgp.org" or "not on". The message names the server. The record goes
 with the key on purge. 4 new strings. Origin: #90 (Oct 15).
 
 ## 61. Look up a certifier's key (#88)
 
-**Status:** Next RC, code in. A certification by a key not in the keyring gets Look up, which searches the
+**Status:** RC5, on device green (Oct 16). A certification by a key not in the keyring gets Look up, which searches the
 configured key servers by the issuer fingerprint (keys.pgpony.app and the others first, then keys.openpgp.org),
 or by key ID when the certification has no fingerprint, and shows the key before importing it (the signer
 lookup sheet in a certifier wording). After import the certifications are read again, so the certifier shows by
@@ -1447,7 +1449,7 @@ name and its signature is checked. Hidden in offline mode. 6 new strings. Origin
 
 ## 62. Import and Exchange overlap (#92)
 
-**Status:** Decision for NorseHorse, not built. The requester proposes that Import keep Paste, File and Link and
+**Status:** Decided Oct 15, built in RC6 as item 64 (after a follow-up on #92: the Import sheet's slide-ups are the harder part to use). The requester proposes that Import keep Paste, File and Link and
 point to Exchange for QR, Server and GitHub (GitHub joining Exchange), since Exchange has room to explain.
 Recommendation: keep every method in Import (it is where people look to add a key, and the Keyring's + leads
 there) and make Exchange the place for meeting in person and publishing: add GitHub to Exchange's key server
@@ -1456,7 +1458,7 @@ tab so the two lists agree, and give Import's QR, Server and GitHub rows a one-l
 
 ## 63. Export several public keys as one file (#93)
 
-**Status:** Next RC, code in. Keyring > overflow > Select keys: a tap ticks a key (a checkbox on each card), the
+**Status:** RC5, on device green (Oct 16). Keyring > overflow > Select keys: a tap ticks a key (a checkbox on each card), the
 bar shows how many are picked, Select all, and Export, which puts the picked keys' public keys in one armored
 block (KeyRepository.exportPublicKeysArmored: the binary certificates one after another, as gpg --export
 --armor writes them) and opens the public key sheet (Copy, Save as .asc, Share). Back or the close icon ends
@@ -1470,6 +1472,59 @@ translator and one separate reviewer per locale; a script check confirms every k
 the files parse, placeholders match English and apostrophes are escaped. The Korean community revisions from the
 translations repository (PR #6, 82 strings) were applied on top, the contributor's wording kept where both
 translated a string, with five particle fixes. The English GitHub help now names the Import Key button.
+
+## 64. Import's QR, Server and GitHub open the Exchange page (#92)
+
+**Status:** RC6, code in. ImportKeyScreen's section, error banner and preview are now ImportMethodBody, shared
+by the Import sheet (Paste, File, Link) and the Exchange page. The QR, Server and GitHub chips carry an open-in
+icon and, when tapped, close the sheet and open Exchange on Scan Key or Key Server (MainActivity sets the
+section and navigates like a tab tap). Exchange's Scan Key and Key Server tabs now run on the Keyring's view
+model (preview with fingerprints, the multi-key list, Import or Encrypt to this key), and Key Server has Key
+server and GitHub chips; the import outcome shows as a snackbar there. Exchange's own scan confirm dialog and
+search card are gone. No new strings.
+
+Priority: medium (UI). Origin: #92 (Oct 15). Import's method picker keeps every method, so people still find
+them where they look to add a key, but QR, Server and GitHub open their tab on the Exchange page instead of a
+slide-up; the requester found the slide-ups the harder part to use. GitHub joins Exchange's key server tab, so
+both pages offer the same lookups. Paste, File and Link stay in the sheet. Offline mode hides the same rows as
+before.
+
+## 65. The same-identity key list does not scroll (#87)
+
+**Status:** RC6, code in.
+
+Origin: #87 (Oct 15). The count badge on a Keyring card ("8 keys") opens a dialog listing every key with that
+address; the list had no scroll, so with eight keys everything after the seventh was cut off. The dialog's
+text slot scrolls now. No new strings.
+
+## 66. Confirm before an expiry change or a self-signature refresh (#86)
+
+**Status:** RC6, code in. Update expiration in the sheet (date and passphrase or PIN, as before) opens
+ConfirmExpiryChangeDialog: current and new date, the number of live User IDs re-signed (and of still-valid
+subkeys when that option is ticked), or for a subkey that only its binding is re-signed, and that others see
+it after publishing. Change expiration then goes through deleteWithOptionalBiometricGate (screen lock or
+fingerprint when the device has one and Protect destructive actions is on), and only then signs. Refresh
+self-signatures keeps its dialog as the confirmation and adds the same gate. 8 strings and 2 plurals.
+
+Origin: #86 (Oct 15, after item 53): the requester wants a change that re-signs a published key to need a
+deliberate confirmation. Edit expiration (primary or subkey) and Refresh self-signatures first show what will
+change (old and new date, which User IDs and subkeys get re-signed, and that others see it after publishing),
+then device authentication through BiometricGate when the device has a screen lock (as delete and private key
+export do), then the passphrase as before.
+
+## 67. The recipient review shows the keys already included (#25)
+
+**Status:** RC6, code in.
+
+Origin: #25 (Oct 15). FairEmail sends the From address with the recipients, so the sender's own key is added
+from that address, but the review listed it unticked, which looked like it was left out. Keys the request
+already resolves from its addresses show ticked and locked, with a line saying which address includes them.
+
+Status detail (RC6, code in): GET_KEY_IDS and encrypt pass the fingerprints they resolved, with the address or
+key ID behind each (EXTRA_INCLUDED_FPS and EXTRA_INCLUDED_FOR, RecipientReview.includedMap). The review shows
+those rows ticked and disabled with "Already included for <address>", and returns them with the picks (the
+service dedupes by fingerprint), so confirming with only those keys works as before. 1 string. Test:
+RecipientReviewTest (two new cases).
 
 ## RC breakdown (set Oct 9 2026)
 
@@ -1492,6 +1547,8 @@ uk, b+zh+Hans).
   against gpg 2.5 and does not hold the RC3 build.
 - RC4: 44 to 50 first (RC3 tester reports, no card needed), then the card work (Token2 on hand for testing): 13 (keytocard), card certification for 31, 34 (card-generated key display) and 28 (provider card
   prompt over USB), once a working card is on hand for testing.
+- RC5 (Oct 15, green Oct 16): 51 to 63.
+- RC6: 64 to 67, then the 12a on-device checks below.
 - Last RC: the 12a on-device checks (Tor with Orbot, custom proxy, OpenKeychain restore, protected key over a
   contact, the provider with Thunderbird including a card).
 - Not RC-gated: 30 (README), 11 (SOP wrapper), 12 (external review follow-up).

@@ -36,6 +36,27 @@ internal object RecipientReview {
 
     fun formatKeyId(id: Long): String = String.format(java.util.Locale.ROOT, "0x%016X", id)
 
+    /** 4.7.0 RC6 (item 67): fingerprints compared without case or spaces. */
+    fun normalizeFingerprint(fp: String): String = fp.replace(" ", "").uppercase(java.util.Locale.ROOT)
+
+    /**
+     * 4.7.0 RC6 (item 67, #25): the keys a request already includes, as the
+     * two parallel extras the review receives, keyed by normalized
+     * fingerprint. Pairs past the shorter array, and blank entries, are
+     * dropped; the first label for a fingerprint wins.
+     */
+    fun includedMap(fingerprints: Array<String>?, labels: Array<String>?): Map<String, String> {
+        if (fingerprints == null || labels == null) return emptyMap()
+        val out = LinkedHashMap<String, String>()
+        for (i in 0 until minOf(fingerprints.size, labels.size)) {
+            val fp = normalizeFingerprint(fingerprints[i])
+            val label = labels[i].trim()
+            if (fp.isEmpty() || label.isEmpty()) continue
+            out.putIfAbsent(fp, label)
+        }
+        return out
+    }
+
     /**
      * Why an address resolved to no usable key. [hadCandidate] is whether
      * recipient lookup found any usable key for it (a key whose ring then

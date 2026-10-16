@@ -3021,4 +3021,26 @@ Opcionalmente, bloquea la app con tu huella digital o cara para mayor tranquilid
         <item quantity="many">%1$d claves públicas</item>
         <item quantity="other">%1$d claves públicas</item>
     </plurals>
+    <!-- 4.7.0 RC6, translated Oct 2026 -->
+    <!-- 4.7.0 RC6: confirm before an expiry change or a refresh (item 66, #86) -->
+    <string name="key_detail_expiry_confirm_title">¿Cambiar la caducidad?</string>
+    <string name="key_detail_expiry_confirm_current">Caducidad actual: %1$s</string>
+    <string name="key_detail_expiry_confirm_new">Nueva caducidad: %1$s</string>
+    <string name="key_detail_expiry_confirm_subkey_only">Solo se vuelve a firmar la vinculación de la subclave %1$s.</string>
+    <plurals name="key_detail_expiry_confirm_user_ids">
+        <item quantity="one">Se vuelve a firmar %1$d ID de usuario.</item>
+        <item quantity="many">Se vuelven a firmar %1$d ID de usuario.</item>
+        <item quantity="other">Se vuelven a firmar %1$d ID de usuario.</item>
+    </plurals>
+    <plurals name="key_detail_expiry_confirm_subkeys">
+        <item quantity="one">También se vuelve a firmar %1$d subclave que sigue siendo válida.</item>
+        <item quantity="many">También se vuelven a firmar %1$d subclaves que siguen siendo válidas.</item>
+        <item quantity="other">También se vuelven a firmar %1$d subclaves que siguen siendo válidas.</item>
+    </plurals>
+    <string name="key_detail_expiry_confirm_publish">Los demás solo verán la nueva fecha cuando publiques la clave.</string>
+    <string name="key_detail_expiry_confirm_action">Cambiar caducidad</string>
+    <string name="key_detail_resign_biometric_title">Confirmar las nuevas firmas</string>
+    <string name="key_detail_resign_biometric_subtitle">Autentícate para volver a firmar esta clave</string>
+    <!-- 4.7.0 RC6: the recipient review shows keys the request already includes (item 67, #25) -->
+    <string name="provider_review_included_format">Ya incluida para %1$s</string>
 </resources>

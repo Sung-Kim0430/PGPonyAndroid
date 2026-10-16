@@ -95,6 +95,13 @@ class ProviderRecipientReviewActivity : ComponentActivity() {
         /** 4.7.0 (item 56, #25): key ids picked in this app's last review,
          *  ticked again. */
         const val EXTRA_PREVIOUS_PICKS = "com.pgpony.android.provider.REVIEW_PREVIOUS_PICKS"
+
+        /** 4.7.0 RC6 (item 67, #25): String[] of the fingerprints the request
+         *  already resolves from its own addresses or key ids, shown ticked
+         *  and locked, with [EXTRA_INCLUDED_FOR] (same order) naming what
+         *  includes each one. */
+        const val EXTRA_INCLUDED_FPS = "com.pgpony.android.provider.REVIEW_INCLUDED_FPS"
+        const val EXTRA_INCLUDED_FOR = "com.pgpony.android.provider.REVIEW_INCLUDED_FOR"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -117,6 +124,10 @@ class ProviderRecipientReviewActivity : ComponentActivity() {
         val senderEmail: String? = intent.getStringExtra(EXTRA_SENDER_EMAIL)?.takeIf { it.isNotBlank() }
         val signKeyId = intent.getLongExtra(EXTRA_SIGN_KEY_ID, 0L)
         val previousPicks: Set<Long> = intent.getLongArrayExtra(EXTRA_PREVIOUS_PICKS)?.toSet() ?: emptySet()
+        val includedFor: Map<String, String> = RecipientReview.includedMap(
+            intent.getStringArrayExtra(EXTRA_INCLUDED_FPS),
+            intent.getStringArrayExtra(EXTRA_INCLUDED_FOR)
+        )
 
         val repo = (application as PGPonyApp).keyRepository
 
@@ -141,6 +152,14 @@ class ProviderRecipientReviewActivity : ComponentActivity() {
                     }
                 }
                 val chosen: Set<String> = selected ?: emptySet()
+                // Keys the request already includes are always part of the
+                // answer (deduped by the service), so confirming with only
+                // those works as it did when the sender's key was preselected.
+                val included: Set<String> = current?.keys
+                    ?.map { it.fingerprint }
+                    ?.filter { RecipientReview.normalizeFingerprint(it) in includedFor }
+                    ?.toSet() ?: emptySet()
+                val answer: Set<String> = chosen + included
 
                 AlertDialog(
                     onDismissRequest = { cancel() },
@@ -208,7 +227,8 @@ class ProviderRecipientReviewActivity : ComponentActivity() {
                                     else -> shown.forEach { key ->
                                         ReviewKeyRow(
                                             key = key,
-                                            checked = key.fingerprint in chosen,
+                                            checked = key.fingerprint in answer,
+                                            includedFor = includedFor[RecipientReview.normalizeFingerprint(key.fingerprint)],
                                             onToggle = { on ->
                                                 selected = if (on) chosen + key.fingerprint else chosen - key.fingerprint
                                             }
@@ -220,8 +240,8 @@ class ProviderRecipientReviewActivity : ComponentActivity() {
                     },
                     confirmButton = {
                         TextButton(
-                            onClick = { confirm(apiData, current?.keys ?: emptyList(), chosen) },
-                            enabled = chosen.isNotEmpty()
+                            onClick = { confirm(apiData, current?.keys ?: emptyList(), answer) },
+                            enabled = answer.isNotEmpty()
                         ) {
                             Text(stringResource(R.string.provider_review_confirm))
                         }
@@ -306,16 +326,28 @@ private fun EmptyText(text: String) {
 // 4.7.0 (item 41, #25): the whole row is the checkbox (Role.Checkbox on the
 // row, the Checkbox itself not clickable), so a tap anywhere toggles it and
 // TalkBack reads one control with the key's name.
+// 4.7.0 RC6 (item 67, #25): a key the request already includes is ticked and
+// locked, with a line naming the address (or key id) that includes it.
 @Composable
-private fun ReviewKeyRow(key: PGPKeyEntity, checked: Boolean, onToggle: (Boolean) -> Unit) {
+private fun ReviewKeyRow(
+    key: PGPKeyEntity,
+    checked: Boolean,
+    includedFor: String?,
+    onToggle: (Boolean) -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .toggleable(value = checked, role = Role.Checkbox, onValueChange = onToggle)
+            .toggleable(
+                value = checked,
+                enabled = includedFor == null,
+                role = Role.Checkbox,
+                onValueChange = onToggle
+            )
             .padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Checkbox(checked = checked, onCheckedChange = null)
+        Checkbox(checked = checked, onCheckedChange = null, enabled = includedFor == null)
         Spacer(modifier = Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
@@ -335,6 +367,15 @@ private fun ReviewKeyRow(key: PGPKeyEntity, checked: Boolean, onToggle: (Boolean
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
+            if (includedFor != null) {
+                Text(
+                    stringResource(R.string.provider_review_included_format, includedFor),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
             if (key.isExpired) {
                 Text(
                     stringResource(R.string.key_card_expired_badge),

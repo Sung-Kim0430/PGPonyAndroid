@@ -3021,4 +3021,24 @@ Vous pouvez aussi verrouiller l\'application derrière votre empreinte digitale 
         <item quantity="many">%1$d clés publiques</item>
         <item quantity="other">%1$d clés publiques</item>
     </plurals>
+    <!-- 4.7.0 RC6, translated Oct 2026 -->
+    <string name="key_detail_expiry_confirm_title">Modifier l\'expiration ?</string>
+    <string name="key_detail_expiry_confirm_current">Expiration actuelle : %1$s</string>
+    <string name="key_detail_expiry_confirm_new">Nouvelle expiration : %1$s</string>
+    <string name="key_detail_expiry_confirm_subkey_only">Seule la liaison de la sous-clé %1$s est re-signée.</string>
+    <plurals name="key_detail_expiry_confirm_user_ids">
+        <item quantity="one">%1$d ID utilisateur est re-signé.</item>
+        <item quantity="many">%1$d ID utilisateur sont re-signés.</item>
+        <item quantity="other">%1$d ID utilisateur sont re-signés.</item>
+    </plurals>
+    <plurals name="key_detail_expiry_confirm_subkeys">
+        <item quantity="one">%1$d sous-clé encore valide est aussi re-signée.</item>
+        <item quantity="many">%1$d sous-clés encore valides sont aussi re-signées.</item>
+        <item quantity="other">%1$d sous-clés encore valides sont aussi re-signées.</item>
+    </plurals>
+    <string name="key_detail_expiry_confirm_publish">Les autres ne verront la nouvelle date qu\'une fois la clé publiée.</string>
+    <string name="key_detail_expiry_confirm_action">Modifier l\'expiration</string>
+    <string name="key_detail_resign_biometric_title">Confirmer les nouvelles signatures</string>
+    <string name="key_detail_resign_biometric_subtitle">Authentifiez-vous pour re-signer cette clé</string>
+    <string name="provider_review_included_format">Déjà incluse pour %1$s</string>
 </resources>

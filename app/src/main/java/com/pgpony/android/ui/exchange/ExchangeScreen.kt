@@ -30,14 +30,24 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import com.pgpony.android.R
 import com.pgpony.android.ui.components.ScreenTooltip
+import com.pgpony.android.ui.keyring.ImportMethod
+import com.pgpony.android.ui.keyring.ImportMethodBody
+import com.pgpony.android.ui.keyring.KeyringUiState
+import com.pgpony.android.ui.keyring.KeyringViewModel
+import androidx.compose.ui.platform.LocalContext
 import com.pgpony.android.ui.util.rememberHaptics
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ExchangeScreen(viewModel: ExchangeViewModel) {
+fun ExchangeScreen(viewModel: ExchangeViewModel, keyringViewModel: KeyringViewModel) {
     val state by viewModel.state.collectAsState()
+    // 4.7.0 RC6 (item 64, #92): Scan Key and Key Server run the Import flow
+    // (preview with fingerprints, then import) on the Keyring's view model,
+    // the same one the Import sheet uses, so both pages import the same way.
+    val importState by keyringViewModel.state.collectAsState()
     val clipboard = LocalClipboardManager.current
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
 
     // Refresh keys whenever this screen enters composition. The ViewModel
     // is scoped to the activity / nav entry and survives tab switches, so
@@ -51,6 +61,25 @@ fun ExchangeScreen(viewModel: ExchangeViewModel) {
     LaunchedEffect(state.successMessage) {
         state.successMessage?.let { snackbarHostState.showSnackbar(it); viewModel.clearSuccess() }
     }
+    // The import outcome, shown here since the Keyring screen is not.
+    LaunchedEffect(importState.successMessage) {
+        importState.successMessage?.let { snackbarHostState.showSnackbar(it); keyringViewModel.clearSuccess() }
+    }
+    LaunchedEffect(importState.duplicateImportResult) {
+        importState.duplicateImportResult?.let {
+            keyringViewModel.dismissDuplicateAlert()
+            snackbarHostState.showSnackbar(context.getString(R.string.import_result_already_in_keyring))
+        }
+    }
+
+    if (importState.showImportQRScanner) {
+        com.pgpony.android.ui.scanner.QRScannerScreen(
+            onScanned = { text -> keyringViewModel.onImportQRScanned(text) },
+            onDismiss = { keyringViewModel.dismissImportQRScanner() }
+        )
+        return
+    }
+
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = { TopAppBar(title = { Text(stringResource(R.string.exchange_screen_title)) }) }
@@ -69,7 +98,15 @@ fun ExchangeScreen(viewModel: ExchangeViewModel) {
                 }.forEach { section ->
                     Tab(
                         selected = state.section == section,
-                        onClick = { viewModel.setSection(section) },
+                        onClick = {
+                            viewModel.setSection(section)
+                            // A new tab starts without the last tab's preview.
+                            when (section) {
+                                ExchangeSection.SCAN_KEY -> keyringViewModel.setImportMethod(ImportMethod.QR_CODE)
+                                ExchangeSection.KEY_SERVER -> keyringViewModel.setImportMethod(ImportMethod.KEY_SERVER)
+                                ExchangeSection.SHOW_KEY -> Unit
+                            }
+                        },
                         text = {
                             Text(when (section) {
                                 ExchangeSection.SHOW_KEY -> stringResource(R.string.exchange_section_show_key)
@@ -83,30 +120,18 @@ fun ExchangeScreen(viewModel: ExchangeViewModel) {
             // Section content
             when (state.section) {
                 ExchangeSection.SHOW_KEY -> ShowKeySection(state, viewModel, clipboard)
-                ExchangeSection.SCAN_KEY -> ScanKeySection(state, viewModel)
+                ExchangeSection.SCAN_KEY -> ImportPane {
+                    ImportMethodBody(importState, keyringViewModel, ImportMethod.QR_CODE)
+                }
                 ExchangeSection.KEY_SERVER ->
                     // RC1 offline switch: no keyserver section while offline.
                     if (com.pgpony.android.network.OfflineMode.enabled) {
                         ShowKeySection(state, viewModel, clipboard)
                     } else {
-                        KeyServerSection(state, viewModel)
+                        KeyLookupPane(importState, keyringViewModel)
                     }
             }
         }
-    }
-    // Import confirm dialog
-    if (state.showImportConfirm) {
-        AlertDialog(
-            onDismissRequest = { viewModel.dismissImportConfirm() },
-            title = { Text(stringResource(R.string.exchange_import_dialog_title)) },
-            text = { Text(stringResource(R.string.exchange_import_dialog_body)) },
-            confirmButton = {
-                TextButton(onClick = { viewModel.importScannedKey() }) { Text(stringResource(R.string.signer_lookup_import_button)) }
-            },
-            dismissButton = {
-                TextButton(onClick = { viewModel.dismissImportConfirm() }) { Text(stringResource(R.string.common_button_cancel)) }
-            }
-        )
     }
 }
 
@@ -265,166 +290,49 @@ private fun ShowKeySection(
     }
 }
 
-// ââ Scan Key Section âââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ── Scan Key and Key Server (4.7.0 RC6, item 64) ───────────────────────
 
 @Composable
-private fun ScanKeySection(state: ExchangeUiState, viewModel: ExchangeViewModel) {
-    var showScanner by remember { mutableStateOf(false) }
-
-    if (showScanner) {
-        com.pgpony.android.ui.scanner.QRScannerScreen(
-            onScanned = { text ->
-                showScanner = false
-                viewModel.onQRScanned(text)
-            },
-            onDismiss = { showScanner = false }
-        )
-    } else {
-        Column(
-            modifier = Modifier.fillMaxSize().padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Icon(
-                Icons.Filled.QrCodeScanner,
-                contentDescription = null,
-                modifier = Modifier.size(64.dp),
-                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(stringResource(R.string.qr_scanner_title), style = MaterialTheme.typography.titleMedium)
-            Text(
-                stringResource(R.string.exchange_scan_hint),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(24.dp))
-            Button(onClick = { showScanner = true }) {
-                Icon(Icons.Filled.CameraAlt, null, modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(R.string.exchange_scan_button))
-            }
-        }
+private fun ImportPane(content: @Composable () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .imePadding(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        content()
+        Spacer(modifier = Modifier.height(24.dp))
     }
 }
 
-// ââ Key Server Section âââââââââââââââââââââââââââââââââââââââââââââââââ
-
+/**
+ * The Key Server tab: a key server or WKD lookup, or a GitHub user's keys
+ * (item 42), each with the Import flow's preview.
+ */
 @Composable
-private fun KeyServerSection(state: ExchangeUiState, viewModel: ExchangeViewModel) {
-    Column(
-        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp)
-    ) {
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(stringResource(R.string.exchange_keyserver_search_order), style = MaterialTheme.typography.labelLarge)
-        Spacer(modifier = Modifier.height(4.dp))
-        OutlinedTextField(
-            value = state.searchQuery,
-            onValueChange = { viewModel.updateSearchQuery(it) },
-            label = { Text(stringResource(R.string.exchange_keyserver_query_label)) },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        val keyboard = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
-        Button(
-            onClick = {
-                // 4.6.0 (item 18 follow-up): the open keyboard hid the result
-                // and the import confirmation.
-                keyboard?.hide()
-                viewModel.searchKeyServer()
-            },
-            enabled = state.searchQuery.isNotBlank() && !state.isSearching,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            if (state.isSearching) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(18.dp),
-                    strokeWidth = 2.dp,
-                    color = MaterialTheme.colorScheme.onPrimary
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(R.string.exchange_keyserver_searching))
-            } else {
-                Icon(Icons.Filled.Search, null, modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(R.string.exchange_keyserver_search_button))
-            }
+private fun KeyLookupPane(importState: KeyringUiState, keyringViewModel: KeyringViewModel) {
+    val method = if (importState.importMethod == ImportMethod.GITHUB) ImportMethod.GITHUB else ImportMethod.KEY_SERVER
+    ImportPane {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FilterChip(
+                selected = method == ImportMethod.KEY_SERVER,
+                onClick = { if (method != ImportMethod.KEY_SERVER) keyringViewModel.setImportMethod(ImportMethod.KEY_SERVER) },
+                leadingIcon = { Icon(Icons.Filled.Public, null, modifier = Modifier.size(FilterChipDefaults.IconSize)) },
+                label = { Text(stringResource(R.string.import_method_key_server)) }
+            )
+            FilterChip(
+                selected = method == ImportMethod.GITHUB,
+                onClick = { if (method != ImportMethod.GITHUB) keyringViewModel.setImportMethod(ImportMethod.GITHUB) },
+                leadingIcon = { Icon(Icons.Filled.Code, null, modifier = Modifier.size(FilterChipDefaults.IconSize)) },
+                label = { Text(stringResource(R.string.import_method_github)) }
+            )
         }
-        Spacer(modifier = Modifier.height(12.dp))
-        // Search result
-        state.searchResult?.let { armored ->
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                )
-            ) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    Text(stringResource(R.string.signer_lookup_found_title), style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.primary)
-                    // 4.6.0 (item 20): more than one key answered for this address.
-                    val found = remember(armored) {
-                        com.pgpony.android.network.KeyResponse.certificates(armored.toByteArray())?.size ?: 1
-                    }
-                    if (found > 1) {
-                        Text(
-                            androidx.compose.ui.res.pluralStringResource(R.plurals.exchange_keyserver_found_count, found, found),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.tertiary
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        armored.take(120) + "...",
-                        style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
-                        maxLines = 4
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Button(
-                        onClick = { viewModel.importSearchResult() },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Icon(Icons.Filled.Download, null, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(stringResource(R.string.exchange_keyserver_import_button))
-                    }
-                }
-            }
-        }
-        // 4.6.0 (item 18 follow-up): the import outcome, in place of the card.
-        state.importedNotice?.let { notice ->
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
-            ) {
-                Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.Top) {
-                    Icon(Icons.Filled.CheckCircle, null,
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(20.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Column {
-                        Text(notice.message, style = MaterialTheme.typography.titleSmall,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer)
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(notice.userId, style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer)
-                        Text(
-                            notice.fingerprint.uppercase().chunked(4).joinToString(" "),
-                            style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    }
-                }
-            }
-        }
-        Spacer(modifier = Modifier.height(24.dp))
+        ImportMethodBody(importState, keyringViewModel, method)
     }
 
-    // ââ First-visit tooltip (Phase 4) âââââââââââââââââââââââââââââââââââ
+    // First-visit tooltip (Phase 4)
     ScreenTooltip(
         tooltipKey = "exchange_qr",
         message = stringResource(R.string.exchange_tooltip_qr)

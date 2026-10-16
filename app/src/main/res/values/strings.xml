@@ -3106,4 +3106,23 @@
         <item quantity="one">%1$d public key</item>
         <item quantity="other">%1$d public keys</item>
     </plurals>
+    <!-- 4.7.0 RC6: confirm before an expiry change or a refresh (item 66, #86) -->
+    <string name="key_detail_expiry_confirm_title">Change the expiration?</string>
+    <string name="key_detail_expiry_confirm_current">Current expiration: %1$s</string>
+    <string name="key_detail_expiry_confirm_new">New expiration: %1$s</string>
+    <string name="key_detail_expiry_confirm_subkey_only">Only the binding of subkey %1$s is signed again.</string>
+    <plurals name="key_detail_expiry_confirm_user_ids">
+        <item quantity="one">%1$d User ID is signed again.</item>
+        <item quantity="other">%1$d User IDs are signed again.</item>
+    </plurals>
+    <plurals name="key_detail_expiry_confirm_subkeys">
+        <item quantity="one">%1$d subkey that is still valid is signed again too.</item>
+        <item quantity="other">%1$d subkeys that are still valid are signed again too.</item>
+    </plurals>
+    <string name="key_detail_expiry_confirm_publish">Others see the new date only after you publish the key.</string>
+    <string name="key_detail_expiry_confirm_action">Change expiration</string>
+    <string name="key_detail_resign_biometric_title">Confirm the new signatures</string>
+    <string name="key_detail_resign_biometric_subtitle">Authenticate to sign this key again</string>
+    <!-- 4.7.0 RC6: the recipient review shows keys the request already includes (item 67, #25) -->
+    <string name="provider_review_included_format">Already included for %1$s</string>
 </resources>

@@ -3012,4 +3012,22 @@ Optional kannst du die App hinter deinem Fingerabdruck oder Gesicht sperren, um 
         <item quantity="one">%1$d öffentlicher Schlüssel</item>
         <item quantity="other">%1$d öffentliche Schlüssel</item>
     </plurals>
+    <!-- 4.7.0 RC6, translated Oct 2026 -->
+    <string name="key_detail_expiry_confirm_title">Ablaufdatum ändern?</string>
+    <string name="key_detail_expiry_confirm_current">Aktuelles Ablaufdatum: %1$s</string>
+    <string name="key_detail_expiry_confirm_new">Neues Ablaufdatum: %1$s</string>
+    <string name="key_detail_expiry_confirm_subkey_only">Nur die Bindung des Unterschlüssels %1$s wird neu signiert.</string>
+    <plurals name="key_detail_expiry_confirm_user_ids">
+        <item quantity="one">%1$d Benutzer-ID wird neu signiert.</item>
+        <item quantity="other">%1$d Benutzer-IDs werden neu signiert.</item>
+    </plurals>
+    <plurals name="key_detail_expiry_confirm_subkeys">
+        <item quantity="one">Auch %1$d noch gültiger Unterschlüssel wird neu signiert.</item>
+        <item quantity="other">Auch %1$d noch gültige Unterschlüssel werden neu signiert.</item>
+    </plurals>
+    <string name="key_detail_expiry_confirm_publish">Andere sehen das neue Datum erst, wenn du den Schlüssel veröffentlicht hast.</string>
+    <string name="key_detail_expiry_confirm_action">Ablaufdatum ändern</string>
+    <string name="key_detail_resign_biometric_title">Neue Signaturen bestätigen</string>
+    <string name="key_detail_resign_biometric_subtitle">Authentifiziere dich, um diesen Schlüssel neu zu signieren</string>
+    <string name="provider_review_included_format">%1$s: bereits enthalten</string>
 </resources>

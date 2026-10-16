@@ -3064,4 +3064,20 @@
     <plurals name="keyring_export_selected_label">
         <item quantity="other">%1$d 个公钥</item>
     </plurals>
+    <!-- 4.7.0 RC6, translated Oct 2026 -->
+    <string name="key_detail_expiry_confirm_title">要更改有效期吗？</string>
+    <string name="key_detail_expiry_confirm_current">当前有效期：%1$s</string>
+    <string name="key_detail_expiry_confirm_new">新有效期：%1$s</string>
+    <string name="key_detail_expiry_confirm_subkey_only">仅重新签名子钥 %1$s 的绑定。</string>
+    <plurals name="key_detail_expiry_confirm_user_ids">
+        <item quantity="other">将重新签名 %1$d 个用户 ID。</item>
+    </plurals>
+    <plurals name="key_detail_expiry_confirm_subkeys">
+        <item quantity="other">仍然有效的 %1$d 个子钥也将重新签名。</item>
+    </plurals>
+    <string name="key_detail_expiry_confirm_publish">只有在你发布此密钥后，其他人才能看到新的日期。</string>
+    <string name="key_detail_expiry_confirm_action">更改有效期</string>
+    <string name="key_detail_resign_biometric_title">确认新的签名</string>
+    <string name="key_detail_resign_biometric_subtitle">验证身份以重新签名此密钥</string>
+    <string name="provider_review_included_format">已通过 %1$s 包含在内</string>
 </resources>

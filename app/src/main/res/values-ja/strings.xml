@@ -2990,4 +2990,20 @@ PGPony は、古い OpenPGP 実装との相互運用性のために従来の RSA
     <plurals name="keyring_export_selected_label">
         <item quantity="other">公開鍵 %1$d 件</item>
     </plurals>
+    <!-- 4.7.0 RC6, translated Oct 2026 -->
+    <string name="key_detail_expiry_confirm_title">有効期限を変更しますか？</string>
+    <string name="key_detail_expiry_confirm_current">現在の有効期限: %1$s</string>
+    <string name="key_detail_expiry_confirm_new">新しい有効期限: %1$s</string>
+    <string name="key_detail_expiry_confirm_subkey_only">サブキー %1$s のバインディングだけが再署名されます。</string>
+    <plurals name="key_detail_expiry_confirm_user_ids">
+        <item quantity="other">%1$d 件のユーザー ID が再署名されます。</item>
+    </plurals>
+    <plurals name="key_detail_expiry_confirm_subkeys">
+        <item quantity="other">まだ有効な %1$d 件のサブキーも再署名されます。</item>
+    </plurals>
+    <string name="key_detail_expiry_confirm_publish">他の人が新しい日付を確認できるのは、鍵を公開した後です。</string>
+    <string name="key_detail_expiry_confirm_action">有効期限を変更</string>
+    <string name="key_detail_resign_biometric_title">新しい署名を確認</string>
+    <string name="key_detail_resign_biometric_subtitle">この鍵を再署名するには認証してください</string>
+    <string name="provider_review_included_format">%1$s によりすでに含まれています</string>
 </resources>

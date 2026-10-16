@@ -1299,7 +1299,22 @@ fun PGPonyMainScreen(
                         },
                         onScanCard = { navController.navigate("card_scan") },
                         onOpenRecycleBin = { navController.navigate("recently_deleted") },
-                        onOpenPair = { navController.navigate("pair") }
+                        onOpenPair = { navController.navigate("pair") },
+                        // 4.7.0 RC6 (item 64, #92): the Exchange tab for that method.
+                        onOpenExchange = { method ->
+                            exchangeVm.setSection(
+                                if (method == com.pgpony.android.ui.keyring.ImportMethod.QR_CODE) {
+                                    com.pgpony.android.ui.exchange.ExchangeSection.SCAN_KEY
+                                } else {
+                                    com.pgpony.android.ui.exchange.ExchangeSection.KEY_SERVER
+                                }
+                            )
+                            navController.navigate(Screen.Exchange.route) {
+                                popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        }
                     )
                 }
                 // Phase A4a: KeyDetailScreen route.
@@ -1435,7 +1450,7 @@ fun PGPonyMainScreen(
                 }
                 composable(Screen.Encrypt.route) { EncryptScreen(viewModel = encDecVm) }
                 composable(Screen.Decrypt.route) { DecryptScreen(viewModel = encDecVm) }
-                composable(Screen.Exchange.route) { ExchangeScreen(viewModel = exchangeVm) }
+                composable(Screen.Exchange.route) { ExchangeScreen(viewModel = exchangeVm, keyringViewModel = keyringVm) }
                 composable(Screen.Contacts.route) { ContactsScreen(viewModel = contactsVm) }
                 composable("backup") {
                     // Consume the pending bytes exactly once so navigating

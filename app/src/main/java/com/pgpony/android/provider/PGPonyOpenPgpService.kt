@@ -421,6 +421,8 @@ class PGPonyOpenPgpService : Service() {
         // review; the re-run carries EXTRA_KEY_IDS_SELECTED.
         val missing = mutableListOf<String>()
         val dontUse = mutableListOf<String>()
+        // 4.7.0 RC6 (item 67): fingerprint -> the address that includes it.
+        val included = LinkedHashMap<String, String>()
         val resolvedIds: List<Long> = runBlocking {
             val ids = mutableListOf<Long>()
             userIds.forEach { raw ->
@@ -438,6 +440,7 @@ class PGPonyOpenPgpService : Service() {
                 val pickId = pick?.let { RecipientReview.keyIdOf(it) }
                 if (pickId != null) {
                     ids += pickId
+                    pick?.let { included.putIfAbsent(it.fingerprint, email) }
                 } else {
                     when (RecipientReview.reasonForAddress(false, repo.getByAnyUserEmail(email))) {
                         RecipientReview.Reason.DONT_USE -> dontUse += email
@@ -474,7 +477,7 @@ class PGPonyOpenPgpService : Service() {
         if (RecipientReview.needsReview(missing.size + dontUse.size, opportunistic, hasSelection = false) &&
             storageFailureMessage() == null
         ) {
-            return recipientReviewInteraction(data, callingPackage, missing, dontUse, forKeyIds = true)
+            return recipientReviewInteraction(data, callingPackage, missing, dontUse, included, forKeyIds = true)
         }
         return successResult().putExtra(OpenPgpApi.RESULT_KEY_IDS, resolvedIds.toLongArray())
     }
@@ -623,6 +626,8 @@ class PGPonyOpenPgpService : Service() {
         }
 
         val rings = LinkedHashMap<String, org.bouncycastle.openpgp.PGPPublicKeyRing>()
+        // 4.7.0 RC6 (item 67): fingerprint -> the address or key id that includes it.
+        val includedFor = LinkedHashMap<String, String>()
         val missing = mutableListOf<String>()
         // 4.7.0 (item 10): recipients the user marked Don't use. The mail app
         // cannot ask for the in-app confirmation, so such a key is never used.
@@ -647,8 +652,10 @@ class PGPonyOpenPgpService : Service() {
                     return@forEach
                 }
                 val ring = entity?.let { repo.loadEncryptionRecipientRing(it.fingerprint) }
-                if (ring != null) rings[entity.fingerprint] = ring
-                else missing += String.format("0x%016X", id)
+                if (ring != null) {
+                    rings[entity.fingerprint] = ring
+                    includedFor.putIfAbsent(entity.fingerprint, RecipientReview.formatKeyId(id))
+                } else missing += String.format("0x%016X", id)
             }
             requestedUserIds?.forEach { raw ->
                 val email = raw.substringAfterLast('<').substringBefore('>').trim()
@@ -671,6 +678,7 @@ class PGPonyOpenPgpService : Service() {
                 matches.forEach { entity ->
                     repo.loadEncryptionRecipientRing(entity.fingerprint)?.let { ring ->
                         rings[entity.fingerprint] = ring
+                        includedFor.putIfAbsent(entity.fingerprint, email)
                         added = true
                     }
                 }
@@ -737,7 +745,7 @@ class PGPonyOpenPgpService : Service() {
         if (RecipientReview.needsReview(missing.size + dontUse.size, opportunistic, selectedKeyIds != null) &&
             storageFailureMessage() == null
         ) {
-            return recipientReviewInteraction(data, callingPackage, missing, dontUse)
+            return recipientReviewInteraction(data, callingPackage, missing, dontUse, includedFor)
         }
         if (dontUse.isNotEmpty() &&
             !data.getBooleanExtra(OpenPgpApi.EXTRA_OPPORTUNISTIC_ENCRYPTION, false)
@@ -2245,12 +2253,16 @@ class PGPonyOpenPgpService : Service() {
         callingPackage: String,
         missing: List<String>,
         dontUse: List<String>,
+        included: Map<String, String>,
         forKeyIds: Boolean = false
     ): Intent {
         val reviewIntent = Intent(this, ProviderRecipientReviewActivity::class.java).apply {
             putExtra(ProviderRecipientReviewActivity.EXTRA_API_DATA, data)
             putExtra(ProviderRecipientReviewActivity.EXTRA_MISSING, missing.toTypedArray())
             putExtra(ProviderRecipientReviewActivity.EXTRA_DONT_USE, dontUse.toTypedArray())
+            // 4.7.0 RC6 (item 67, #25): what the request already includes.
+            putExtra(ProviderRecipientReviewActivity.EXTRA_INCLUDED_FPS, included.keys.toTypedArray())
+            putExtra(ProviderRecipientReviewActivity.EXTRA_INCLUDED_FOR, included.values.toTypedArray())
             putExtra(ProviderRecipientReviewActivity.EXTRA_SENDER_EMAIL, sendIdentityEmail(data))
             putExtra(
                 ProviderRecipientReviewActivity.EXTRA_SIGN_KEY_ID,

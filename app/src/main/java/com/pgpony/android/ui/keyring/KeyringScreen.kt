@@ -71,7 +71,9 @@ fun KeyringScreen(
     onScanCard: () -> Unit = {},
     onOpenRecycleBin: () -> Unit = {},
     // 4.6.3 (4.7.0 item 21): pair with PGPony Desktop or another phone.
-    onOpenPair: () -> Unit = {}
+    onOpenPair: () -> Unit = {},
+    // 4.7.0 RC6 (item 64, #92): Import's QR, Server and GitHub open Exchange.
+    onOpenExchange: (ImportMethod) -> Unit = {}
 ) {
     val state by viewModel.state.collectAsState()
     // 4.6.0 (item 20): the key whose shared identity is being listed.
@@ -517,7 +519,11 @@ fun KeyringScreen(
                 ))
             },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                // 4.7.0 RC6 (item 65, #87): scrolls, so a long list is not cut off.
+                Column(
+                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
                     Text(
                         stringResource(R.string.keyring_same_identity_body),
                         style = MaterialTheme.typography.bodySmall,
@@ -571,7 +577,7 @@ fun KeyringScreen(
     // with ImportKeyScreen, which surfaces all four iOS methods
     // (Paste / File / QR / Key Server) and an inline preview card.
     if (state.showImportSheet) {
-        ImportKeyScreen(state = state, viewModel = viewModel)
+        ImportKeyScreen(state = state, viewModel = viewModel, onOpenExchange = onOpenExchange)
     }
 
     // ── 4.0.0 Phase 1 (iOS v7.1.1 F3): duplicate-import alert ──────────

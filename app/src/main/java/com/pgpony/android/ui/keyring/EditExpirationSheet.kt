@@ -17,6 +17,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -268,4 +269,66 @@ private fun FlowRowPresets(
             label = { Text(stringResource(R.string.key_detail_expiry_custom)) }
         )
     }
+}
+
+/**
+ * 4.7.0 RC6 (item 66, #86): the step between the sheet and the change. An
+ * expiry edit re-signs a key that may already be published, so it says what
+ * will change before anything is signed: the current and the new date, which
+ * signatures are remade, and that others see it only after a publish. Confirm
+ * then goes through the device-authentication gate (see
+ * [deleteWithOptionalBiometricGate]).
+ *
+ * [currentExpiresAtMs] and [newExpiresAtEpochSeconds] are null for "never".
+ * [subkeyLabel] is set when one subkey is the target; otherwise
+ * [userIdCount] live User IDs are re-signed, plus [currentSubkeyCount]
+ * subkeys when that option was ticked (0 when it was not).
+ */
+@Composable
+internal fun ConfirmExpiryChangeDialog(
+    currentExpiresAtMs: Long?,
+    newExpiresAtEpochSeconds: Long?,
+    subkeyLabel: String?,
+    userIdCount: Int,
+    currentSubkeyCount: Int,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    val never = stringResource(R.string.expiration_never)
+    val fmt = DateFormat.getDateInstance(DateFormat.MEDIUM)
+    val current = currentExpiresAtMs?.let { fmt.format(Date(it)) } ?: never
+    val next = newExpiresAtEpochSeconds?.let { fmt.format(Date(it * 1000L)) } ?: never
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.key_detail_expiry_confirm_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(stringResource(R.string.key_detail_expiry_confirm_current, current))
+                Text(stringResource(R.string.key_detail_expiry_confirm_new, next))
+                if (subkeyLabel != null) {
+                    Text(stringResource(R.string.key_detail_expiry_confirm_subkey_only, subkeyLabel))
+                } else {
+                    Text(pluralStringResource(R.plurals.key_detail_expiry_confirm_user_ids, userIdCount, userIdCount))
+                    if (currentSubkeyCount > 0) {
+                        Text(
+                            pluralStringResource(
+                                R.plurals.key_detail_expiry_confirm_subkeys, currentSubkeyCount, currentSubkeyCount
+                            )
+                        )
+                    }
+                }
+                Text(
+                    stringResource(R.string.key_detail_expiry_confirm_publish),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) { Text(stringResource(R.string.key_detail_expiry_confirm_action)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_button_cancel)) }
+        }
+    )
 }

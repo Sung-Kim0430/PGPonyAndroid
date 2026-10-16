@@ -189,4 +189,22 @@ class RecipientReviewTest {
         assertEquals("0x1111111111111111", RecipientReview.formatKeyId(id("1111111111111111")))
         assertEquals("0xFFFFFFFFFFFFFFFF", RecipientReview.formatKeyId(-1L))
     }
+
+    // 4.7.0 RC6 (item 67, #25): the keys a request already includes.
+    @Test
+    fun `included map pairs fingerprints with labels, normalized, first label wins`() {
+        val map = RecipientReview.includedMap(
+            arrayOf("aaaa bbbb", "AAAABBBB", "", "CCCC", "DDDD"),
+            arrayOf("me@example.org", "other@example.org", "x@example.org", "  ", "0x1111111111111111")
+        )
+        assertEquals(mapOf("AAAABBBB" to "me@example.org", "DDDD" to "0x1111111111111111"), map)
+        assertEquals("AAAABBBB", RecipientReview.normalizeFingerprint("aaaa bbbb"))
+    }
+
+    @Test
+    fun `included map is empty when either array is missing, and stops at the shorter one`() {
+        assertTrue(RecipientReview.includedMap(null, arrayOf("a")).isEmpty())
+        assertTrue(RecipientReview.includedMap(arrayOf("AAAA"), null).isEmpty())
+        assertEquals(mapOf("AAAA" to "a"), RecipientReview.includedMap(arrayOf("AAAA", "BBBB"), arrayOf("a")))
+    }
 }

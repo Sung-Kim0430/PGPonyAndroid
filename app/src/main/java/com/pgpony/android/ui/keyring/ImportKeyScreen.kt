@@ -57,6 +57,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -75,9 +76,18 @@ import com.pgpony.android.MainActivity
 import com.pgpony.android.network.KeyLookupSource
 import com.pgpony.android.ui.scanner.QRScannerScreen
 
+/** 4.7.0 RC6 (item 64, #92): the methods that open their tab on the Exchange page. */
+internal val EXCHANGE_IMPORT_METHODS = setOf(ImportMethod.QR_CODE, ImportMethod.KEY_SERVER, ImportMethod.GITHUB)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ImportKeyScreen(state: KeyringUiState, viewModel: KeyringViewModel) {
+fun ImportKeyScreen(
+    state: KeyringUiState,
+    viewModel: KeyringViewModel,
+    // 4.7.0 RC6 (item 64, #92): QR, Server and GitHub open the Exchange
+    // page (full screen) instead of a section in this sheet.
+    onOpenExchange: (ImportMethod) -> Unit = {}
+) {
     // QR scanner is rendered as a full-screen overlay above the sheet;
     // when active, the sheet is hidden behind it so the scanner has
     // the full viewport.
@@ -116,140 +126,159 @@ fun ImportKeyScreen(state: KeyringUiState, viewModel: KeyringViewModel) {
             // the new method may have a totally different data source.
             ImportMethodPicker(
                 selected = state.importMethod,
-                onSelect = { viewModel.setImportMethod(it) }
+                onSelect = { method ->
+                    if (method in EXCHANGE_IMPORT_METHODS) {
+                        viewModel.dismissImport()
+                        viewModel.setImportMethod(method)
+                        onOpenExchange(method)
+                    } else {
+                        viewModel.setImportMethod(method)
+                    }
+                }
             )
 
-            // ── Method-specific section ───────────────────────────────
-            when (state.importMethod) {
-                ImportMethod.PASTE      -> PasteSection(state, viewModel)
-                ImportMethod.FILE       -> {
-                    OpenKeychainMigrationCard()
-                    FileSection(state, viewModel)
-                }
-                ImportMethod.QR_CODE    -> QrSection(state, viewModel)
-                ImportMethod.KEY_SERVER ->
-                    if (!com.pgpony.android.network.OfflineMode.enabled) {
-                        KeyServerSection(state, viewModel)
-                    }
-                ImportMethod.URL ->
-                    if (!com.pgpony.android.network.OfflineMode.enabled) {
-                        UrlSection(state, viewModel)
-                    }
-                ImportMethod.GITHUB ->
-                    if (!com.pgpony.android.network.OfflineMode.enabled) {
-                        GitHubSection(state, viewModel)
-                    }
-            }
-
-            // ── Error banner ──────────────────────────────────────────
-            state.errorMessage?.let { msg ->
-                Surface(
-                    color = MaterialTheme.colorScheme.errorContainer,
-                    shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        msg,
-                        modifier = Modifier.padding(12.dp),
-                        color = MaterialTheme.colorScheme.onErrorContainer,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-            }
-
-            // ── Preview + Import buttons ──────────────────────────────
-            state.importPreview?.let { preview ->
-                ImportPreviewCard(
-                    preview = preview,
-                    lookupSource = state.importLookupSource,
-                    sourceFilename = state.importSourceFilename,
-                    sourceUrl = state.importSourceUrl
-                )
-                // 4.7.0 (item 47, #78): your own key pair, whose secret keys
-                // this file protects differently (a passphrase changed in gpg).
-                var useFileSecrets by remember(preview.fingerprint) { mutableStateOf(false) }
-                var fileSecretsPassphrase by remember(preview.fingerprint) { mutableStateOf("") }
-                if (preview.replaceableSecrets > 0 && preview.additionalKeys.isEmpty()) {
-                    ReplaceSecretsOption(
-                        count = preview.replaceableSecrets,
-                        checked = useFileSecrets,
-                        onCheckedChange = { useFileSecrets = it },
-                        passphrase = fileSecretsPassphrase,
-                        onPassphraseChange = { fileSecretsPassphrase = it },
-                        enabled = !state.isImporting
-                    )
-                }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    OutlinedButton(
-                        onClick = { viewModel.clearImportPreview() },
-                        modifier = Modifier.weight(1f),
-                        enabled = !state.isImporting
-                    ) {
-                        Text(stringResource(R.string.common_button_cancel))
-                    }
-                    Button(
-                        onClick = {
-                            val replace = useFileSecrets && preview.replaceableSecrets > 0 &&
-                                preview.additionalKeys.isEmpty()
-                            viewModel.confirmImportPreview(
-                                replaceSecrets = replace,
-                                secretPassphrase = fileSecretsPassphrase.takeIf { replace && it.isNotEmpty() }?.toCharArray()
-                            )
-                        },
-                        modifier = Modifier.weight(1f),
-                        // Block re-commit during the in-flight import.
-                        // 4.0.0 Phase 1 (iOS v7.1.1 F3) — a plain
-                        // duplicate is now a valid commit too: it
-                        // resolves to already-in-keyring (dialog with a
-                        // View Key jump) or merges newer material into
-                        // the existing row, so the pre-4.0 duplicate
-                        // disable is gone.
-                        // HW Phase 1.5 — a card-pairing duplicate folds
-                        // the public key onto the card record; the
-                        // secret-upgrade duplicate adds the private
-                        // material. All duplicate shapes commit.
-                        enabled = !state.isImporting
-                    ) {
-                        if (state.isImporting) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(18.dp),
-                                strokeWidth = 2.dp,
-                                color = MaterialTheme.colorScheme.onPrimary
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                        }
-                        Text(
-                            when {
-                                preview.willPairWithCard -> stringResource(R.string.import_button_pair_card)
-                                preview.willUpgradeToKeyPair -> stringResource(R.string.import_button_upgrade_key)
-                                else -> stringResource(R.string.import_button_import_key)
-                            }
-                        )
-                    }
-                }
-                // #58 (CertainBot): a shared PUBLIC key can go straight to
-                // Encrypt with itself as recipient, not only get filed away.
-                if (!preview.hasPrivateKey) {
-                    FilledTonalButton(
-                        onClick = { viewModel.confirmImportAndEncrypt() },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = !state.isImporting
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Lock,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(R.string.import_button_encrypt_to_key))
-                    }
-                }
-            }
+            ImportMethodBody(state = state, viewModel = viewModel, method = state.importMethod)
 
             Spacer(modifier = Modifier.height(8.dp))
+        }
+    }
+}
+
+/**
+ * 4.7.0 RC6 (item 64, #92): one import method's section, the error banner and
+ * the preview with its buttons. The Import sheet shows it for Paste, File and
+ * Link; the Exchange page shows it for QR, Server and GitHub, on the same
+ * KeyringViewModel, so both pages preview and import the same way.
+ */
+@Composable
+internal fun ImportMethodBody(state: KeyringUiState, viewModel: KeyringViewModel, method: ImportMethod) {
+    // ── Method-specific section ───────────────────────────────
+    when (method) {
+        ImportMethod.PASTE      -> PasteSection(state, viewModel)
+        ImportMethod.FILE       -> {
+            OpenKeychainMigrationCard()
+            FileSection(state, viewModel)
+        }
+        ImportMethod.QR_CODE    -> QrSection(state, viewModel)
+        ImportMethod.KEY_SERVER ->
+            if (!com.pgpony.android.network.OfflineMode.enabled) {
+                KeyServerSection(state, viewModel)
+            }
+        ImportMethod.URL ->
+            if (!com.pgpony.android.network.OfflineMode.enabled) {
+                UrlSection(state, viewModel)
+            }
+        ImportMethod.GITHUB ->
+            if (!com.pgpony.android.network.OfflineMode.enabled) {
+                GitHubSection(state, viewModel)
+            }
+    }
+
+    // ── Error banner ──────────────────────────────────────────
+    state.errorMessage?.let { msg ->
+        Surface(
+            color = MaterialTheme.colorScheme.errorContainer,
+            shape = RoundedCornerShape(8.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                msg,
+                modifier = Modifier.padding(12.dp),
+                color = MaterialTheme.colorScheme.onErrorContainer,
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+    }
+
+    // ── Preview + Import buttons ──────────────────────────────
+    state.importPreview?.let { preview ->
+        ImportPreviewCard(
+            preview = preview,
+            lookupSource = state.importLookupSource,
+            sourceFilename = state.importSourceFilename,
+            sourceUrl = state.importSourceUrl
+        )
+        // 4.7.0 (item 47, #78): your own key pair, whose secret keys
+        // this file protects differently (a passphrase changed in gpg).
+        var useFileSecrets by remember(preview.fingerprint) { mutableStateOf(false) }
+        var fileSecretsPassphrase by remember(preview.fingerprint) { mutableStateOf("") }
+        if (preview.replaceableSecrets > 0 && preview.additionalKeys.isEmpty()) {
+            ReplaceSecretsOption(
+                count = preview.replaceableSecrets,
+                checked = useFileSecrets,
+                onCheckedChange = { useFileSecrets = it },
+                passphrase = fileSecretsPassphrase,
+                onPassphraseChange = { fileSecretsPassphrase = it },
+                enabled = !state.isImporting
+            )
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            OutlinedButton(
+                onClick = { viewModel.clearImportPreview() },
+                modifier = Modifier.weight(1f),
+                enabled = !state.isImporting
+            ) {
+                Text(stringResource(R.string.common_button_cancel))
+            }
+            Button(
+                onClick = {
+                    val replace = useFileSecrets && preview.replaceableSecrets > 0 &&
+                        preview.additionalKeys.isEmpty()
+                    viewModel.confirmImportPreview(
+                        replaceSecrets = replace,
+                        secretPassphrase = fileSecretsPassphrase.takeIf { replace && it.isNotEmpty() }?.toCharArray()
+                    )
+                },
+                modifier = Modifier.weight(1f),
+                // Block re-commit during the in-flight import.
+                // 4.0.0 Phase 1 (iOS v7.1.1 F3): a plain
+                // duplicate is now a valid commit too: it
+                // resolves to already-in-keyring (dialog with a
+                // View Key jump) or merges newer material into
+                // the existing row, so the pre-4.0 duplicate
+                // disable is gone.
+                // HW Phase 1.5: a card-pairing duplicate folds
+                // the public key onto the card record; the
+                // secret-upgrade duplicate adds the private
+                // material. All duplicate shapes commit.
+                enabled = !state.isImporting
+            ) {
+                if (state.isImporting) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
+                Text(
+                    when {
+                        preview.willPairWithCard -> stringResource(R.string.import_button_pair_card)
+                        preview.willUpgradeToKeyPair -> stringResource(R.string.import_button_upgrade_key)
+                        else -> stringResource(R.string.import_button_import_key)
+                    }
+                )
+            }
+        }
+        // #58 (CertainBot): a shared PUBLIC key can go straight to
+        // Encrypt with itself as recipient, not only get filed away.
+        if (!preview.hasPrivateKey) {
+            FilledTonalButton(
+                onClick = { viewModel.confirmImportAndEncrypt() },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !state.isImporting
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Lock,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(stringResource(R.string.import_button_encrypt_to_key))
+            }
         }
     }
 }
@@ -279,7 +308,7 @@ private fun ImportMethodPicker(
     ) {
         methods.forEach { method ->
             FilterChip(
-                selected = selected == method,
+                selected = selected == method && method !in EXCHANGE_IMPORT_METHODS,
                 onClick = { onSelect(method) },
                 leadingIcon = {
                     Icon(
@@ -288,6 +317,16 @@ private fun ImportMethodPicker(
                         modifier = Modifier.size(FilterChipDefaults.IconSize)
                     )
                 },
+                // 4.7.0 RC6 (item 64): these open the Exchange page.
+                trailingIcon = if (method in EXCHANGE_IMPORT_METHODS) {
+                    {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.OpenInNew,
+                            contentDescription = null,
+                            modifier = Modifier.size(FilterChipDefaults.IconSize)
+                        )
+                    }
+                } else null,
                 label = {
                     Text(
                         text = when (method) {

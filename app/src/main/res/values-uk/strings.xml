@@ -3136,4 +3136,26 @@
         <item quantity="many">%1$d відкритих ключів</item>
         <item quantity="other">%1$d відкритого ключа</item>
     </plurals>
+    <!-- 4.7.0 RC6, translated Oct 2026 -->
+    <string name="key_detail_expiry_confirm_title">Змінити термін дії?</string>
+    <string name="key_detail_expiry_confirm_current">Поточний термін дії: %1$s</string>
+    <string name="key_detail_expiry_confirm_new">Новий термін дії: %1$s</string>
+    <string name="key_detail_expiry_confirm_subkey_only">Заново буде підписано лише прив’язку підключа %1$s.</string>
+    <plurals name="key_detail_expiry_confirm_user_ids">
+        <item quantity="one">%1$d ідентифікатор користувача буде підписано заново.</item>
+        <item quantity="few">%1$d ідентифікатори користувача буде підписано заново.</item>
+        <item quantity="many">%1$d ідентифікаторів користувача буде підписано заново.</item>
+        <item quantity="other">%1$d ідентифікатора користувача буде підписано заново.</item>
+    </plurals>
+    <plurals name="key_detail_expiry_confirm_subkeys">
+        <item quantity="one">%1$d ще дійсний підключ також буде підписано заново.</item>
+        <item quantity="few">%1$d ще дійсні підключі також буде підписано заново.</item>
+        <item quantity="many">%1$d ще дійсних підключів також буде підписано заново.</item>
+        <item quantity="other">%1$d ще дійсного підключа також буде підписано заново.</item>
+    </plurals>
+    <string name="key_detail_expiry_confirm_publish">Інші побачать нову дату лише після того, як ви опублікуєте ключ.</string>
+    <string name="key_detail_expiry_confirm_action">Змінити термін дії</string>
+    <string name="key_detail_resign_biometric_title">Підтвердьте нові підписи</string>
+    <string name="key_detail_resign_biometric_subtitle">Пройдіть автентифікацію, щоб повторно підписати цей ключ</string>
+    <string name="provider_review_included_format">Уже включено для %1$s</string>
 </resources>

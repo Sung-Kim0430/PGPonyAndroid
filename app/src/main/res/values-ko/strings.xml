@@ -2672,4 +2672,20 @@
     <plurals name="keyring_export_selected_label">
         <item quantity="other">공개 키 %1$d개</item>
     </plurals>
+    <!-- 4.7.0 RC6, translated Oct 2026 -->
+    <string name="key_detail_expiry_confirm_title">만료일을 변경할까요?</string>
+    <string name="key_detail_expiry_confirm_current">현재 만료일: %1$s</string>
+    <string name="key_detail_expiry_confirm_new">새 만료일: %1$s</string>
+    <string name="key_detail_expiry_confirm_subkey_only">보조 키 %1$s의 바인딩에만 다시 서명합니다.</string>
+    <plurals name="key_detail_expiry_confirm_user_ids">
+        <item quantity="other">사용자 ID %1$d개에 다시 서명합니다.</item>
+    </plurals>
+    <plurals name="key_detail_expiry_confirm_subkeys">
+        <item quantity="other">아직 유효한 보조 키 %1$d개에도 다시 서명합니다.</item>
+    </plurals>
+    <string name="key_detail_expiry_confirm_publish">다른 사람들은 키를 공개한 뒤에야 새 날짜를 볼 수 있습니다.</string>
+    <string name="key_detail_expiry_confirm_action">만료일 변경</string>
+    <string name="key_detail_resign_biometric_title">새 서명 확인</string>
+    <string name="key_detail_resign_biometric_subtitle">이 키에 다시 서명하려면 인증하세요</string>
+    <string name="provider_review_included_format">%1$s을(를) 통해 이미 포함됨</string>
 </resources>

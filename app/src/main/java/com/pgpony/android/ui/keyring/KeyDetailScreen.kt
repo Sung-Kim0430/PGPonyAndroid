@@ -866,7 +866,16 @@ fun KeyDetailScreen(
             },
             confirmButton = {
                 TextButton(
-                    onClick = { viewModel.applyRefreshSigs(refreshPass.ifBlank { null }) },
+                    // 4.7.0 RC6 (item 66, #86): the dialog is the confirmation;
+                    // the device-auth gate comes before the re-signing.
+                    onClick = {
+                        val pass = refreshPass.ifBlank { null }
+                        deleteWithOptionalBiometricGate(
+                            context = context,
+                            title = context.getString(R.string.key_detail_resign_biometric_title),
+                            subtitle = context.getString(R.string.key_detail_resign_biometric_subtitle)
+                        ) { viewModel.applyRefreshSigs(pass) }
+                    },
                     enabled = !state.refreshSigsInFlight
                 ) { Text(stringResource(R.string.key_detail_refresh_sigs_action)) }
             },
@@ -900,6 +909,9 @@ fun KeyDetailScreen(
         val cardExpiryFailed = stringResource(R.string.key_detail_expiry_failed)
         val expirySubkey = state.expirySubkey
         val nowMs = System.currentTimeMillis()
+        // 4.7.0 RC6 (item 66, #86): Save opens a confirmation first; the
+        // change itself runs only after it and the device-auth gate.
+        var pendingExpiry by remember { mutableStateOf<PendingExpiryChange?>(null) }
         EditExpirationSheet(
             keyOwnerLabel = ownerLabel,
             // 4.7.0 (item 55): a key pair whose subkeys are on a card signs with
@@ -910,29 +922,56 @@ fun KeyDetailScreen(
             subkeyLabel = expirySubkey?.keyId,
             offerCurrentSubkeys = state.subkeys.any { !it.isRevoked && (it.expiresAt == null || it.expiresAt > nowMs) },
             onApplySoftware = { expiresAt, passphrase, alsoSubkeys ->
-                viewModel.applyExpirationSoftware(expiresAt, passphrase, alsoSubkeys)
+                pendingExpiry = PendingExpiryChange(expiresAt, alsoSubkeys) {
+                    viewModel.applyExpirationSoftware(expiresAt, passphrase, alsoSubkeys)
+                }
             },
             onApplyCard = { expiresAt, pin, alsoSubkeys ->
-                val fp = keyForExpiry.fingerprint
-                val target = viewModel.expiryTarget(alsoSubkeys)
-                viewModel.onCardExpiryStarted()
-                val started = activity?.startCardOperation({ session ->
-                    session.select()
-                    val ring = PGPonyApp.instance.keyRepository.loadPublicKeyRing(fp)
-                        ?: throw OpenPgpCardException.Malformed(cardPairFirst)
-                    KeyExpirationService.shared.setExpirationCard(
-                        session, ring, expiresAt, pin.toByteArray(Charsets.UTF_8), target
-                    )
-                }) { result ->
-                    activity.stopCardScan()
-                    result
-                        .onSuccess { viewModel.persistCardExpiry(it.publicRing, expiresAt, target) }
-                        .onFailure { e -> viewModel.onCardExpiryFailure(e.message ?: cardExpiryFailed) }
+                pendingExpiry = PendingExpiryChange(expiresAt, alsoSubkeys) {
+                    val fp = keyForExpiry.fingerprint
+                    val target = viewModel.expiryTarget(alsoSubkeys)
+                    viewModel.onCardExpiryStarted()
+                    val started = activity?.startCardOperation({ session ->
+                        session.select()
+                        val ring = PGPonyApp.instance.keyRepository.loadPublicKeyRing(fp)
+                            ?: throw OpenPgpCardException.Malformed(cardPairFirst)
+                        KeyExpirationService.shared.setExpirationCard(
+                            session, ring, expiresAt, pin.toByteArray(Charsets.UTF_8), target
+                        )
+                    }) { result ->
+                        activity.stopCardScan()
+                        result
+                            .onSuccess { viewModel.persistCardExpiry(it.publicRing, expiresAt, target) }
+                            .onFailure { e -> viewModel.onCardExpiryFailure(e.message ?: cardExpiryFailed) }
+                    }
+                    if (started != true) viewModel.onCardExpiryFailure(cardNfcUnavail)
                 }
-                if (started != true) viewModel.onCardExpiryFailure(cardNfcUnavail)
             },
             onDismiss = { viewModel.dismissExpirySheet() }
         )
+        pendingExpiry?.let { pending ->
+            val resignTitle = stringResource(R.string.key_detail_resign_biometric_title)
+            val resignSubtitle = stringResource(R.string.key_detail_resign_biometric_subtitle)
+            ConfirmExpiryChangeDialog(
+                currentExpiresAtMs = if (expirySubkey != null) expirySubkey.expiresAt else keyForExpiry.expiresAt,
+                newExpiresAtEpochSeconds = pending.expiresAtEpochSeconds,
+                subkeyLabel = expirySubkey?.keyId,
+                userIdCount = state.userIds.count { !it.isRevoked },
+                currentSubkeyCount = if (pending.alsoCurrentSubkeys) {
+                    state.subkeys.count { !it.isRevoked && (it.expiresAt == null || it.expiresAt > nowMs) }
+                } else 0,
+                onConfirm = {
+                    pendingExpiry = null
+                    deleteWithOptionalBiometricGate(
+                        context = context,
+                        title = resignTitle,
+                        subtitle = resignSubtitle,
+                        onConfirmed = pending.run
+                    )
+                },
+                onDismiss = { pendingExpiry = null }
+            )
+        }
     }
 
     // ── RC3 §17.2 H: Add Subkey sheet ──────────────────────────────────
@@ -2043,3 +2082,10 @@ private fun UnpublishedChangesRow(onUpdate: () -> Unit) {
         }
     }
 }
+
+/** 4.7.0 RC6 (item 66): an expiry change waiting for its confirmation. */
+private class PendingExpiryChange(
+    val expiresAtEpochSeconds: Long?,
+    val alsoCurrentSubkeys: Boolean,
+    val run: () -> Unit
+)
