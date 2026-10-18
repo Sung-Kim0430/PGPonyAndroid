@@ -3045,9 +3045,6 @@ Opcionalmente, bloqueie o app com sua impressão digital ou rosto para mais tran
     <string name="provider_review_included_format">Já incluída para %1$s</string>
 
     <!-- Public-key QR exchange controls and recovery feedback. -->
-    <string name="qr_mode_compatible">Compatível</string>
-    <string name="qr_mode_enhanced">Avançado</string>
-    <string name="qr_enhanced_hint">O telefone receptor precisa oferecer suporte à troca QR avançada. Você pode voltar ao modo Compatível a qualquer momento.</string>
     <string name="qr_density_normal">Padrão</string>
     <string name="qr_density_roomy">Pontos maiores</string>
     <string name="qr_playback_slow">Reprodução mais lenta</string>

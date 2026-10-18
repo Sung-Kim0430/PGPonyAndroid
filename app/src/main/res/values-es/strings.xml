@@ -3045,9 +3045,6 @@ Opcionalmente, bloquea la app con tu huella digital o cara para mayor tranquilid
     <string name="provider_review_included_format">Ya incluida para %1$s</string>
 
     <!-- Public-key QR exchange controls and recovery feedback. -->
-    <string name="qr_mode_compatible">Compatible</string>
-    <string name="qr_mode_enhanced">Mejorado</string>
-    <string name="qr_enhanced_hint">El teléfono receptor debe admitir el intercambio QR mejorado. Puedes volver al modo Compatible en cualquier momento.</string>
     <string name="qr_density_normal">Estándar</string>
     <string name="qr_density_roomy">Puntos más grandes</string>
     <string name="qr_playback_slow">Reproducción más lenta</string>

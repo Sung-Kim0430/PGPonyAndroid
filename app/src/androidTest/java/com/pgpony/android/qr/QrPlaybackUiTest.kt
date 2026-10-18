@@ -21,36 +21,31 @@ import org.junit.runner.RunWith
 class QrPlaybackUiTest {
     @get:Rule val compose = createAndroidComposeRule<ComponentActivity>()
 
-    @Test fun sharedControlsKeepLegacyDefaultAndRequireExplicitEnhancedSelection() {
+    @Test fun sharedControlsKeepCompatibleDefaultAndAllowLargerModules() {
         val store = QrFrameStore.create("test".repeat(400))!!
-        var selectedMode = QrTransferMode.COMPATIBLE
         var selectedPolicy = QrEncodingPolicy.BASELINE
         compose.setContent {
-            var mode by remember { mutableStateOf(selectedMode) }
             var policy by remember { mutableStateOf(selectedPolicy) }
             MaterialTheme {
-                PublicKeyQrDisplay(store, mode, policy,
-                    { mode = it; selectedMode = it }, { policy = it; selectedPolicy = it })
+                PublicKeyQrDisplay(store, policy, { policy = it; selectedPolicy = it })
             }
         }
         compose.waitUntil(10_000) {
             compose.onAllNodesWithTag("public-key-qr-image").fetchSemanticsNodes().isNotEmpty()
         }
-        assertEquals(QrTransferMode.COMPATIBLE, selectedMode)
+        assertEquals(QrEncodingPolicy.BASELINE, selectedPolicy)
         compose.onNodeWithText(compose.activity.getString(R.string.qr_density_roomy)).performClick()
         compose.runOnIdle { assertEquals(QrEncodingPolicy.ROBUST, selectedPolicy) }
-        compose.onNodeWithText(compose.activity.getString(R.string.qr_mode_enhanced)).performClick()
-        compose.runOnIdle { assertEquals(QrTransferMode.ENHANCED, selectedMode) }
-        compose.onNodeWithText(compose.activity.getString(R.string.qr_enhanced_hint)).assertIsDisplayed()
-        compose.onNodeWithText(compose.activity.getString(R.string.qr_density_roomy)).assertDoesNotExist()
+        compose.onNodeWithText(compose.activity.getString(R.string.qr_density_normal)).performClick()
+        compose.runOnIdle { assertEquals(QrEncodingPolicy.BASELINE, selectedPolicy) }
     }
 
     @Test fun enlargedViewPreservesPausedPartAndFingerprint() {
         val store = QrFrameStore.create("fixture".repeat(400))!!
         compose.setContent {
             MaterialTheme {
-                PublicKeyQrDisplay(store, QrTransferMode.COMPATIBLE, QrEncodingPolicy.BASELINE,
-                    {}, {}, fingerprint = "TEST FINGERPRINT")
+                PublicKeyQrDisplay(store, QrEncodingPolicy.BASELINE,
+                    {}, fingerprint = "TEST FINGERPRINT")
             }
         }
         compose.waitUntil(10_000) {
@@ -78,7 +73,7 @@ class QrPlaybackUiTest {
             }
             CompositionLocalProvider(LocalConfiguration provides shortWindow) {
                 MaterialTheme {
-                    PublicKeyQrDisplay(store, QrTransferMode.COMPATIBLE, QrEncodingPolicy.BASELINE, {}, {})
+                    PublicKeyQrDisplay(store, QrEncodingPolicy.BASELINE, {})
                 }
             }
         }
@@ -94,8 +89,8 @@ class QrPlaybackUiTest {
     @Test fun renderingFailureShowsActionableMessageInsteadOfAnEndlessSpinner() {
         compose.setContent {
             MaterialTheme {
-                PublicKeyQrDisplay(null, QrTransferMode.COMPATIBLE, QrEncodingPolicy.BASELINE,
-                    {}, {}, errorMessage = "Fixture export failed")
+                PublicKeyQrDisplay(null, QrEncodingPolicy.BASELINE,
+                    {}, errorMessage = "Fixture export failed")
             }
         }
         compose.onNodeWithText("Fixture export failed").assertIsDisplayed()

@@ -2,10 +2,12 @@
 
 Protocol revision: PGPONY2, 2026-10-17.
 
-This document specifies the optional enhanced public-certificate transport byte for byte.
-The compatibility sender remains the default. Enhanced sending requires an explicit user
-selection and a receiver implementing this revision. There is no negotiation or return
-channel. Supporting PGPONY2 in PGPony Android does not establish support in other clients.
+This document specifies the experimental enhanced public-certificate transport byte for byte.
+Android only offers compatible sending (raw armor or PGPONY1). PGPONY2 receiving and the
+reference encoder remain available for interoperability testing; the app has no enhanced
+sending option. Sending must remain deferred until the iOS and desktop clients can read
+this revision. There is no negotiation or return channel, and Android receiver support
+does not establish support in other clients. These changes target a release after 4.7.0.
 
 A receiver recognizes raw armored public certificates, legacy `PGPONY1` multipart text,
 and this separate `PGPONY2` prefix. An unknown PGPony transport version must be reported

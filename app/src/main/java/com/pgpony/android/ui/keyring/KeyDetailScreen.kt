@@ -559,9 +559,7 @@ fun KeyDetailScreen(
         KeyDetailQRSheet(
             key = keyForSheet,
             qrStore = state.qrStore,
-            mode = state.qrMode,
             policy = state.qrPolicy,
-            onModeChange = viewModel::setQrMode,
             onPolicyChange = viewModel::setQrPolicy,
             // Phase A4b — wire real copy: armored public key to clipboard.
             onCopyArmored = {

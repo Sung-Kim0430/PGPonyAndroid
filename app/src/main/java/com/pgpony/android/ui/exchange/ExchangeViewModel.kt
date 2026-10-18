@@ -41,7 +41,6 @@ data class ExchangeUiState(
     /** Immutable text/matrix sequence; only current and adjacent bitmaps are cached. */
     val qrStore: QrFrameStore? = null,
     val qrError: String? = null,
-    val qrMode: QrTransferMode = QrTransferMode.COMPATIBLE,
     val qrPolicy: QrEncodingPolicy = QrEncodingPolicy.BASELINE,
     val armoredPublicKey: String? = null,
     // Key server
@@ -104,12 +103,6 @@ class ExchangeViewModel(
         generateQR(key)
     }
 
-    fun setQrMode(mode: QrTransferMode) {
-        if (mode == _state.value.qrMode) return
-        _state.value = _state.value.copy(qrMode = mode)
-        _state.value.selectedKey?.let(::generateQR)
-    }
-
     fun setQrPolicy(policy: QrEncodingPolicy) {
         if (policy == _state.value.qrPolicy) return
         _state.value = _state.value.copy(qrPolicy = policy)
@@ -119,7 +112,6 @@ class ExchangeViewModel(
     private fun generateQR(key: PGPKeyEntity) {
         qrJob?.cancel()
         val generation = ++qrGeneration
-        val mode = _state.value.qrMode
         val policy = _state.value.qrPolicy
         _state.value.qrStore?.clear()
         _state.value = _state.value.copy(qrStore = null, qrError = null, armoredPublicKey = null)
@@ -128,7 +120,8 @@ class ExchangeViewModel(
                 val armored = withContext(Dispatchers.IO) {
                     repo.exportArmoredPublicKey(key.fingerprint)
                 } ?: error("Public key export failed")
-                val store = withContext(Dispatchers.Default) { PublicKeyQrSequence.create(armored, mode, policy) }
+                // Keep sending compatible until the other clients can receive PGPONY2.
+                val store = withContext(Dispatchers.Default) { QrFrameStore.create(armored, policy) }
                 // Cancellation is cooperative; a finished old encoder must not replace a newer selection.
                 if (generation != qrGeneration) return@launch
                 _state.value = _state.value.copy(armoredPublicKey = armored, qrStore = store,

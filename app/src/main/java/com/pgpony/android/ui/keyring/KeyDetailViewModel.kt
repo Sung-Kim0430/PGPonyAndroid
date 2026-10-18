@@ -234,7 +234,6 @@ data class KeyDetailUiState(
     /** Lazily built immutable sequence; rendered bitmaps use a bounded cache. */
     val qrStore: QrFrameStore? = null,
     val qrError: String? = null,
-    val qrMode: QrTransferMode = QrTransferMode.COMPATIBLE,
     val qrPolicy: QrEncodingPolicy = QrEncodingPolicy.BASELINE,
     /** Flipped briefly true on fingerprint tap → drives the "Copied!"
      *  green check + label in FingerprintSection. Reset to false after
@@ -691,12 +690,6 @@ class KeyDetailViewModel(
         generateQR()
     }
 
-    fun setQrMode(mode: QrTransferMode) {
-        if (mode == _state.value.qrMode) return
-        _state.value = _state.value.copy(qrMode = mode)
-        generateQR()
-    }
-
     fun setQrPolicy(policy: QrEncodingPolicy) {
         if (policy == _state.value.qrPolicy) return
         _state.value = _state.value.copy(qrPolicy = policy)
@@ -707,7 +700,6 @@ class KeyDetailViewModel(
         val key = _state.value.key ?: return
         qrJob?.cancel()
         val generation = ++qrGeneration
-        val mode = _state.value.qrMode
         val policy = _state.value.qrPolicy
         _state.value.qrStore?.clear()
         _state.value = _state.value.copy(qrStore = null, qrError = null)
@@ -715,7 +707,8 @@ class KeyDetailViewModel(
             try {
                 val armored = withContext(Dispatchers.IO) { repo.exportArmoredPublicKey(key.fingerprint) }
                 if (armored.isNullOrBlank()) error("Public key export failed")
-                val store = withContext(Dispatchers.Default) { PublicKeyQrSequence.create(armored, mode, policy) }
+                // Keep sending compatible until the other clients can receive PGPONY2.
+                val store = withContext(Dispatchers.Default) { QrFrameStore.create(armored, policy) }
                 if (generation != qrGeneration || !_state.value.showQRSheet) return@launch
                 _state.value = _state.value.copy(qrStore = store,
                     showQRSheet = store != null,

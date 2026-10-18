@@ -17,7 +17,6 @@ import com.pgpony.android.R
 import com.pgpony.android.data.PGPKeyEntity
 import com.pgpony.android.qr.QrEncodingPolicy
 import com.pgpony.android.qr.QrFrameStore
-import com.pgpony.android.qr.QrTransferMode
 import com.pgpony.android.ui.components.PublicKeyQrDisplay
 
 /**
@@ -29,9 +28,7 @@ import com.pgpony.android.ui.components.PublicKeyQrDisplay
 fun KeyDetailQRSheet(
     key: PGPKeyEntity,
     qrStore: QrFrameStore?,
-    mode: QrTransferMode,
     policy: QrEncodingPolicy,
-    onModeChange: (QrTransferMode) -> Unit,
     onPolicyChange: (QrEncodingPolicy) -> Unit,
     onCopyArmored: () -> Unit,
     onShare: () -> Unit,
@@ -46,7 +43,7 @@ fun KeyDetailQRSheet(
             val fallback = stringResource(R.string.key_detail_type_public_key)
             Text(key.userName.ifBlank { key.userEmail.ifBlank { fallback } },
                 style = MaterialTheme.typography.titleMedium)
-            PublicKeyQrDisplay(qrStore, mode, policy, onModeChange, onPolicyChange, fingerprint = key.formattedFingerprint)
+            PublicKeyQrDisplay(qrStore, policy, onPolicyChange, fingerprint = key.formattedFingerprint)
             // A transport checksum cannot authenticate an owner. Keep the fingerprint visible.
             Text(key.formattedFingerprint,
                 style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace))

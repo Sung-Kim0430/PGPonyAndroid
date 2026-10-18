@@ -7,7 +7,7 @@ import java.security.MessageDigest
 import java.util.Locale
 import java.util.zip.CRC32
 
-/** Explicitly selected enhanced public-certificate transport. Existing formats remain separate. */
+/** Reference encoder for interoperability tests; app sending remains raw armor or PGPONY1. */
 object EnhancedQrEncoder {
     // At most 128 data plus 32 parity shards; bounds also apply before parsing a certificate.
     const val MAX_CERTIFICATE_BYTES = 65536

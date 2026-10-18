@@ -3127,9 +3127,6 @@
     <string name="provider_review_included_format">Already included for %1$s</string>
 
     <!-- Public-key QR exchange controls and recovery feedback. -->
-    <string name="qr_mode_compatible">Compatible</string>
-    <string name="qr_mode_enhanced">Enhanced</string>
-    <string name="qr_enhanced_hint">The receiving phone must support enhanced QR exchange. You can switch back to Compatible at any time.</string>
     <string name="qr_density_normal">Standard</string>
     <string name="qr_density_roomy">Larger dots</string>
     <string name="qr_playback_slow">Slower playback</string>

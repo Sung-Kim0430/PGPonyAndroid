@@ -181,8 +181,8 @@ private fun ShowKeySection(
                 Spacer(modifier = Modifier.height(12.dp))
             }
             com.pgpony.android.ui.components.PublicKeyQrDisplay(
-                store = state.qrStore, mode = state.qrMode, policy = state.qrPolicy,
-                onModeChange = viewModel::setQrMode, onPolicyChange = viewModel::setQrPolicy, errorMessage = state.qrError,
+                store = state.qrStore, policy = state.qrPolicy,
+                onPolicyChange = viewModel::setQrPolicy, errorMessage = state.qrError,
                 fingerprint = state.selectedKey?.formattedFingerprint)
             if (state.qrStore != null) {
                 state.selectedKey?.let { key ->

@@ -3145,9 +3145,6 @@
     <string name="provider_review_included_format">Уже включён для %1$s</string>
 
     <!-- Public-key QR exchange controls and recovery feedback. -->
-    <string name="qr_mode_compatible">Совместимый</string>
-    <string name="qr_mode_enhanced">Расширенный</string>
-    <string name="qr_enhanced_hint">Принимающий телефон должен поддерживать расширенный QR-обмен. В любой момент можно вернуться в совместимый режим.</string>
     <string name="qr_density_normal">Обычные точки</string>
     <string name="qr_density_roomy">Крупные точки</string>
     <string name="qr_playback_slow">Медленнее</string>

@@ -2690,9 +2690,6 @@
     <string name="provider_review_included_format">%1$s을(를) 통해 이미 포함됨</string>
 
     <!-- Public-key QR exchange controls and recovery feedback. -->
-    <string name="qr_mode_compatible">호환 모드</string>
-    <string name="qr_mode_enhanced">향상 모드</string>
-    <string name="qr_enhanced_hint">수신 휴대폰이 향상된 QR 교환을 지원해야 합니다. 언제든 호환 모드로 돌아갈 수 있습니다.</string>
     <string name="qr_density_normal">표준</string>
     <string name="qr_density_roomy">큰 점</string>
     <string name="qr_playback_slow">느리게 재생</string>

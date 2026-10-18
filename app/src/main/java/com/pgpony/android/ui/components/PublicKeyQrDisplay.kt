@@ -50,9 +50,7 @@ private class QrPlaybackState(store: QrFrameStore) {
 @Composable
 fun PublicKeyQrDisplay(
     store: QrFrameStore?,
-    mode: QrTransferMode,
     policy: QrEncodingPolicy,
-    onModeChange: (QrTransferMode) -> Unit,
     onPolicyChange: (QrEncodingPolicy) -> Unit,
     errorMessage: String? = null,
     fingerprint: String? = null,
@@ -64,25 +62,12 @@ fun PublicKeyQrDisplay(
     Column(horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            FilterChip(selected = mode == QrTransferMode.COMPATIBLE,
-                onClick = { onModeChange(QrTransferMode.COMPATIBLE) },
-                label = { Text(stringResource(R.string.qr_mode_compatible)) })
-            FilterChip(selected = mode == QrTransferMode.ENHANCED,
-                onClick = { onModeChange(QrTransferMode.ENHANCED) },
-                label = { Text(stringResource(R.string.qr_mode_enhanced)) })
-        }
-        if (mode == QrTransferMode.ENHANCED) {
-            Text(stringResource(R.string.qr_enhanced_hint), style = MaterialTheme.typography.bodySmall)
-        }
-        if (mode == QrTransferMode.COMPATIBLE) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(selected = policy == QrEncodingPolicy.BASELINE,
-                    onClick = { onPolicyChange(QrEncodingPolicy.BASELINE) },
-                    label = { Text(stringResource(R.string.qr_density_normal)) })
-                FilterChip(selected = policy != QrEncodingPolicy.BASELINE,
-                    onClick = { onPolicyChange(QrEncodingPolicy.ROBUST) },
-                    label = { Text(stringResource(R.string.qr_density_roomy)) })
-            }
+            FilterChip(selected = policy == QrEncodingPolicy.BASELINE,
+                onClick = { onPolicyChange(QrEncodingPolicy.BASELINE) },
+                label = { Text(stringResource(R.string.qr_density_normal)) })
+            FilterChip(selected = policy != QrEncodingPolicy.BASELINE,
+                onClick = { onPolicyChange(QrEncodingPolicy.ROBUST) },
+                label = { Text(stringResource(R.string.qr_density_roomy)) })
         }
         if (store == null || playback == null) {
             Box(Modifier.fillMaxWidth().heightIn(max = dialogHeight * 0.6f).background(Color.White),

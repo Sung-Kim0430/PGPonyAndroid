@@ -5,6 +5,10 @@ Recorded on 2026-10-17. The source reference is 4.7.0 RC6,
 and synthetic luminance results from measurements requiring physical phones.
 **Phone-to-phone performance and release acceptance remain untested.**
 
+The QR changes target a release after 4.7.0. Android offers compatible sending only;
+PGPONY2 receiving and reference encoding are retained for interoperability testing.
+Enhanced sending is deferred until the iOS and desktop clients can read the protocol.
+
 ## Public dataset and ownership
 
 Only the four explicitly selected public certificates are packaged in the instrumentation
@@ -132,7 +136,7 @@ text, key identifiers or camera images. Public fixtures may be recorded by the Q
 | Current → current on affected phones | Both directions; compare medians, p95 and timeouts with RC6 | UNTESTED |
 | RC6 / 4.6.4 → current | Both fixture sizes and raw single QR | UNTESTED |
 | Current compatible → RC6 / 4.6.4 | Both fixture sizes and raw single QR | UNTESTED |
-| Current enhanced → current | Drop/reorder tolerance plus actual elapsed completion time | UNTESTED |
+| Reference PGPONY2 encoder → current receiver | Drop/reorder tolerance plus actual elapsed completion time; no app sending option | UNTESTED |
 | Medium/low performance Android ↔ newer Android | At least two physical models; both directions | UNTESTED |
 | Memory, decoder allocation and 20 camera reopen cycles | Release build, same phones and fixture | UNTESTED |
 | iOS interoperability | Matching implementations, physical devices, both directions | UNTESTED |

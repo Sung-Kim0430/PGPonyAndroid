@@ -3008,9 +3008,6 @@ PGPony は、古い OpenPGP 実装との相互運用性のために従来の RSA
     <string name="provider_review_included_format">%1$s によりすでに含まれています</string>
 
     <!-- Public-key QR exchange controls and recovery feedback. -->
-    <string name="qr_mode_compatible">互換モード</string>
-    <string name="qr_mode_enhanced">拡張モード</string>
-    <string name="qr_enhanced_hint">受信側の端末は拡張 QR 交換に対応している必要があります。いつでも互換モードに戻せます。</string>
     <string name="qr_density_normal">標準</string>
     <string name="qr_density_roomy">大きいドット</string>
     <string name="qr_playback_slow">ゆっくり再生</string>
