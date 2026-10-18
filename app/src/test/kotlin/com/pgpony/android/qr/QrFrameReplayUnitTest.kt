@@ -33,7 +33,7 @@ class QrFrameReplayUnitTest {
         assertEquals(listOf(DecodeStrategy.REGION),strategies)
         time = 500_000_000L
         assertEquals("Full image fallback",decoder.decode(image,240,240,240,1,region=region))
-        assertEquals(DecodeStrategy.HARD_FULL_FRAME,strategies.last())
+        assertEquals(DecodeStrategy.HARD_QUARTER_TURN,strategies.last())
         strategies.clear()
         assertNull(decoder.decode(image,240,240,240,1,region=region))
         assertEquals(listOf(DecodeStrategy.REGION),strategies)
@@ -59,5 +59,36 @@ class QrFrameReplayUnitTest {
         strategies.clear()
         assertEquals("Duplicate symbol",decoder.decode(image,240,240,240,1))
         assertEquals(listOf(DecodeStrategy.FULL_FRAME,DecodeStrategy.HARD_FULL_FRAME),strategies)
+    }
+
+    @Test fun quarterTurnFallbackRecoversAnUprightPublicKeyFrameWithinTheExistingBudget() {
+        val armor = javaClass.getResource("/keys/uid-selfsig-expiry-rsa.asc")!!.readText()
+        val policy = QrEncodingPolicy.ROBUST
+        val frames = QrChunking.split(armor, policy)!!
+        val expected = frames[3]
+        val layout = QrSymbolLayout.forFrames(frames, policy)
+        val matrix = layout.encode(expected, policy)
+        val scale = layout.fit(947).moduleScale
+        val width = matrix.width * scale
+        val image = ByteBuffer.wrap(ByteArray(width * width) {
+            if (matrix[it % width / scale, it / width / scale]) 0 else 255.toByte()
+        })
+        var time = 0L
+        val strategies = mutableListOf<DecodeStrategy>()
+        val metrics = object : QrScanMetrics {
+            override fun decode(sessionId: Long, strategy: DecodeStrategy, elapsedNanos: Long, success: Boolean) {
+                strategies += strategy
+            }
+        }
+        val decoder = QrFrameDecoder(clockNanos = { time }, metrics = metrics)
+        assertNull(decoder.decode(image, width, width, width, 1))
+        time = 500_000_000L
+        assertEquals(expected, decoder.decode(image, width, width, width, 1))
+        assertEquals(listOf(DecodeStrategy.FULL_FRAME, DecodeStrategy.FULL_FRAME,
+            DecodeStrategy.HARD_QUARTER_TURN), strategies)
+        strategies.clear()
+        // A second difficult frame cannot spend another fallback in the same interval.
+        assertNull(decoder.decode(image, width, width, width, 1))
+        assertEquals(listOf(DecodeStrategy.FULL_FRAME), strategies)
     }
 }

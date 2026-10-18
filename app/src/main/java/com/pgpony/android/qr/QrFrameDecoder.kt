@@ -42,11 +42,21 @@ class QrFrameDecoder(private val clockNanos: () -> Long = System::nanoTime,
         lastFallback = now
         // Duplicate symbols do not postpone recovery. Collection progress alone resets this budget.
         // One extra search per interval includes ROI/full-frame and rotation fallback together.
-        val fallbackRotation = if (selected == crop) 0 else rotationDegrees
+        // ZXing can miss a valid upright symbol in both normal and hard search.
+        // A quarter-turn changes finder detection without adding another attempt.
+        val fallbackRotation = when {
+            primaryText == null && rotationDegrees == 0 -> 90
+            selected == crop -> 0
+            else -> rotationDegrees
+        }
         val fallback = extractor.extract(buffer,width,height,rowStride,pixelStride,crop,fallbackRotation)
             ?: return primaryText
         return attempt(fallback,
-            if(fallbackRotation != rotationDegrees) DecodeStrategy.HARD_UNROTATED else DecodeStrategy.HARD_FULL_FRAME,true)
+            when {
+                fallbackRotation == rotationDegrees -> DecodeStrategy.HARD_FULL_FRAME
+                fallbackRotation == 0 -> DecodeStrategy.HARD_UNROTATED
+                else -> DecodeStrategy.HARD_QUARTER_TURN
+            },true)
             ?: primaryText
     }
 

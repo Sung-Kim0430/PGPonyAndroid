@@ -120,6 +120,57 @@ metadata and the complete production CSV matched the regenerated output.
 Android instrumentation requires a connected device or emulator; emulator results may
 verify Android bitmap behavior but must be recorded separately from physical camera data.
 
+## Follow-up verification on 2026-10-18
+
+The review fixes were checked against upstream main
+`9370bf9440f7e6a38e6b42ef54d44371898a01af`. The portable harness now passes
+**36 tests**; all **16 public assets**, manifest metadata and the encoding CSV still
+reproduce exactly. The focused Gradle QR suite passes **85 tests**, with no failures
+or skips.
+
+An added complete-transfer test exposed a reproducible decoder miss: upright RSA
+ROBUST frame 4 of 5, rendered for a 947-pixel target (873-pixel bitmap,
+9 pixels/module), failed both normal and hard upright search. A quarter-turn recovered
+the exact frame. The existing bounded fallback now tries 90 degrees when normal
+upright decoding misses; it still permits only one extra attempt per half-second
+without collection progress. The new JVM regression fails against the previous
+decoder and passes with this change, including an assertion that a second fallback
+cannot run in the same interval.
+
+On an API 35 AOSP ATD x86_64 emulator, **14 Android QR tests passed**. The new
+`QrExchangeRoundTripTest` sends all four pinned public certificates through production
+Android bitmap rendering, offset/padded luminance planes, decoding and collection:
+**67 compatible frames** across BASELINE and ROBUST, in reverse order with duplicate
+offers. It also decodes **27 enhanced reference frames** after dropping seven of the
+34 ML-DSA frames, reconstructing the exact original binary certificate. The test
+advances a deterministic clock by 500 ms on a decode miss to exercise the bounded
+retry; it does not require every frame to decode on its first attempt. These
+**94 rendered frames** are synthetic transfer evidence, not camera captures or an
+actual key-import test. Other Android tests cover bitmap ownership, camera coordinate
+transforms, replay, playback controls and scanner dispatch lifecycle.
+
+The earlier full JVM run completed **1,245 tests: 1,233 passed, 10 skipped and two
+failed**. Both failures (`AppLockCoreTest.counterPersistsAcrossRestarts` and
+`configWritesAreAtomic`) reproduce independently with pristine upstream source on
+Windows: `File.renameTo` cannot replace the existing destination. The focused QR run
+above was repeated after the decoder fix; the full suite was not rerun.
+
+FOSS debug, Android test APK, FOSS release and Play release assemblies succeeded.
+Both release variants installed and cold-started on the emulator, stayed running
+after the startup check and produced no entries in the crash log. These local release
+builds use the project's debug-signing fallback because no `keystore.properties` is
+present; they are not officially signed release artifacts.
+
+`lintFossDebug` still fails with **391 errors, 342 warnings and 11 hints**. An
+independent upstream worktree produces **391 errors, 338 warnings and 11 hints**.
+Comparing issue ID, message and primary repository-relative path confirms that every
+error is identical: 389 Korean `MissingTranslation` issues and two manifest
+`AppLinkUrlError` issues. The branch adds four nonfatal warnings: one
+`PluralsCandidate` for the enhanced receiver's required-parts text and three unused
+strings (`kd_vm_error_export_for_qr`, `qr_scan_restarted`, `key_detail_qr_image_cd`).
+No lint baseline or suppression was added. Assembly success does not mean lint or
+the full JVM suite is green.
+
 ## Physical benchmark protocol and results still required
 
 Use a distinct local session ID and a monotonic clock. Record camera binding separately.

@@ -10,7 +10,7 @@ interface QrScanMetrics {
     companion object { val None: QrScanMetrics = object : QrScanMetrics {} }
 }
 
-enum class DecodeStrategy { REGION, FULL_FRAME, HARD_FULL_FRAME, HARD_UNROTATED }
+enum class DecodeStrategy { REGION, FULL_FRAME, HARD_FULL_FRAME, HARD_UNROTATED, HARD_QUARTER_TURN }
 enum class CollectionEvent { NEW_PART, DUPLICATE, RESTARTED, MALFORMED, COMPLETE }
 enum class ScanMilestone { READY, FIRST_PART, COMPLETE, PREVIEW }
 
