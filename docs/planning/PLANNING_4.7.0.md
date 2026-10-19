@@ -1526,6 +1526,57 @@ those rows ticked and disabled with "Already included for <address>", and return
 service dedupes by fingerprint), so confirming with only those keys works as before. 1 string. Test:
 RecipientReviewTest (two new cases).
 
+## 68. The card scan screen stops answering after Change PIN and back (#79)
+
+**Status:** RC7, code in. MainActivity keeps the owner of the current reader (cardReaderOwner);
+startCardScan and startCardOperation take an optional owner, and stopCardScan(owner) stops only the reader
+that owner started (with no owner it stops whatever runs, as before, for the operation callbacks). The six
+card screens (scan, Change PIN, sign, decrypt, keygen, card management) pass their own owner to the start
+calls and to the stop in onDispose. No new strings.
+
+Origin: #79 (Oct 15, on RC4, YubiKey 5 NFC): scan a key on the card screen, open Change PIN, go back; the
+screen says it is ready but no longer reacts to the card until it is left and opened again.
+
+Cause (read from the code): MainActivity holds one cardReader. Going back, the card screen's
+DisposableEffect arms a new reader (startCardScan), and the Change PIN screen's onDispose, which runs when its
+exit transition ends, then calls stopCardScan() and stops the reader the card screen just armed. The same
+ordering can hit any pair of card screens.
+
+Work: startCardScan and startCardOperation return a handle, and stopCardScan(handle) stops the reader only
+when it is still the one that handle started (the no-argument form stays for the error paths that must stop
+whatever is running). Every card screen's onDispose passes its own handle. Test on device: scan, Change PIN,
+back, scan again; the same through Card sign and Card decrypt.
+
+## 69. Show Key with a key too large for a QR code (#100)
+
+**Status:** RC7, code in.
+
+Origin: #100 (Oct 17, on RC6). With a default key too large for a QR code, Exchange showed "This key is too
+large for a QR code. Use Share or Copy instead." as a snackbar on every visit, including after item 64's links
+from Import, and Show Key then showed nothing under the key list: the key's name, fingerprint and the Copy Key
+and Upload buttons sat inside the QR block. Show Key has no Share button either. Now the view model sets
+qrTooLarge instead of an error message; Show Key says so inline (new string, naming Copy Key and Upload) and
+keeps the key and its buttons on screen. The Select Key rows are selectable as a whole (Role.RadioButton), so
+tapping the name selects the key. 1 string.
+
+## Feature freeze (Oct 17)
+
+RC7 is the release candidate. It carries item 68, item 69, and two contributor fixes merged on GitHub: #97
+(contact email lookup tolerates a provider that leaves out a column) and #99 (the French and Portuguese
+"keys need regenerating" plural shows its count, so 0 no longer reads as one key), with #94 (test
+infrastructure only) under them, then the 12a on-device checks. Only a regression or crash found in RC7
+justifies an RC8, and only for that fix. Everything else goes to the next release:
+
+- #101: a setting to turn off drag to reorder on the Keyring.
+- #86 follow-up: choose the hash (SHA-512) when re-signing self-signatures.
+- #93 follow-up: long press on a key starts select mode.
+- #100 follow-up: slower or paused QR playback by default (part of #95).
+- #95: QR exchange rework and the optional PGPONY2 format (review; iOS and desktop need to read it first; needs
+  a rebase on RC6's Exchange changes, and its planning-doc edit taken out).
+- #96: Korean err_ strings (decision pending on Korean error strings).
+- #98: manifest content VIEW filters without the inert path patterns.
+- #71: signing new subkeys with a primary held on a card.
+
 ## RC breakdown (set Oct 9 2026)
 
 Release note (Oct 14): the new store listing (fastlane/metadata/android: localized descriptions in 11 locales, 7 screenshots per locale, feature graphics) is committed for 4.7.0. F-Droid reads the listing from the tagged commit it builds, so it appears with the v4.7.0 build; 4.6.4 was built from a tree with the old screenshots. The F-Droid changelog 470.txt is still to write before tagging.
@@ -1548,7 +1599,8 @@ uk, b+zh+Hans).
 - RC4: 44 to 50 first (RC3 tester reports, no card needed), then the card work (Token2 on hand for testing): 13 (keytocard), card certification for 31, 34 (card-generated key display) and 28 (provider card
   prompt over USB), once a working card is on hand for testing.
 - RC5 (Oct 15, green Oct 16): 51 to 63.
-- RC6: 64 to 67, then the 12a on-device checks below.
+- RC6 (Oct 16): 64 to 67.
+- RC7 (release candidate): 68, 69, #94, #97, #99, then the 12a on-device checks below.
 - Last RC: the 12a on-device checks (Tor with Orbot, custom proxy, OpenKeychain restore, protected key over a
   contact, the provider with Thunderbird including a card).
 - Not RC-gated: 30 (README), 11 (SOP wrapper), 12 (external review follow-up).

@@ -3030,4 +3030,6 @@ Optional kannst du die App hinter deinem Fingerabdruck oder Gesicht sperren, um 
     <string name="key_detail_resign_biometric_title">Neue Signaturen bestätigen</string>
     <string name="key_detail_resign_biometric_subtitle">Authentifiziere dich, um diesen Schlüssel neu zu signieren</string>
     <string name="provider_review_included_format">%1$s: bereits enthalten</string>
+    <!-- 4.7.0 RC7, translated Oct 2026 -->
+    <string name="exchange_qr_too_large_inline">Dieser Schlüssel ist zu groß für einen QR-Code. Nutze stattdessen unten „Schlüssel kopieren“ oder „Hochladen“.</string>
 </resources>

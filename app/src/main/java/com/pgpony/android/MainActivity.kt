@@ -309,11 +309,18 @@ class MainActivity :
      * a fumbled tap) until [stopCardScan] is called. Returns false if
      * NFC is unavailable/disabled, in which case [onResult] never fires.
      */
-    fun startCardScan(onResult: (Result<CardInfo>) -> Unit): Boolean {
+    // 4.7.0 RC7 (item 68, #79): who started the current reader. A card
+    // screen passes an owner and stops with it on dispose, so a screen that
+    // closes after the next one has armed the reader (its exit transition ends
+    // later) does not turn off the reader the next screen just started.
+    private var cardReaderOwner: Any? = null
+
+    fun startCardScan(owner: Any? = null, onResult: (Result<CardInfo>) -> Unit): Boolean {
         val reader = OpenPgpCardReader(this)
         cardReader = reader
+        cardReaderOwner = owner
         val started = reader.start(onResult)
-        if (!started) cardReader = null
+        if (!started) { cardReader = null; cardReaderOwner = null }
         if (started) suppressAutoLock = true
         return started
     }
@@ -342,9 +349,15 @@ class MainActivity :
     }
 
     /** Stop NFC reader-mode polling and release the reader. */
-    fun stopCardScan() {
+    /**
+     * Stop the reader. With [owner], only when that owner started the current
+     * reader (4.7.0 RC7, item 68); without one, whatever is running.
+     */
+    fun stopCardScan(owner: Any? = null) {
+        if (owner != null && owner !== cardReaderOwner) return
         cardReader?.stop()
         cardReader = null
+        cardReaderOwner = null
         suppressAutoLock = false
     }
 
@@ -365,6 +378,7 @@ class MainActivity :
      */
     fun <T> startCardOperation(
         operation: (com.pgpony.android.crypto.card.OpenPgpCardSession) -> T,
+        owner: Any? = null,
         onResult: (Result<T>) -> Unit
     ): Boolean {
         // 4.1.0 USB Phase 2 — the chokepoint. Every card operation in the app
@@ -392,8 +406,9 @@ class MainActivity :
 
         val reader = OpenPgpCardReader(this)
         cardReader = reader
+        cardReaderOwner = owner
         val started = reader.startOperation(operation, onResult)
-        if (!started) cardReader = null
+        if (!started) { cardReader = null; cardReaderOwner = null }
         if (started) suppressAutoLock = true
         return started
     }

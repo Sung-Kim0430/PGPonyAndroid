@@ -3106,4 +3106,6 @@
     <string name="key_detail_resign_biometric_title">Yeni imzaları onaylayın</string>
     <string name="key_detail_resign_biometric_subtitle">Bu anahtarı yeniden imzalamak için kimliğinizi doğrulayın</string>
     <string name="provider_review_included_format">%1$s için zaten dahil edildi</string>
+    <!-- 4.7.0 RC7, translated Oct 2026 -->
+    <string name="exchange_qr_too_large_inline">Bu anahtar bir QR kodu için çok büyük. Bunun yerine aşağıdaki Anahtarı Kopyala\'yı veya Yükle\'yi kullanın.</string>
 </resources>

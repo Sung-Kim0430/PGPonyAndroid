@@ -3006,4 +3006,6 @@ PGPony は、古い OpenPGP 実装との相互運用性のために従来の RSA
     <string name="key_detail_resign_biometric_title">新しい署名を確認</string>
     <string name="key_detail_resign_biometric_subtitle">この鍵を再署名するには認証してください</string>
     <string name="provider_review_included_format">%1$s によりすでに含まれています</string>
+    <!-- 4.7.0 RC7, translated Oct 2026 -->
+    <string name="exchange_qr_too_large_inline">この鍵は QR コードには大きすぎます。代わりに下の「鍵をコピー」または「アップロード」をお使いください。</string>
 </resources>

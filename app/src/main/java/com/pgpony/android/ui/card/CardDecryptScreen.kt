@@ -61,6 +61,9 @@ private sealed class DecState {
 fun CardDecryptScreen(onBack: () -> Unit) {
     val context = LocalContext.current
     val activity = context as? MainActivity
+    // 4.7.0 RC7 (item 68, #79): the reader this screen starts is stopped only by
+    // this screen, so closing it cannot turn off the next screen's reader.
+    val cardOwner = remember { Any() }
     val clipboard = LocalClipboardManager.current
 
     // 4.1.0 USB Phase 2 — recomputed, not remembered once: a key can be
@@ -131,7 +134,7 @@ fun CardDecryptScreen(onBack: () -> Unit) {
                     }
                 }
             }
-            CardLinkKind.NFC -> activity?.startCardOperation(operation) { result ->
+            CardLinkKind.NFC -> activity?.startCardOperation(operation, owner = cardOwner) { result ->
                 result
                     .onSuccess { state.value = DecState.Result(it.data.toString(Charsets.UTF_8)) }
                     .onFailure { e -> state.value = DecState.Failed(ErrorText.localize(context, e.message) ?: context.getString(R.string.card_decrypt_failed_generic)) }
@@ -141,7 +144,7 @@ fun CardDecryptScreen(onBack: () -> Unit) {
     }
 
     DisposableEffect(Unit) {
-        onDispose { activity?.stopCardScan() }
+        onDispose { activity?.stopCardScan(cardOwner) }
     }
 
     Scaffold(

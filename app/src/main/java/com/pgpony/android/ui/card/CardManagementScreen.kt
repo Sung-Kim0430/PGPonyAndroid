@@ -48,12 +48,15 @@ private sealed class OpState {
 fun CardManagementScreen(onBack: () -> Unit, onDone: () -> Unit = {}) {
     val context = LocalContext.current
     val activity = context as? MainActivity
+    // 4.7.0 RC7 (item 68, #79): the reader this screen starts is stopped only by
+    // this screen, so closing it cannot turn off the next screen's reader.
+    val cardOwner = remember { Any() }
 
     var mode by remember { mutableStateOf(MgmtMode.MENU) }
     val opState = remember { mutableStateOf<OpState>(OpState.Idle) }
 
     DisposableEffect(Unit) {
-        onDispose { activity?.stopCardScan() }
+        onDispose { activity?.stopCardScan(cardOwner) }
     }
 
     val doneAdmin = stringResource(R.string.card_mgmt_done_admin)
@@ -63,7 +66,7 @@ fun CardManagementScreen(onBack: () -> Unit, onDone: () -> Unit = {}) {
 
     fun arm(operation: (com.pgpony.android.crypto.card.OpenPgpCardSession) -> Unit, doneMsg: String) {
         opState.value = OpState.Waiting
-        val started = activity?.startCardOperation(operation) { result ->
+        val started = activity?.startCardOperation(operation, owner = cardOwner) { result ->
             result
                 .onSuccess { opState.value = OpState.Done(doneMsg) }
                 .onFailure { e -> opState.value = OpState.Failed(ErrorText.localize(context, e.message) ?: failGeneric) }

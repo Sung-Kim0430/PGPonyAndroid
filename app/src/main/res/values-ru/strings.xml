@@ -3143,4 +3143,6 @@
     <string name="key_detail_resign_biometric_title">Подтвердите новые подписи</string>
     <string name="key_detail_resign_biometric_subtitle">Пройдите аутентификацию, чтобы заново подписать этот ключ</string>
     <string name="provider_review_included_format">Уже включён для %1$s</string>
+    <!-- 4.7.0 RC7, translated Oct 2026 -->
+    <string name="exchange_qr_too_large_inline">Этот ключ слишком велик для QR-кода. Используйте «Копировать ключ» или «Загрузить» ниже.</string>
 </resources>

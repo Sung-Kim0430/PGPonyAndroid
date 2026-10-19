@@ -3041,4 +3041,6 @@ Vous pouvez aussi verrouiller l\'application derrière votre empreinte digitale 
     <string name="key_detail_resign_biometric_title">Confirmer les nouvelles signatures</string>
     <string name="key_detail_resign_biometric_subtitle">Authentifiez-vous pour re-signer cette clé</string>
     <string name="provider_review_included_format">Déjà incluse pour %1$s</string>
+    <!-- 4.7.0 RC7, translated Oct 2026 -->
+    <string name="exchange_qr_too_large_inline">Cette clé est trop grande pour un code QR. Utilisez plutôt Copier la clé ou Envoyer ci-dessous.</string>
 </resources>

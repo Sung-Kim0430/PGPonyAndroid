@@ -3158,4 +3158,6 @@
     <string name="key_detail_resign_biometric_title">Підтвердьте нові підписи</string>
     <string name="key_detail_resign_biometric_subtitle">Пройдіть автентифікацію, щоб повторно підписати цей ключ</string>
     <string name="provider_review_included_format">Уже включено для %1$s</string>
+    <!-- 4.7.0 RC7, translated Oct 2026 -->
+    <string name="exchange_qr_too_large_inline">Цей ключ завеликий для QR-коду. Скористайтеся кнопкою «Копіювати ключ» або «Вивантажити» нижче.</string>
 </resources>

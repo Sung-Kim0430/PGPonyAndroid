@@ -2688,4 +2688,6 @@
     <string name="key_detail_resign_biometric_title">새 서명 확인</string>
     <string name="key_detail_resign_biometric_subtitle">이 키에 다시 서명하려면 인증하세요</string>
     <string name="provider_review_included_format">%1$s을(를) 통해 이미 포함됨</string>
+    <!-- 4.7.0 RC7, translated Oct 2026 -->
+    <string name="exchange_qr_too_large_inline">이 키는 QR 코드에 담기 너무 큽니다. 대신 아래의 ‘키 복사’나 ‘올리기’를 사용하세요.</string>
 </resources>

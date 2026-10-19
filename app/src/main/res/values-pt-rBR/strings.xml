@@ -3043,4 +3043,6 @@ Opcionalmente, bloqueie o app com sua impressão digital ou rosto para mais tran
     <string name="key_detail_resign_biometric_subtitle">Autentique-se para assinar esta chave novamente</string>
     <!-- 4.7.0 RC6: the recipient review shows keys the request already includes (item 67, #25) -->
     <string name="provider_review_included_format">Já incluída para %1$s</string>
+    <!-- 4.7.0 RC7, translated Oct 2026 -->
+    <string name="exchange_qr_too_large_inline">Esta chave é grande demais para um código QR. Use Copiar chave ou Enviar abaixo.</string>
 </resources>

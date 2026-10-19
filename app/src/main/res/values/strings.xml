@@ -3125,4 +3125,6 @@
     <string name="key_detail_resign_biometric_subtitle">Authenticate to sign this key again</string>
     <!-- 4.7.0 RC6: the recipient review shows keys the request already includes (item 67, #25) -->
     <string name="provider_review_included_format">Already included for %1$s</string>
+    <!-- 4.7.0 RC7: Show Key with a key too large for a QR code (item 69, #100) -->
+    <string name="exchange_qr_too_large_inline">This key is too large for a QR code. Use Copy Key or Upload below instead.</string>
 </resources>

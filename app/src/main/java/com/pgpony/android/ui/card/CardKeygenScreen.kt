@@ -48,6 +48,9 @@ private sealed class KeygenState {
 fun CardKeygenScreen(onBack: () -> Unit, onDone: () -> Unit = {}) {
     val context = LocalContext.current
     val activity = context as? MainActivity
+    // 4.7.0 RC7 (item 68, #79): the reader this screen starts is stopped only by
+    // this screen, so closing it cannot turn off the next screen's reader.
+    val cardOwner = remember { Any() }
     val repo = remember { PGPonyApp.instance.keyRepository }
     val scope = rememberCoroutineScope()
 
@@ -59,7 +62,7 @@ fun CardKeygenScreen(onBack: () -> Unit, onDone: () -> Unit = {}) {
     var userPin by remember { mutableStateOf("") }
     var acknowledged by remember { mutableStateOf(false) }
 
-    DisposableEffect(Unit) { onDispose { activity?.stopCardScan() } }
+    DisposableEffect(Unit) { onDispose { activity?.stopCardScan(cardOwner) } }
 
     val genFail = stringResource(R.string.card_keygen_failed_generate)
     val saveFail = stringResource(R.string.card_keygen_failed_save)
@@ -75,7 +78,7 @@ fun CardKeygenScreen(onBack: () -> Unit, onDone: () -> Unit = {}) {
                 adminPin = adminPin,
                 userPin = userPin
             )
-        }) { result ->
+        }, owner = cardOwner) { result ->
             result
                 .onSuccess { r ->
                     state.value = KeygenState.Persisting

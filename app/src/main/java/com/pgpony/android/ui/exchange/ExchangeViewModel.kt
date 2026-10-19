@@ -42,6 +42,9 @@ data class ExchangeUiState(
     val qrFrames: List<Bitmap> = emptyList(),
     val qrIndex: Int = 0,
     val armoredPublicKey: String? = null,
+    /** 4.7.0 RC7 (item 69, #100): the selected key does not fit in a QR code.
+     *  Shown inline on Show Key, not as a snackbar on every visit. */
+    val qrTooLarge: Boolean = false,
     // Key server
     val searchQuery: String = "",
     val searchResult: String? = null,
@@ -106,14 +109,14 @@ class ExchangeViewModel(
             val armored = withContext(Dispatchers.IO) {
                 repo.exportArmoredPublicKey(key.fingerprint)
             } ?: return@launch
-            _state.value = _state.value.copy(armoredPublicKey = armored)
+            _state.value = _state.value.copy(armoredPublicKey = armored, qrTooLarge = false)
             try {
                 val frames = withContext(Dispatchers.Default) { QrBitmap.encodeFrames(armored) }
                 if (frames.isNullOrEmpty()) {
                     _state.value = _state.value.copy(
                         qrFrames = emptyList(),
                         qrIndex = 0,
-                        errorMessage = PGPonyApp.instance.getString(R.string.qr_too_large)
+                        qrTooLarge = true
                     )
                     return@launch
                 }

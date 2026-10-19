@@ -3080,4 +3080,6 @@
     <string name="key_detail_resign_biometric_title">确认新的签名</string>
     <string name="key_detail_resign_biometric_subtitle">验证身份以重新签名此密钥</string>
     <string name="provider_review_included_format">已通过 %1$s 包含在内</string>
+    <!-- 4.7.0 RC7, translated Oct 2026 -->
+    <string name="exchange_qr_too_large_inline">此密钥太大，无法生成二维码。请改用下方的「复制密钥」或「上传」。</string>
 </resources>

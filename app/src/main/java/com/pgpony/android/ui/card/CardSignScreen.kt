@@ -56,6 +56,9 @@ private sealed class SignState {
 fun CardSignScreen(onBack: () -> Unit) {
     val context = LocalContext.current
     val activity = context as? MainActivity
+    // 4.7.0 RC7 (item 68, #79): the reader this screen starts is stopped only by
+    // this screen, so closing it cannot turn off the next screen's reader.
+    val cardOwner = remember { Any() }
     val clipboard = LocalClipboardManager.current
 
     // 4.1.0 USB Phase 2 — computed per composition, not remembered once, so a
@@ -110,7 +113,7 @@ fun CardSignScreen(onBack: () -> Unit) {
                 pinBytes,
                 msg
             )
-        }) { result ->
+        }, owner = cardOwner) { result ->
             result
                 .onSuccess { state.value = SignState.Result(it) }
                 .onFailure { e -> state.value = SignState.Failed(ErrorText.localize(context, e.message) ?: context.getString(R.string.card_sign_failed_generic)) }
@@ -118,7 +121,7 @@ fun CardSignScreen(onBack: () -> Unit) {
     }
 
     DisposableEffect(Unit) {
-        onDispose { activity?.stopCardScan() }
+        onDispose { activity?.stopCardScan(cardOwner) }
     }
 
     Scaffold(

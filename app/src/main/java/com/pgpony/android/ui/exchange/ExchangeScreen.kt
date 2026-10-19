@@ -10,6 +10,7 @@ import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FastForward
@@ -176,13 +177,21 @@ private fun ShowKeySection(
                     modifier = Modifier.fillMaxWidth())
                 Spacer(modifier = Modifier.height(4.dp))
                 state.myKeyPairs.forEach { key ->
+                    // 4.7.0 RC7 (item 69, #100): the whole row selects the key.
+                    val isSelected = state.selectedKey?.fingerprint == key.fingerprint
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .selectable(
+                                selected = isSelected,
+                                role = androidx.compose.ui.semantics.Role.RadioButton,
+                                onClick = { viewModel.selectKey(key) }
+                            ),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         RadioButton(
-                            selected = state.selectedKey?.fingerprint == key.fingerprint,
-                            onClick = { viewModel.selectKey(key) }
+                            selected = isSelected,
+                            onClick = null
                         )
                         // 4.7.0 (item 35): name, email and short fingerprint.
                         Text(key.pickerLabel, style = MaterialTheme.typography.bodyMedium)
@@ -254,6 +263,18 @@ private fun ShowKeySection(
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                 }
+            }
+            // 4.7.0 RC7 (item 69, #100): a key too large for a QR code says so
+            // here, and the key and its buttons below stay on screen.
+            if (state.qrTooLarge) {
+                Text(
+                    stringResource(R.string.exchange_qr_too_large_inline),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+                )
+            }
+            if (state.armoredPublicKey != null) {
                 state.selectedKey?.let { key ->
                     Text(key.userName.ifBlank { key.userEmail.ifBlank { key.userID } }, style = MaterialTheme.typography.titleSmall)
                     // 4.7.0 (item 35): the email too, so the shown key is unmistakable.

@@ -65,6 +65,9 @@ fun CardScanScreen(
 ) {
     val context = LocalContext.current
     val activity = context as? MainActivity
+    // 4.7.0 RC7 (item 68, #79): the reader this screen starts is stopped only by
+    // this screen, so closing it cannot turn off the next screen's reader.
+    val cardOwner = remember { Any() }
     val repo = remember { PGPonyApp.instance.keyRepository }
     val scope = rememberCoroutineScope()
 
@@ -97,7 +100,7 @@ fun CardScanScreen(
     // while the card is still present made the OS show "no supported
     // application"). Re-arm for retry / scan-again by calling this again.
     fun armScan() {
-        activity?.startCardScan { result ->
+        activity?.startCardScan(owner = cardOwner) { result ->
             result
                 .onSuccess { info -> scanState.value = ScanState.Found(info) }
                 .onFailure { e -> scanState.value = ScanState.Failed(ErrorText.localize(context, e.message) ?: context.getString(R.string.card_scan_read_failed)) }
@@ -144,7 +147,7 @@ fun CardScanScreen(
             CardLinkKind.NFC -> if (activity != null) armScan()
             null -> Unit
         }
-        onDispose { activity?.stopCardScan() }
+        onDispose { activity?.stopCardScan(cardOwner) }
     }
 
     Scaffold(

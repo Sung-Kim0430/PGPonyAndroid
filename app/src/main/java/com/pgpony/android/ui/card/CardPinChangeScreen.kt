@@ -52,6 +52,9 @@ private const val PW1_MAX_LEN = 127
 fun CardPinChangeScreen(onBack: () -> Unit, onDone: () -> Unit = {}) {
     val context = LocalContext.current
     val activity = context as? MainActivity
+    // 4.7.0 RC7 (item 68, #79): the reader this screen starts is stopped only by
+    // this screen, so closing it cannot turn off the next screen's reader.
+    val cardOwner = remember { Any() }
 
     // 4.1.0 USB Phase 2 — computed per composition, not remembered once, so a
     // reader plugged in before this screen opened is seen. Used ONLY for
@@ -79,7 +82,7 @@ fun CardPinChangeScreen(onBack: () -> Unit, onDone: () -> Unit = {}) {
         // reader's one-shot guard prevents a second tap from re-running
         // the change. Disabling it here (while the card is still on the
         // phone) is what made the OS show "no supported application".
-        activity.startCardOperation({ session -> session.changeUserPin(cur, nw) }) { result ->
+        activity.startCardOperation({ session -> session.changeUserPin(cur, nw) }, owner = cardOwner) { result ->
             result
                 .onSuccess { state.value = PinState.Done }
                 .onFailure { e -> state.value = PinState.Failed(ErrorText.localize(context, e.message) ?: context.getString(R.string.card_pin_change_failed_generic)) }
@@ -87,7 +90,7 @@ fun CardPinChangeScreen(onBack: () -> Unit, onDone: () -> Unit = {}) {
     }
 
     DisposableEffect(Unit) {
-        onDispose { activity?.stopCardScan() }
+        onDispose { activity?.stopCardScan(cardOwner) }
     }
 
     Scaffold(
